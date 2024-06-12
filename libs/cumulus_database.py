@@ -3,7 +3,8 @@ import os
 import sqlite3
 import time
 
-import cumulus_config as config
+import libs.cumulus_config as config
+
 logger = logging.getLogger(__name__)
 #DB = "cumulus.db"
 
@@ -71,7 +72,7 @@ def isOwner(job_id, owner): return getValue(job_id, "owner") == owner
 def addToStderr(job_id, text):
   stderr = getStdErr(job_id)
   if stderr == "": stderr = f"Cumulus: {text}"
-  else stderr += f"\nCumulus: {text}"
+  else: stderr += f"\nCumulus: {text}"
 
 ### specific functions ###
 def createJob(form):

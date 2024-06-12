@@ -1,10 +1,10 @@
 import logging
 import os
 import time
-import cumulus_config as config
-import cumulus_utils as utils
-import cumulus_database as db
-import cumulus_apps as apps
+import libs.cumulus_config as config
+import libs.cumulus_utils as utils
+import libs.cumulus_database as db
+import libs.cumulus_apps as apps
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def isProcessRunning(job_id):
   host = db.getHost(job_id)
   _, stdout, _ = utils.remoteExec(host, f"ps -p {pid} -o comm=")
   # if the pid is still alive, it's RUNNING
-  return False if stdout.at_eof() else return True
+  return False if stdout.at_eof() else True
 
 def isJobFinished(job_id):
   #appName = db.getAppName(job_id)
@@ -107,7 +107,7 @@ def startPendingJobs():
   for job_id in db.getJobsPerStatus("PENDING"):
     # check that all the files are present
     #if utils.areAllFilesTransfered(job_id):
-    if apps.areAllFilesTransfered(job_id, db.getAppName(job_id), db.getSettings(job_id))
+    if apps.areAllFilesTransfered(job_id, db.getAppName(job_id), db.getSettings(job_id)):
       # check that there is an available host matching the strategy
       host = findBestHost(job_id)
       # if all is ok, the job can start and its status can turn to RUNNING

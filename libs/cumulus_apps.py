@@ -1,7 +1,7 @@
 #import logging
 import os
-import cumulus_config as config
-import cumulus_utils as utils
+import libs.cumulus_config as config
+import libs.cumulus_utils as utils
 import apps.diann181 as diann181
 import apps.diann182 as diann182
 import apps.test_app as test

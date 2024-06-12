@@ -6,9 +6,9 @@ import os
 import threading
 
 # local modules
-import cumulus_utils as utils
-import cumulus_database as db
-import cumulus_daemon as daemon
+import libs.cumulus_utils as utils
+import libs.cumulus_database as db
+import libs.cumulus_daemon as daemon
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)

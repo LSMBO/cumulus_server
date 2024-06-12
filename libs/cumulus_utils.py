@@ -4,8 +4,8 @@ import paramiko
 import shutils
 import time
 
-import cumulus_config as config
-import cumulus_database as db
+import libs.cumulus_config as config
+import libs.cumulus_database as db
 
 logger = logging.getLogger(__name__)
 
