@@ -1,10 +1,11 @@
 #import logging
 import os
-import libs.cumulus_config as config
-import libs.cumulus_utils as utils
-import apps.diann181 as diann181
-import apps.diann182 as diann182
-import apps.test_app as test
+
+import cumulus_server.libs.cumulus_config as config
+import cumulus_server.libs.cumulus_utils as utils
+import cumulus_server.apps.diann181 as diann181
+import cumulus_server.apps.diann182 as diann182
+import cumulus_server.apps.test_app as test
 
 #logger = logging.getLogger(__name__)
 FINAL_FILE = config.get("final.file")

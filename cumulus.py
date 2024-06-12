@@ -2,18 +2,19 @@ from flask import Flask
 from flask import request
 from flask import send_file
 import logging
+from logging.handlers import RotatingFileHandler
 import os
 import threading
 
 # local modules
-import libs.cumulus_utils as utils
-import libs.cumulus_database as db
-import libs.cumulus_daemon as daemon
+import cumulus_server.libs.cumulus_utils as utils
+import cumulus_server.libs.cumulus_database as db
+import cumulus_server.libs.cumulus_daemon as daemon
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-        handlers=[RotatingFileHandler(filename = f"{__name__}.log", maxBytes = 100000, backupCount = 10)],
+        handlers=[RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
         level=logging.DEBUG,
         format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
         datefmt='%Y/%m/%d %H:%M:%S')
@@ -92,7 +93,7 @@ def storage():
   return utils.getRawFileList()
 
 @app.route("/version")
-def storage(): return utils.getVersion()
+def version(): return utils.getVersion()
 
 # start the daemons once all functions are defined
 threading.Thread(target=daemon.run, args=(), daemon=True).start()

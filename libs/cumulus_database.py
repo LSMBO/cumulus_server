@@ -3,54 +3,53 @@ import os
 import sqlite3
 import time
 
-import libs.cumulus_config as config
+import cumulus_server.libs.cumulus_config as config
 
 logger = logging.getLogger(__name__)
-#DB = "cumulus.db"
 
 def connect():
-    # connect to the database, create it if it does not exist yet
-    # cnx = sqlite3.connect(DB, autocommit = True)
-    cnx = sqlite3.connect(config.get("database.file.path"))
-    cursor = cnx.cursor()
-    # create the main table if it does not exist
-    cursor.execute("""
-      CREATE TABLE IF NOT EXISTS jobs(
-        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-        owner TEXT NOT NULL,
-        appname TEXT NOT NULL,
-        strategy TEXT NOT NULL,
-        description TEXT NOT NULL,
-        settings TEXT NOT NULL,
-        status TEXT NOT NULL,
-        host TEXT,
-        pid INTEGER,
-        creation_date INTEGER DEFAULT unixepoch(),
-        start_date INTEGER,
-        end_date INTEGER,
-        stdout TEXT,
-        stderr TEXT)
-    """)
-    return cnx, cursor
+  # connect to the database, create it if it does not exist yet
+  # cnx = sqlite3.connect(DB, autocommit = True)
+  cnx = sqlite3.connect(config.get("database.file.path"))
+  cursor = cnx.cursor()
+  # create the main table if it does not exist
+  cursor.execute("""
+    CREATE TABLE IF NOT EXISTS jobs(
+      id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+      owner TEXT NOT NULL,
+      appname TEXT NOT NULL,
+      strategy TEXT NOT NULL,
+      description TEXT NOT NULL,
+      settings TEXT NOT NULL,
+      status TEXT NOT NULL,
+      host TEXT,
+      pid INTEGER,
+      creation_date INTEGER DEFAULT CURRENT_TIMESTAMP,
+      start_date INTEGER,
+      end_date INTEGER,
+      stdout TEXT,
+      stderr TEXT)
+  """)
+  return cnx, cursor
 
 ### getter and setter functions ###
 def setValue(job_id, field, value):
-    # connect to the database
-    cnx, cursor = connect()
-    # TODO test that it does not fail if the job_id does not exist
-    cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
-    # disconnect
-    cnx.close()
+  # connect to the database
+  cnx, cursor = connect()
+  # TODO test that it does not fail if the job_id does not exist
+  cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
+  # disconnect
+  cnx.close()
 
 def getValue(job_id, field):
-    # connect to the database
-    cnx, cursor = connect()
-    # TODO test that it does not fail if the job_id does not exist
-    cursor.execute(f"SELECT {field} FROM jobs WHERE id = ?", job_id)
-    value = cursor.fetchone() if cursor.arraysize > 0 else ""
-    # disconnect and return the value
-    cnx.close()
-    return value
+  # connect to the database
+  cnx, cursor = connect()
+  # TODO test that it does not fail if the job_id does not exist
+  cursor.execute(f"SELECT {field} FROM jobs WHERE id = ?", (job_id,))
+  value = cursor.fetchone() if cursor.arraysize > 0 else ""
+  # disconnect and return the value
+  cnx.close()
+  return value
 
 def setStatus(job_id, status): setValue(job_id, "status", status)
 def getStatus(job_id): return getValue(job_id, "status")
@@ -81,7 +80,7 @@ def createJob(form):
   # status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error
   # pid should be null if the job has not started yet, or if it's finished
   # host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
-  cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?)", form["username"], form["appname"], form["strategy"], form["description"], str(form["settings"]), "PENDING")
+  cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?)", (form["username"], form["appname"], form["strategy"], form["description"], str(form["settings"]), "PENDING"))
   # return the id of the job
   job_id = cursor.lastrowid
   # disconnect
@@ -93,7 +92,7 @@ def getJobDetails(job_id):
   # connect to the database
   cnx, cursor = connect()
   # search the job that corresponds to the id
-  cursor.execute("SELECT owner, appname, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr from jobs WHERE id = ?", job_id)
+  cursor.execute("SELECT owner, appname, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr from jobs WHERE id = ?", (job_id,))
   # put the results in a dict
   job = {}
   if cursor.arraysize > 0:
@@ -107,7 +106,7 @@ def getJobToString(job_id):
   # connect to the database
   cnx, cursor = connect()
   # search the job that corresponds to the id
-  cursor.execute("SELECT owner, appname, status, host from jobs WHERE id = ?", job_id)
+  cursor.execute("SELECT owner, appname, status, host from jobs WHERE id = ?", (job_id,))
   job = ""
   if cursor.arraysize > 0:
     owner, appname, status, host = cursor.fetchone()
@@ -120,7 +119,7 @@ def getJobStatus(job_id):
   # connect to the database
   cnx, cursor = connect()
   # search the job that corresponds to the id
-  cursor.execute("SELECT status, stdout, stderr from jobs WHERE id = ?", job_id)
+  cursor.execute("SELECT status, stdout, stderr from jobs WHERE id = ?", (job_id,))
   # put the results in a dict
   response = "", "", ""
   if cursor.arraysize > 0:
@@ -134,30 +133,36 @@ def getJobList(host = "*", owner = "*", appname = "*", tag = "*", number = 100):
   # connect to the database
   cnx, cursor = connect()
   # search the jobs that fit the conditions
-  results = cursor.execute("SELECT id, owner, appname, status, creation_date from jobs WHERE host LIKE ? AND owner LIKE ? AND appname LIKE ? AND (description LIKE ? OR settings LIKE ?) SORT BY id DESC LIMIT ?", host, owner, appname, tag, tag, number)
+  results = cursor.execute("SELECT id, owner, appname, status, creation_date from jobs WHERE host LIKE ? AND owner LIKE ? AND appname LIKE ? AND (description LIKE ? OR settings LIKE ?) ORDER BY id DESC LIMIT ?", (host, owner, appname, tag, tag, number))
   # put the results in a dict
   jobs = []
   for id, owner, appname, status, creation_date in results:
     jobs.append(f"{id}:{status}:{appname}:{owner}:creation_date")
+  cnx.close()
   return jobs
 
 def getJobsPerStatus(status):
   # connect to the database
   cnx, cursor = connect()
   # search the jobs that fit the conditions
-  results = cursor.execute("SELECT id from jobs WHERE status = ? SORT BY id ASC", status)
+  results = cursor.execute("SELECT id from jobs WHERE status = ? ORDER BY id ASC", (status,))
+  # store the ids
+  jobs = []
+  for id in results: jobs.append(id)
+  cnx.close()
   # return a list of job ids
-  return results
+  return jobs
 
 def getAliveJobsPerHost(host_name):
   # connect to the database
   cnx, cursor = connect()
   # search the jobs that fit the conditions
-  results = cursor.execute("SELECT status from jobs WHERE host = ? AND (status = 'RUNNING' or status = 'PENDING')", host_name)
+  results = cursor.execute("SELECT status from jobs WHERE host = ? AND (status = 'RUNNING' or status = 'PENDING')", (host_name,))
   # count each type of job
   pending = 0
   running = 0
   for status in results:
     if status == "PENDING": pending += 1
     else: running += 1
+  cnx.close()
   return pending, running

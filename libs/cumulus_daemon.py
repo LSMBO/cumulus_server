@@ -1,15 +1,16 @@
 import logging
 import os
 import time
-import libs.cumulus_config as config
-import libs.cumulus_utils as utils
-import libs.cumulus_database as db
-import libs.cumulus_apps as apps
+
+import cumulus_server.libs.cumulus_config as config
+import cumulus_server.libs.cumulus_utils as utils
+import cumulus_server.libs.cumulus_database as db
+import cumulus_server.libs.cumulus_apps as apps
 
 logger = logging.getLogger(__name__)
 
-REFRESH_RATE = config.get("refresh.rate.in.seconds")
-MAX_AGE = config.get("data.max.age.in.days")
+REFRESH_RATE = int(config.get("refresh.rate.in.seconds"))
+MAX_AGE = int(config.get("data.max.age.in.days"))
 
 def getStdout(job_id):
   content = ""
@@ -114,6 +115,8 @@ def startPendingJobs():
       if host is not None: startJob(job_id, selected_host)
 
 def run():
+  # wait a minute before starting the daemon
+  time.sleep(60)
   # possible statuses: PENDING, RUNNING, DONE, FAILED, ARCHIVED
   while True:
     ## archive the DONE|FAILED jobs for which the job folder have been erased over time
@@ -126,24 +129,28 @@ def run():
     time.sleep(REFRESH_RATE)
 
 def clean():
-  # list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
-  for job_id in os.listdir(utils.JOB_DIR):
-    job = utils.JOB_DIR + "/" + job_id
-    if getFileAgeInDays(job) > MAX_AGE:
-      status = db.getStatus(job_id)
-      if status == "DONE" or status == "FAILED":
-        db.setStatus(job_id, "ARCHIVED")
-        utils.deleteJobFolder(job)
-  # list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
-  for file in os.listdir(utils.DATA_DIR):
-    file = utils.DATA_DIR + "/" + file
-    if getFileAgeInDays(file) > MAX_AGE:
-      # verify if this file is used or will be used
-      is_used = False
-      for job_id in db.getJobsPerStatus("RUNNING") + db.getJobsPerStatus("PENDING"):
-        if apps.is_file_required(db.getAppName(job_id), db.getSettings(job_id), file):
-          is_used = True
-          break
-      if not is_used: utils.deleteRawFile(file)
-  # wait 24 hours between each cleaning
-  time.sleep(86400)
+  # wait a minute before starting the daemon
+  time.sleep(60)
+  # clean the old files once a day
+  while True:
+    # list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
+    for job_id in os.listdir(utils.JOB_DIR):
+      job = utils.JOB_DIR + "/" + job_id
+      if utils.getFileAgeInDays(job) > MAX_AGE:
+        status = db.getStatus(job_id)
+        if status == "DONE" or status == "FAILED":
+          db.setStatus(job_id, "ARCHIVED")
+          utils.deleteJobFolder(job)
+    # list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
+    for file in os.listdir(utils.DATA_DIR):
+      file = utils.DATA_DIR + "/" + file
+      if utils.getFileAgeInDays(file) > MAX_AGE:
+        # verify if this file is used or will be used
+        is_used = False
+        for job_id in db.getJobsPerStatus("RUNNING") + db.getJobsPerStatus("PENDING"):
+          if apps.is_file_required(db.getAppName(job_id), db.getSettings(job_id), file):
+            is_used = True
+            break
+        if not is_used: utils.deleteRawFile(file)
+    # wait 24 hours between each cleaning
+    time.sleep(86400)
