@@ -16,11 +16,9 @@ classifier = {
 }
 
 quant = {
-    "any/acc": "",
-    "any/prec": " --no-ifs-removal",
-    "robust/acc": " --peak-center",
-    "robust/prec": " --peak-center --no-ifs-removal",
-    "height": " --peak-height",
+    "ums/prec": "",
+    "ums/acc": " --high-acc",
+    "legacy": " --direct-quant",
     "__default__": ""
 }
 
@@ -49,6 +47,16 @@ def getValue(dictionnary, key):
     else:
         return ""
 
+def checkInputFiles(settings, data_dir, job_dir):
+  # check the raw files
+  for file in settings["files"]:
+    if not os.path.isfile(data_dir + "/" + os.path.basename(file)): return False
+  # check the fasta file
+  fasta = f"{job_dir}/{os.path.basename(settings['fasta'])}"
+  if not os.path.isfile(fasta): return False
+  # if all the expected files are present
+  return True
+
 def checkParameters(data_dir, params):
     errors = []
     # check the input files
@@ -58,22 +66,19 @@ def checkParameters(data_dir, params):
     # check the fasta file
     fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
     if not os.path.isfile(fasta): errors.append(f"Fasta file '{fasta}' not found")
-    # check other parameters?
     return errors
+    # check other parameters?
 
 # generic command from the module
 def getCommandLine(params, data_dir, nb_cpu):
-    # TODO check if --no-quant-files increases the amount of RAM used
-    # TODO or else check that .quant files are created in the temp folder if using --temp 
     # it was put there to avoid the generation of .quant files, because it's not clear if we can choose where they are generated
     # it seems that they are always created where the raw files are, and it may be a problem when the same file is used twice at the same time
-    cmd = f"diann-1.8.1 --dir '{data_dir}' --no-quant-files"
+    cmd = f"wine ~/dia-nn-1.8.2b27/DiaNN.exe --dir '{data_dir}' --no-quant-files"
     for filename in params["files"]:
         # make sure that filename is just a file name, not a relative path
         cmd += f" --f '{os.path.basename(filename)}'"
-    # add user arguments
-    fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
-    cmd += f" --lib '' --fasta '{fasta}' --fasta-search --predictor"
+        # add user arguments
+    cmd += f" --lib '' --fasta '{data_dir}/{params['fasta']}' --fasta-search --predictor"
     cmd += f" --cut {params['protease']} --missed-cleavages {params['mc']}"
     cmd += f" --var-mods {params['var-mods']}"
     if params["met-excision"]: cmd += " --met-excision"
@@ -84,6 +89,7 @@ def getCommandLine(params, data_dir, nb_cpu):
     cmd += f" --min-fr-mz {params['min-fr-mz']}  --max-fr-mz {params['max-fr-mz']}"
     cmd += f" --gen-spec-lib --qvalue {params['fdr']} --threads {nb_cpu} --verbose {params['verbose']}"
     cmd += f" --mass-acc {params['mass-acc']} --mass-acc-ms1 {params['ms1-acc']} --window {params['window']} --reanalyse"
+    if params["slice-pasef"]: cmd += " --tims-scan"
     cmd += getValue(inference, params['inference'])
     cmd += getValue(classifier, params['classifier'])
     cmd += getValue(quant, params['quant'])
@@ -95,3 +101,4 @@ def getCommandLine(params, data_dir, nb_cpu):
 
 def isFinished(stdout):
     return stdout.endswith("Finished\n\n")
+
