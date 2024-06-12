@@ -57,17 +57,17 @@ def checkInputFiles(settings, data_dir, job_dir):
   # if all the expected files are present
   return True
 
-def checkParameters(data_dir, params):
-    errors = []
-    # check the input files
-    for file in params["files"]:
-        filename = os.path.basename(file)
-        if not os.path.isfile(data_dir + "/" + file): errors.append(f"Raw file '{file}' not found")
-    # check the fasta file
-    fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
-    if not os.path.isfile(fasta): errors.append(f"Fasta file '{fasta}' not found")
-    return errors
-    # check other parameters?
+#def checkParameters(data_dir, params):
+#    errors = []
+#    # check the input files
+#    for file in params["files"]:
+#        filename = os.path.basename(file)
+#        if not os.path.isfile(data_dir + "/" + file): errors.append(f"Raw file '{file}' not found")
+#    # check the fasta file
+#    fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
+#    if not os.path.isfile(fasta): errors.append(f"Fasta file '{fasta}' not found")
+#    return errors
+#    # check other parameters?
 
 # generic command from the module
 def getCommandLine(params, data_dir, nb_cpu):
@@ -101,4 +101,11 @@ def getCommandLine(params, data_dir, nb_cpu):
 
 def isFinished(stdout):
     return stdout.endswith("Finished\n\n")
+
+def is_file_required(settings, file):
+  file = os.path.basename(file)
+  for raw in settings["files"]:
+    if os.path.basename(raw) == file: return True
+  if os.path.basename(settings['fasta']) == file: return True
+  return False
 

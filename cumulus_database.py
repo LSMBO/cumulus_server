@@ -3,7 +3,7 @@ import os
 import sqlite3
 import time
 
-import cumulus-config as config
+import cumulus_config as config
 logger = logging.getLogger(__name__)
 #DB = "cumulus.db"
 

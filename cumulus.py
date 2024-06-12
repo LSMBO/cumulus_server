@@ -6,9 +6,9 @@ import os
 import threading
 
 # local modules
-import cumulus-utils as utils
-import cumulus-database as db
-import cumulus-daemon as daemon
+import cumulus_utils as utils
+import cumulus_database as db
+import cumulus_daemon as daemon
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def jobs(owner, appname, tag, number):
   return db.getJobList(owner, appname, tag, number)
 
 @app.route("/status/<int:job_id>")
-def status(job_id = None):
+def status(job_id):
   return db.getJobStatus(job_id)
 
 @app.route("/cancel/<string:owner>/<int:job_id>")

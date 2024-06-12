@@ -42,12 +42,9 @@ speed = {
 
 # secure way to get values
 def getValue(dictionnary, key):
-    if key in dictionnary:
-        return dictionnary[key]
-    elif "__default__" in dictionnary:
-        return dictionnary["__default__"]
-    else:
-        return ""
+  if key in dictionnary: return dictionnary[key]
+  elif "__default__" in dictionnary: return dictionnary["__default__"]
+  else: return ""
 
 def checkInputFiles(settings, data_dir, job_dir):
   # check the raw files
@@ -59,47 +56,54 @@ def checkInputFiles(settings, data_dir, job_dir):
   # if all the expected files are present
   return True
 
-def checkParameters(data_dir, params):
-    errors = []
-    # check the input files
-    for file in params["files"]:
-        filename = os.path.basename(file)
-        if not os.path.isfile(data_dir + "/" + file): errors.append(f"Raw file '{file}' not found")
-    # check the fasta file
-    fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
-    if not os.path.isfile(fasta): errors.append(f"Fasta file '{fasta}' not found")
-    # check other parameters?
-    return errors
+#def checkParameters(data_dir, params):
+#  errors = []
+#  # check the input files
+#  for file in params["files"]:
+#    filename = os.path.basename(file)
+#    if not os.path.isfile(data_dir + "/" + file): errors.append(f"Raw file '{file}' not found")
+#  # check the fasta file
+#  fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
+#  if not os.path.isfile(fasta): errors.append(f"Fasta file '{fasta}' not found")
+#  # check other parameters?
+#  return errors
 
 # generic command from the module
 def getCommandLine(params, data_dir, nb_cpu):
-    # it was put there to avoid the generation of .quant files, because it's not clear if we can choose where they are generated
-    # it seems that they are always created where the raw files are, and it may be a problem when the same file is used twice at the same time
-    cmd = f"diann-1.8.1 --dir '{data_dir}' --no-quant-files"
-    for filename in params["files"]:
-        # make sure that filename is just a file name, not a relative path
-        cmd += f" --f '{os.path.basename(filename)}'"
-    # add user arguments
-    fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
-    cmd += f" --lib '' --fasta '{fasta}' --fasta-search --predictor"
-    cmd += f" --cut {params['protease']} --missed-cleavages {params['mc']}"
-    cmd += f" --var-mods {params['var-mods']}"
-    if params["met-excision"]: cmd += " --met-excision"
-    # TODO add modifications
-    cmd += f" --min-pep-length {params['min-pep-length']}  --max-pep-length {params['max-pep-length']}"
-    cmd += f" --min-pr-charge {params['min-pr-charge']}  --max-pr-charge {params['max-pr-charge']}"
-    cmd += f" --min-pr-mz {params['min-pr-mz']}  --max-pr-mz {params['max-pr-mz']}"
-    cmd += f" --min-fr-mz {params['min-fr-mz']}  --max-fr-mz {params['max-fr-mz']}"
-    cmd += f" --gen-spec-lib --qvalue {params['fdr']} --threads {nb_cpu} --verbose {params['verbose']}"
-    cmd += f" --mass-acc {params['mass-acc']} --mass-acc-ms1 {params['ms1-acc']} --window {params['window']} --reanalyse"
-    cmd += getValue(inference, params['inference'])
-    cmd += getValue(classifier, params['classifier'])
-    cmd += getValue(quant, params['quant'])
-    cmd += getValue(norm, params['norm'])
-    cmd += " --smart-profiling"
-    cmd += getValue(speed, params['speed'])
+  # it was put there to avoid the generation of .quant files, because it's not clear if we can choose where they are generated
+  # it seems that they are always created where the raw files are, and it may be a problem when the same file is used twice at the same time
+  cmd = f"diann-1.8.1 --dir '{data_dir}' --no-quant-files"
+  for filename in params["files"]:
+    # make sure that filename is just a file name, not a relative path
+    cmd += f" --f '{os.path.basename(filename)}'"
+  # add user arguments
+  fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
+  cmd += f" --lib '' --fasta '{fasta}' --fasta-search --predictor"
+  cmd += f" --cut {params['protease']} --missed-cleavages {params['mc']}"
+  cmd += f" --var-mods {params['var-mods']}"
+  if params["met-excision"]: cmd += " --met-excision"
+  # TODO add modifications
+  cmd += f" --min-pep-length {params['min-pep-length']}  --max-pep-length {params['max-pep-length']}"
+  cmd += f" --min-pr-charge {params['min-pr-charge']}  --max-pr-charge {params['max-pr-charge']}"
+  cmd += f" --min-pr-mz {params['min-pr-mz']}  --max-pr-mz {params['max-pr-mz']}"
+  cmd += f" --min-fr-mz {params['min-fr-mz']}  --max-fr-mz {params['max-fr-mz']}"
+  cmd += f" --gen-spec-lib --qvalue {params['fdr']} --threads {nb_cpu} --verbose {params['verbose']}"
+  cmd += f" --mass-acc {params['mass-acc']} --mass-acc-ms1 {params['ms1-acc']} --window {params['window']} --reanalyse"
+  cmd += getValue(inference, params['inference'])
+  cmd += getValue(classifier, params['classifier'])
+  cmd += getValue(quant, params['quant'])
+  cmd += getValue(norm, params['norm'])
+  cmd += " --smart-profiling"
+  cmd += getValue(speed, params['speed'])
 
-    return cmd
+  return cmd
 
 def isFinished(stdout):
-    return stdout.endswith("Finished\n\n")
+  return stdout.endswith("Finished\n\n")
+
+def is_file_required(settings, file):
+  file = os.path.basename(file)
+  for raw in settings["files"]:
+    if os.path.basename(raw) == file: return True
+  if os.path.basename(settings['fasta']) == file: return True
+  return False

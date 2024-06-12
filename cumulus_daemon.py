@@ -1,10 +1,10 @@
 import logging
 import os
 import time
-import cumulus-config as config
-import cumulus-utils as utils
-import cumulus-database as db
-import cumulus-apps as apps
+import cumulus_config as config
+import cumulus_utils as utils
+import cumulus_database as db
+import cumulus_apps as apps
 
 logger = logging.getLogger(__name__)
 
