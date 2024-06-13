@@ -1,4 +1,4 @@
-def checkInputFiles(settings, data_dir, job_dir):
+def check_input_files(settings, data_dir, job_dir):
   # check the raw files
   for file in settings["files"]:
     if not os.path.isfile(data_dir + "/" + os.path.basename(file)): return False
@@ -8,14 +8,14 @@ def checkInputFiles(settings, data_dir, job_dir):
   # if all the expected files are present
   return True
 
-def getCommandLine():
+def get_command_line():
   args = []
   for file in settings["files"]:
     args.append(data_dir + "/" + os.path.basename(file))
   args.append(f"{job_dir}/{os.path.basename(settings['fasta'])}")
   return "perl /storage/share/test.pl '" + "' '".join(args) + "'"
 
-def isFinished(stdout):
+def is_finished(stdout):
   return stdout.endswith("All done!\n")
 
 def is_file_required(settings, file):

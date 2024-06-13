@@ -39,7 +39,7 @@ speed = {
 }
 
 # secure way to get values
-def getValue(dictionnary, key):
+def get_value(dictionnary, key):
     if key in dictionnary:
         return dictionnary[key]
     elif "__default__" in dictionnary:
@@ -47,7 +47,7 @@ def getValue(dictionnary, key):
     else:
         return ""
 
-def checkInputFiles(settings, data_dir, job_dir):
+def check_input_files(settings, data_dir, job_dir):
   # check the raw files
   for file in settings["files"]:
     if not os.path.isfile(data_dir + "/" + os.path.basename(file)): return False
@@ -70,7 +70,7 @@ def checkInputFiles(settings, data_dir, job_dir):
 #    # check other parameters?
 
 # generic command from the module
-def getCommandLine(params, data_dir, nb_cpu):
+def get_command_line(params, data_dir, nb_cpu):
     # it was put there to avoid the generation of .quant files, because it's not clear if we can choose where they are generated
     # it seems that they are always created where the raw files are, and it may be a problem when the same file is used twice at the same time
     cmd = f"wine ~/dia-nn-1.8.2b27/DiaNN.exe --dir '{data_dir}' --no-quant-files"
@@ -90,16 +90,16 @@ def getCommandLine(params, data_dir, nb_cpu):
     cmd += f" --gen-spec-lib --qvalue {params['fdr']} --threads {nb_cpu} --verbose {params['verbose']}"
     cmd += f" --mass-acc {params['mass-acc']} --mass-acc-ms1 {params['ms1-acc']} --window {params['window']} --reanalyse"
     if params["slice-pasef"]: cmd += " --tims-scan"
-    cmd += getValue(inference, params['inference'])
-    cmd += getValue(classifier, params['classifier'])
-    cmd += getValue(quant, params['quant'])
-    cmd += getValue(norm, params['norm'])
+    cmd += get_value(inference, params['inference'])
+    cmd += get_value(classifier, params['classifier'])
+    cmd += get_value(quant, params['quant'])
+    cmd += get_value(norm, params['norm'])
     cmd += " --smart-profiling"
-    cmd += getValue(speed, params['speed'])
+    cmd += get_value(speed, params['speed'])
 
     return cmd
 
-def isFinished(stdout):
+def is_finished(stdout):
     return stdout.endswith("Finished\n\n")
 
 def is_file_required(settings, file):
