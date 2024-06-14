@@ -14,18 +14,20 @@ MAX_AGE = int(config.get("data.max.age.in.days"))
 
 def get_stdout(job_id):
   content = ""
-  if os.path.isfile(JOB_DIR + "/" + job_id):
+  job_dir = utils.get_job_dir(job_id)
+  if os.path.isfile(job_dir):
     settings = db.get_settings(job_id)
-    f = open(f"{JOB_DIR}/{job_id}/{utils.get_stdout_file_name(settings['app_name'])}", "r")
+    f = open(f"{job_dir}/{utils.get_stdout_file_name(settings['app_name'])}", "r")
     content = f.read()
     f.close()
   return content
 
 def get_stderr(job_id): 
   content = ""
-  if os.path.isfile(JOB_DIR + "/" + job_id):
+  job_dir = utils.get_job_dir(job_id)
+  if os.path.isfile(job_dir):
     settings = db.get_settings(job_id)
-    f = open(f"{JOB_DIR}/{job_id}/{utils.get_stderr_file_name(settings['app_name'])}", "r")
+    f = open(f"{job_dir}/{utils.get_stderr_file_name(settings['app_name'])}", "r")
     content = f.read()
     f.close()
   return content
@@ -69,7 +71,7 @@ def find_best_host(job_id):
   if strategy == "first_available":
     # if the strategy is to take the first available host, return the first host who is not running anything
     for host in hosts:
-      if host.toDict()["running"] == 0: selected_host = host
+      if host.to_dict()["running"] == 0: selected_host = host
   else:
     # otherwise, find the host that fits the strategy
     if strategy == "best_ram":
@@ -83,7 +85,7 @@ def find_best_host(job_id):
       for host in hosts:
         if f"host:{host.name}" == strategy: selected_host = host
     # reset the selected host if it is already in use
-    if selected_host.toDict()["running"] > 0: selected_host = None
+    if selected_host.to_dict()["running"] > 0: selected_host = None
   
   # return the selected host, it can be None
   return selected_host
@@ -131,7 +133,7 @@ def clean():
   while True:
     # list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
     for job_id in os.listdir(utils.JOB_DIR):
-      job = utils.JOB_DIR + "/" + job_id
+      job = utils.get_job_dir(job_id)
       if utils.get_file_age_in_days(job) > MAX_AGE:
         status = db.get_status(job_id)
         if status == "DONE" or status == "FAILED":

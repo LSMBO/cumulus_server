@@ -82,7 +82,7 @@ def get_results(owner, job_id, file_name):
 def info():
   # return an array of dicts, one per host
   # each dict contains its name, the number of cpu, the amount of ram and the numbers of jobs running and pending
-  return jsonify(list(map(lambda host: host.toDict(), utils.get_all_hosts(True))))
+  return jsonify(list(map(lambda host: host.to_dict(), utils.get_all_hosts(True))))
 
 @app.route("/storage")
 def storage():

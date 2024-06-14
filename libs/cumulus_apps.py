@@ -17,10 +17,11 @@ def is_finished(app_name, stdout):
   else: return True
 
 def are_all_files_transfered(job_id, app_name, settings):
-  if os.path.isfile(f"{utils.JOB_DIR}/{job_id}/{FINAL_FILE}"):
-    if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR, utils.JOB_DIR)
-    elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR, utils.JOB_DIR)
-    elif app_name == "test": return test.check_input_files(settings, utils.DATA_DIR, utils.JOB_DIR)
+  job_dir = utils.get_job_dir(job_id)
+  if os.path.isfile(f"{job_dir}/{FINAL_FILE}"):
+    if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR, job_dir)
+    elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR, job_dir)
+    elif app_name == "test": return test.check_input_files(settings, utils.DATA_DIR, job_dir)
   return False
 
 #def checkParameters(app_name, settings):

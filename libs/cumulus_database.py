@@ -21,13 +21,13 @@ def connect():
       description TEXT NOT NULL,
       settings TEXT NOT NULL,
       status TEXT NOT NULL,
-      host TEXT DEFAULT NULL,
-      pid INTEGER DEFAULT NULL,
-      creation_date INTEGER DEFAULT CURRENT_TIMESTAMP,
-      start_date INTEGER DEFAULT NULL,
-      end_date INTEGER DEFAULT NULL,
-      stdout TEXT DEFAULT NULL,
-      stderr TEXT DEFAULT NULL)
+      host TEXT,
+      pid INTEGER,
+      creation_date INTEGER,
+      start_date INTEGER,
+      end_date INTEGER,
+      stdout TEXT,
+      stderr TEXT)
   """)
   return cnx, cursor
 
@@ -79,7 +79,8 @@ def create_job(form):
   # status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error
   # pid should be null if the job has not started yet, or if it's finished
   # host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
-  cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?)", (form["username"], form["app_name"], form["strategy"], form["description"], str(form["settings"]), "PENDING"))
+  #cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?)", (form["username"], form["app_name"], form["strategy"], form["description"], str(form["settings"]), "PENDING"))
+  cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, form["username"], form["app_name"], form["strategy"], form["description"], str(form["settings"]), "PENDING", "", 0, int(time.time()), None, None, "", ""))
   # return the id of the job
   job_id = cursor.lastrowid
   # disconnect

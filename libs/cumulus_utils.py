@@ -25,7 +25,7 @@ class Host:
     self.ram = ram
   def __str__(self):
     return f"{self.name}\t{self.address}\t{self.port}\t{self.user}\t{self.cpu}\t{self.ram}"
-  def toDict(self):
+  def to_dict(self):
     runnings, pendings = db.get_alive_jobs_per_host(self.name)
     return {"name": self.name, "cpu": self.cpu, "ram": self.ram, "jobs_running": runnings, "jobs_pending": pendings}
 
@@ -86,8 +86,12 @@ def remote_exec(ip, command):
   ssh.close()
   return pid, stdout, stderr
 
+def get_job_dir(job_id):
+  return JOB_DIR + "/" + str(job_id)
+
 def create_job_directory(job_id):
-  if not os.path.isfile(JOB_DIR + "/" + job_id): os.mkdir(JOB_DIR + "/" + job_id)
+  job_dir = get_job_dir(job_id)
+  if not os.path.isfile(job_dir): os.mkdir(job_dir)
 
 def get_size(file):
   if os.path.isfile(file):
@@ -101,7 +105,7 @@ def get_size(file):
         if not os.path.islink(fp): total_size += os.path.getsize(fp)
     return total_size
 
-def getRawFileList():
+def get_raw_file_list():
   filelist = []
   for file in os.listdir(DATA_DIR):
     filelist.append((file, get_size(DATA_DIR + "/" + file)))
@@ -109,9 +113,10 @@ def getRawFileList():
 
 def get_file_list(job_id):
   filelist = []
-  if os.path.isfile(JOB_DIR + "/" + job_id):
+  job_dir = get_job_dir(job_id)
+  if os.path.isfile(job_dir):
     # list all files including sub-directories
-    root_path = JOB_DIR + "/" + job_id + "/"
+    root_path = job_dir + "/"
     for root, dirs, files in os.walk(root_path):
       # make sure that the file pathes are relative to the root of the job folder
       rel_path = root.replace(root_path, "")
@@ -131,7 +136,7 @@ def delete_raw_file(file):
 
 def delete_job_folder(job_id):
   try:
-    shutils.rmtree(JOB_DIR + "/" + job_id)
+    shutils.rmtree(get_job_dir(job_id))
     return true
   except OSError as o:
     db.set_status(job_id, "FAILED")
@@ -148,7 +153,6 @@ def cancel_job(job_id):
   # delete the job directory
   return delete_job_folder(job_id)
 
-def get_job_dir(job_id): return JOB_DIR + "/" + job_id
 def get_stdout_file_name(app_name): return f".{app_name}.stdout"
 def get_stderr_file_name(app_name): return f".{app_name}.stderr"
 
