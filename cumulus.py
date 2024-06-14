@@ -24,7 +24,7 @@ logging.basicConfig(
 @app.route("/start", methods=["POST"])
 def start():
   # create a pending job, it will be started when the files are all available, return the job id
-  job_id, job_dir = db.create_job(request.form)
+  job_id, job_dir = db.create_job(request.form, utils.JOB_DIR)
   utils.create_job_directory(job_dir, request.form)
   logger.info(f"Create job ${job_id}")
   return str(job_id)

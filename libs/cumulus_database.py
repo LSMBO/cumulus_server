@@ -76,7 +76,7 @@ def add_to_stderr(job_id, text):
   else: stderr += f"\nCumulus: {text}"
 
 ### specific functions ###
-def create_job(form):
+def create_job(form, main_job_dir):
   # connect to the database
   cnx, cursor = connect()
   # status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error
@@ -90,7 +90,7 @@ def create_job(form):
   # return the id of the job
   job_id = cursor.lastrowid
   # define the job directory "job_<num>_<user>_<app>_<timestamp>"
-  job_dir = f"{utils.JOB_DIR}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
+  job_dir = f"{main_job_dir}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
   set_job_dir(job_id, job_dir)
   # disconnect
   cnx.close()
