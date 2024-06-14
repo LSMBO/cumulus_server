@@ -27,7 +27,8 @@ def connect():
       start_date INTEGER,
       end_date INTEGER,
       stdout TEXT,
-      stderr TEXT)
+      stderr TEXT,
+      job_dir TEXT)
   """)
   return cnx, cursor
 
@@ -66,6 +67,8 @@ def get_settings(job_id): return eval(get_value(job_id, "settings"))
 def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
+def set_job_dir(job_id, dir): set_value(job_id, "job_dir", text)
+def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
 def add_to_stderr(job_id, text):
   stderr = get_stderr(job_id)
@@ -80,13 +83,19 @@ def create_job(form):
   # pid should be null if the job has not started yet, or if it's finished
   # host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
   #cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?)", (form["username"], form["app_name"], form["strategy"], form["description"], str(form["settings"]), "PENDING"))
-  cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, form["username"], form["app_name"], form["strategy"], form["description"], str(form["settings"]), "PENDING", "", 0, int(time.time()), None, None, "", ""))
+  owner = form["username"]
+  app_name = form["app_name"]
+  creation_date = int(time.time())
+  cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], str(form["settings"]), "PENDING", "", 0, creation_date, None, None, "", "", ""))
   # return the id of the job
   job_id = cursor.lastrowid
+  # define the job directory "job_<num>_<user>_<app>_<timestamp>"
+  job_dir = f"{utils.JOB_DIR}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
+  set_job_dir(job_id, job_dir)
   # disconnect
   cnx.close()
   # return the job_id
-  return job_id
+  return job_id, job_dir
 
 def get_job_details(job_id):
   # connect to the database

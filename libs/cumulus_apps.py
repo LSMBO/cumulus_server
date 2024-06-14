@@ -16,8 +16,8 @@ def is_finished(app_name, stdout):
   elif app_name == "test": return test.is_finished(stdout)
   else: return True
 
-def are_all_files_transfered(job_id, app_name, settings):
-  job_dir = utils.get_job_dir(job_id)
+def are_all_files_transfered(job_dir, app_name, settings):
+  #job_dir = db.get_job_dir(job_id)
   if os.path.isfile(f"{job_dir}/{FINAL_FILE}"):
     if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR, job_dir)
     elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR, job_dir)

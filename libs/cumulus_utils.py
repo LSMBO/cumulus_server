@@ -86,11 +86,22 @@ def remote_exec(ip, command):
   ssh.close()
   return pid, stdout, stderr
 
-def get_job_dir(job_id):
-  return JOB_DIR + "/" + str(job_id)
+#def get_job_dir(job_id):
+#  return JOB_DIR + "/" + str(job_id)
 
-def create_job_directory(job_id):
-  job_dir = get_job_dir(job_id)
+def write_local_file(file_path, content):
+  f = open(file_path, "w")
+  f.write(content)
+  f.close()
+
+def write_local_file(job_id, file_name, content):
+  write_local_file(db.get_job_dir(job_id) + "/.cumulus." + file_name)
+
+#def create_job_directory(job_id):
+def create_job_directory(job_dir, form):
+  # add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
+  write_local_file(job_dir + "/.cumulus.settings", str(form))
+  #job_dir = get_job_dir(job_id)
   if not os.path.isfile(job_dir): os.mkdir(job_dir)
 
 def get_size(file):
@@ -113,7 +124,7 @@ def get_raw_file_list():
 
 def get_file_list(job_id):
   filelist = []
-  job_dir = get_job_dir(job_id)
+  job_dir = db.get_job_dir(job_id)
   if os.path.isfile(job_dir):
     # list all files including sub-directories
     root_path = job_dir + "/"
@@ -121,9 +132,11 @@ def get_file_list(job_id):
       # make sure that the file pathes are relative to the root of the job folder
       rel_path = root.replace(root_path, "")
       for f in files:
-        # return an array of tuples (name|size)
-        file = f if rel_path == "" else rel_path + "/" + f
-        filelist.append((file, get_size(file)))
+        # avoid the .cumulus.* files
+        if not f.startswith(".cumulus."):
+          # return an array of tuples (name|size)
+          file = f if rel_path == "" else rel_path + "/" + f
+          filelist.append((file, get_size(file)))
   # the user will select the files they want to retrieve
   return filelist
 
@@ -136,7 +149,7 @@ def delete_raw_file(file):
 
 def delete_job_folder(job_id):
   try:
-    shutils.rmtree(get_job_dir(job_id))
+    shutils.rmtree(db.get_job_dir(job_id))
     return true
   except OSError as o:
     db.set_status(job_id, "FAILED")

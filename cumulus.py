@@ -24,10 +24,10 @@ logging.basicConfig(
 @app.route("/start", methods=["POST"])
 def start():
   # create a pending job, it will be started when the files are all available, return the job id
-  job_id = db.create_job(request.form)
-  utils.create_job_directory(job_id)
+  job_id, job_dir = db.create_job(request.form)
+  utils.create_job_directory(job_dir, request.form)
   logger.info(f"Create job ${job_id}")
-  return job_id
+  return str(job_id)
 
 # get details for a job
 @app.route("/details/<int:job_id>")
@@ -64,7 +64,7 @@ def get_file_list(owner, job_id):
 
 @app.route("/getresults/<string:owner>/<int:job_id>/<file_name>")
 def get_results(owner, job_id, file_name):
-  file = f"{utils.get_job_dir(job_id)}/{file_name}"
+  file = f"{db.get_job_dir(job_id)}/{file_name}"
   # check that the user can download the results
   if db.is_owner(job_id, owner) and db.get_status(job_id) == "DONE":
     # check that the file exists

@@ -14,7 +14,7 @@ MAX_AGE = int(config.get("data.max.age.in.days"))
 
 def get_stdout(job_id):
   content = ""
-  job_dir = utils.get_job_dir(job_id)
+  job_dir = db.get_job_dir(job_id)
   if os.path.isfile(job_dir):
     settings = db.get_settings(job_id)
     f = open(f"{job_dir}/{utils.get_stdout_file_name(settings['app_name'])}", "r")
@@ -24,7 +24,7 @@ def get_stdout(job_id):
 
 def get_stderr(job_id): 
   content = ""
-  job_dir = utils.get_job_dir(job_id)
+  job_dir = db.get_job_dir(job_id)
   if os.path.isfile(job_dir):
     settings = db.get_settings(job_id)
     f = open(f"{job_dir}/{utils.get_stderr_file_name(settings['app_name'])}", "r")
@@ -93,8 +93,12 @@ def find_best_host(job_id):
 def start_job(job_id, host):
   # set the command line
   cmd = apps.get_command_line(db.get_app_name(job_id), db.get_settings(job_id), host)
+  # write the command line into a .cumulus.cmd file in the job dir
+  utils.write_local_file(job_id, "cmd", cmd)
   # execute the command
   pid, _, _ = remote_exec(host, cmd)
+  # also write the pid to a .cumulus.pid file
+  utils.write_local_file(job_id, "pid", pid)
   # update the job
   db.set_pid(job_id, pid)
   db.set_host(job_id, host)
@@ -108,7 +112,7 @@ def start_pending_jobs():
   # get all the PENDING jobs, oldest ones first
   for job_id in db.get_jobs_per_status("PENDING"):
     # check that all the files are present
-    if apps.are_all_files_transfered(job_id, db.get_app_name(job_id), db.get_settings(job_id)):
+    if apps.are_all_files_transfered(db.get_job_dir(job_id), db.get_app_name(job_id), db.get_settings(job_id)):
       # check that there is an available host matching the strategy
       host = find_best_host(job_id)
       # if all is ok, the job can start and its status can turn to RUNNING
@@ -133,7 +137,7 @@ def clean():
   while True:
     # list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
     for job_id in os.listdir(utils.JOB_DIR):
-      job = utils.get_job_dir(job_id)
+      job = db.get_job_dir(job_id)
       if utils.get_file_age_in_days(job) > MAX_AGE:
         status = db.get_status(job_id)
         if status == "DONE" or status == "FAILED":
