@@ -99,10 +99,10 @@ def write_local_file(job_id, file_name, content):
 
 #def create_job_directory(job_id):
 def create_job_directory(job_dir, form):
-	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
-	write_file(job_dir + "/.cumulus.settings", str(form))
 	#job_dir = get_job_dir(job_id)
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
+	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
+	write_file(job_dir + "/.cumulus.settings", str(form))
 
 def get_size(file):
 	if os.path.isfile(file):
