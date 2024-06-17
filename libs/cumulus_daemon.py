@@ -136,8 +136,9 @@ def clean():
 	# clean the old files once a day
 	while True:
 		# list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
-		for job_id in os.listdir(utils.JOB_DIR):
-			job = db.get_job_dir(job_id)
+		for job in os.listdir(utils.JOB_DIR):
+			job_id = int(job.split("_")[1])
+			job = utils.JOB_DIR + "/" + job
 			if utils.get_file_age_in_days(job) > MAX_AGE:
 				status = db.get_status(job_id)
 				if status == "DONE" or status == "FAILED":
