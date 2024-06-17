@@ -67,7 +67,7 @@ def get_settings(job_id): return eval(get_value(job_id, "settings"))
 def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
-def set_job_dir(job_id, dir): set_value(job_id, "job_dir", text)
+#def set_job_dir(job_id, dir): set_value(job_id, "job_dir", text)
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
 def add_to_stderr(job_id, text):
@@ -91,7 +91,8 @@ def create_job(form, main_job_dir):
   job_id = cursor.lastrowid
   # define the job directory "job_<num>_<user>_<app>_<timestamp>"
   job_dir = f"{main_job_dir}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
-  set_job_dir(job_id, job_dir)
+  #set_job_dir(job_id, job_dir)
+	cursor.execute(f"UPDATE jobs SET job_dir = ? WHERE id = ?", (job_dir, job_id))
   # disconnect
   cnx.close()
   # return the job_id
@@ -104,9 +105,23 @@ def get_job_details(job_id):
   cursor.execute("SELECT owner, app_name, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr from jobs WHERE id = ?", (job_id,))
   # put the results in a dict
   job = {}
-  if cursor.arraysize > 0:
-    owner, app_name, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr = cursor.fetchone()
-    job = {"settings": settings, "strategy": strategy, "description": description, "username": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr}
+  #if cursor.arraysize > 0:
+  #  owner, app_name, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr = cursor.fetchone()
+  #  job = {"settings": settings, "strategy": strategy, "description": description, "username": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr}
+	response = cursor.fetchone()
+  if response:
+    job["settings"] = response[4]
+    job["strategy"] = response[2]
+    job["description"] = response[3]
+    job["username"] = response[0]
+    job["app_name"] = response[1]
+    job["status"] = response[5]
+    job["host"] = response[6]
+    job["creation_date"] = response[7]
+    job["start_date"] = response[8]
+    job["end_date"] = response[9]
+    job["stdout"] = response[10]
+    job["stderr"] = response[11]
   # disconnect and return the job
   cnx.close()
   return job

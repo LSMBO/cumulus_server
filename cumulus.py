@@ -33,7 +33,7 @@ def start():
 @app.route("/details/<int:job_id>")
 def details(job_id):
   # return the job's owner, its app, the settings, status, host, description, stdout, stderr, and all three dates
-  return db.get_job_details(job_id)
+  return jsonify(db.get_job_details(job_id))
 
 @app.route("/jobs/<string:owner>/<string:app_name>/<string:tag>/<int:number>/")
 def jobs(owner, app_name, tag, number):
