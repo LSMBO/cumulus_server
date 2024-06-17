@@ -173,6 +173,7 @@ def get_file_age_in_days(file):
 	# mtime is the date in seconds since epoch since the last modification
 	# time() is the current time
 	# divide by the number of seconds in a day to have the number of days
+	if file is None: return 0
 	return (time.time() - os.path.getmtime(file)) / 86400
 
 def get_version(): return config.get("version")

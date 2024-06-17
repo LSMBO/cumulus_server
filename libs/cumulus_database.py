@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def connect():
 	# connect to the database, create it if it does not exist yet
-	cnx = sqlite3.connect(config.get("database.file.path"))
+	cnx = sqlite3.connect(config.get("database.file.path"), isolation_level = None)
 	cursor = cnx.cursor()
 	# create the main table if it does not exist
 	cursor.execute("""
