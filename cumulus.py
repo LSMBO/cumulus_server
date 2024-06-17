@@ -36,12 +36,16 @@ def details(job_id):
 	return jsonify(db.get_job_details(job_id))
 
 @app.route("/jobs/<string:owner>/<string:app_name>/<string:tag>/<int:number>/")
-def jobs(owner, app_name, tag, number):
-	return db.get_job_list(owner, app_name, tag, number)
+def jobs(host, owner, app_name, tag, number):
+	if host == "*": host = "%"
+	if owner == "*": owner = "%"
+	if app_name == "*": app_name = "%"
+	if tag == "*": tag = "%"
+	return jsonify(db.get_job_list(host, owner, app_name, tag, number))
 
 @app.route("/status/<int:job_id>")
 def status(job_id):
-	return db.get_job_status(job_id)
+	return jsonify(db.get_job_status(job_id))
 
 @app.route("/cancel/<string:owner>/<int:job_id>")
 def cancel(owner, job_id):
@@ -53,7 +57,8 @@ def cancel(owner, job_id):
 		if status == "RUNNING": return utils.cancel_job(job_id)
 		# a previous cancel may not have been able to remove the folder, try again now
 		elif status == "FAILED": return utils.delete_job_folder(job_id)
-	return False
+		return f"Job {job_id} has been deleted"
+	else: return f"You cannot delete this job"
 
 @app.route("/getfilelist/<string:owner>/<int:job_id>")
 def get_file_list(owner, job_id):

@@ -121,7 +121,7 @@ def start_pending_jobs():
 def run():
 	# wait a minute before starting the daemon
 	time.sleep(60)
-	# possible statuses: PENDING, RUNNING, DONE, FAILED, ARCHIVED
+	# possible statuses: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED
 	while True:
 		# check the running jobs to see if they are finished
 		check_running_jobs()
@@ -139,9 +139,10 @@ def clean():
 		for job in os.listdir(utils.JOB_DIR):
 			job_id = int(job.split("_")[1])
 			job = utils.JOB_DIR + "/" + job
+			logger.warning(f"Checking job {job_id} stored in '{job}'")
 			if utils.get_file_age_in_days(job) > MAX_AGE:
 				status = db.get_status(job_id)
-				if status == "DONE" or status == "FAILED":
+				if status == "DONE" or status == "FAILED" or status == "CANCELLED":
 					db.set_status(job_id, "ARCHIVED")
 					utils.delete_job_folder(job)
 		# list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them

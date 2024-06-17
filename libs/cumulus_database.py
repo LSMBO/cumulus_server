@@ -46,7 +46,7 @@ def get_value(job_id, field):
 	cnx, cursor = connect()
 	# TODO test that it does not fail if the job_id does not exist
 	cursor.execute(f"SELECT {field} FROM jobs WHERE id = ?", (job_id,))
-	value = cursor.fetchone() if cursor.arraysize > 0 else ""
+	value = cursor.fetchone()[0] if cursor.arraysize > 0 else ""
 	# disconnect and return the value
 	cnx.close()
 	return value
@@ -145,23 +145,27 @@ def get_job_status(job_id):
 	# search the job that corresponds to the id
 	cursor.execute("SELECT status, stdout, stderr from jobs WHERE id = ?", (job_id,))
 	# put the results in a dict
-	response = "", "", ""
+	response = []
 	if cursor.arraysize > 0:
 		status, stdout, stderr = cursor.fetchone()
-		response = status, stdout, stderr
+		response.append(status)
+		response.append(stdout)
+		response.append(stderr)
 	# disconnect and return the status with stdout and stderr
 	cnx.close()
 	return response
 
-def get_job_list(host = "*", owner = "*", app_name = "*", tag = "*", number = 100):
+def get_job_list(host = "%", owner = "%", app_name = "%", tag = "%", number = 100):
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
+	logger.warning(f"SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE '{host}' AND owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND (description LIKE '{tag}' OR settings LIKE '{tag}') ORDER BY id DESC LIMIT '{number}'")
 	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE ? AND owner LIKE ? AND app_name LIKE ? AND (description LIKE ? OR settings LIKE ?) ORDER BY id DESC LIMIT ?", (host, owner, app_name, tag, tag, number))
 	# put the results in a dict
 	jobs = []
 	for id, owner, app_name, status, creation_date in results:
-		jobs.append(f"{id}:{status}:{app_name}:{owner}:creation_date")
+		# TODO a dict could be returned, it would be cleaner
+		jobs.append(f"{id}:{status}:{app_name}:{owner}:{creation_date}")
 	cnx.close()
 	return jobs
 

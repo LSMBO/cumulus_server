@@ -3,6 +3,7 @@ import os
 import paramiko
 import shutils
 import time
+from flask import jsonify
 
 import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_database as db
@@ -102,7 +103,7 @@ def create_job_directory(job_dir, form):
 	#job_dir = get_job_dir(job_id)
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
-	write_file(job_dir + "/.cumulus.settings", str(form))
+	write_file(job_dir + "/.cumulus.settings", jsonify(form))
 
 def get_size(file):
 	if os.path.isfile(file):
@@ -149,7 +150,9 @@ def delete_raw_file(file):
 
 def delete_job_folder(job_id):
 	try:
-		shutils.rmtree(db.get_job_dir(job_id))
+		job_dir = db.get_job_dir(job_id)
+		shutils.rmtree(job_dir)
+		logger.info(f"Job folder '{job_dir}' has been deleted")
 		return true
 	except OSError as o:
 		db.set_status(job_id, "FAILED")
@@ -163,6 +166,8 @@ def cancel_job(job_id):
 	host = db.get_host(job_id)
 	# use ssh to kill the pid
 	remote_exec(host, f"kill -9 {pid}")
+	# change the status
+	db.set_status(job_id, "CANCELLED")
 	# delete the job directory
 	return delete_job_folder(job_id)
 
