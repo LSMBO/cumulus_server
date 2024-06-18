@@ -16,8 +16,10 @@ def get_stdout(job_id):
 	content = ""
 	job_dir = db.get_job_dir(job_id)
 	if os.path.isfile(job_dir):
-		settings = db.get_settings(job_id)
-		f = open(f"{job_dir}/{utils.get_stdout_file_name(settings['app_name'])}", "r")
+		#settings = db.get_settings(job_id)
+		app_name = db.get_app_name(job_id)
+		#f = open(f"{job_dir}/{utils.get_stdout_file_name(settings['app_name'])}", "r")
+		f = open(f"{job_dir}/{utils.get_stdout_file_name(app_name)}", "r")
 		content = f.read()
 		f.close()
 	return content
@@ -26,8 +28,10 @@ def get_stderr(job_id):
 	content = ""
 	job_dir = db.get_job_dir(job_id)
 	if os.path.isfile(job_dir):
-		settings = db.get_settings(job_id)
-		f = open(f"{job_dir}/{utils.get_stderr_file_name(settings['app_name'])}", "r")
+		#settings = db.get_settings(job_id)
+		app_name = db.get_app_name(job_id)
+		#f = open(f"{job_dir}/{utils.get_stderr_file_name(settings['app_name'])}", "r")
+		f = open(f"{job_dir}/{utils.get_stderr_file_name(app_name)}", "r")
 		content = f.read()
 		f.close()
 	return content
@@ -35,10 +39,11 @@ def get_stderr(job_id):
 def is_process_running(job_id):
 	pid = db.get_pid(job_id)
 	host_name = db.get_host(job_id)
-	host = get_host(host_name)
+	host = utils.get_host(host_name)
 	_, stdout, _ = utils.remote_exec(host, f"ps -p {pid} -o comm=")
 	# if the pid is still alive, it's RUNNING
-	return False if stdout.at_eof() else True
+	#return False if stdout.at_eof() else True
+	return stdout != ""
 
 def is_job_finished(job_id):
 	#app_name = db.get_app_name(job_id)
@@ -48,8 +53,8 @@ def is_job_finished(job_id):
 	# ask the proper app module if the job is actually done
 	is_done = apps.is_finished(stdout)
 	# store the logs at the end
-	db.set_stdout(stdout)
-	db.set_stderr(stderr)
+	db.set_stdout(job_id, stdout)
+	db.set_stderr(job_id, stderr)
 	return is_done
 
 def check_running_jobs():
@@ -62,6 +67,9 @@ def check_running_jobs():
 			db.set_end_date(job_id)
 			if status == "DONE": logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
 			else: logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
+			# store stdout and stderr
+			#db.set_stdout(job_id, get_stdout(job_id))
+			#db.set_stderr(job_id, get_stderr(job_id))
 
 def find_best_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
@@ -104,7 +112,7 @@ def start_job(job_id, host):
 	# execute the command
 	pid, _, _ = utils.remote_exec(host, cmd)
 	# also write the pid to a .cumulus.pid file
-	utils.write_local_file(job_id, "pid", pid)
+	utils.write_local_file(job_id, "pid", str(pid))
 	# update the job
 	db.set_pid(job_id, str(pid))
 	db.set_host(job_id, host.name)
