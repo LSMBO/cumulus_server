@@ -19,9 +19,9 @@ def is_finished(app_name, stdout):
 def are_all_files_transfered(job_dir, app_name, settings):
 	#job_dir = db.get_job_dir(job_id)
 	if os.path.isfile(f"{job_dir}/{FINAL_FILE}"):
-		if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR, job_dir)
-		elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR, job_dir)
-		elif app_name == "test": return test.check_input_files(settings, utils.DATA_DIR, job_dir)
+		if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR)
+		elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR)
+		elif app_name == "test": return test.check_input_files(settings, utils.DATA_DIR)
 	return False
 
 #def checkParameters(app_name, settings):
@@ -34,7 +34,7 @@ def get_command_line(app_name, settings, host):
 	cmd = ""
 	if app_name == "diann_1.8.1": cmd = diann181.get_command_line(settings, utils.DATA_DIR, host.cpu)
 	elif app_name == "diann_1.8.2": cmd = diann182.get_command_line(settings, utils.DATA_DIR, host.cpu)
-	elif app_name == "test": cmd = test.get_command_line(settings, utils.DATA_DIR, host.cpu)
+	elif app_name == "test": cmd = test.get_command_line(settings, utils.DATA_DIR)
 	# default test command
 	else: cmd = "sleep 60 &"
 

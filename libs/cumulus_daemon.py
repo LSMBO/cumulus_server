@@ -34,7 +34,8 @@ def get_stderr(job_id):
 
 def is_process_running(job_id):
 	pid = db.get_pid(job_id)
-	host = db.get_host(job_id)
+	host_name = db.get_host(job_id)
+	host = get_host(host_name)
 	_, stdout, _ = utils.remote_exec(host, f"ps -p {pid} -o comm=")
 	# if the pid is still alive, it's RUNNING
 	return False if stdout.at_eof() else True
@@ -71,7 +72,9 @@ def find_best_host(job_id):
 	if strategy == "first_available":
 		# if the strategy is to take the first available host, return the first host who is not running anything
 		for host in hosts:
-			if host.to_dict()["running"] == 0: selected_host = host
+			#if host.to_dict()["running"] == 0: selected_host = host
+			runnings, _ = db.get_alive_jobs_per_host(host.name)
+			if runnings == 0: selected_host = host
 	else:
 		# otherwise, find the host that fits the strategy
 		if strategy == "best_ram":
@@ -85,7 +88,10 @@ def find_best_host(job_id):
 			for host in hosts:
 				if f"host:{host.name}" == strategy: selected_host = host
 		# reset the selected host if it is already in use
-		if selected_host.to_dict()["running"] > 0: selected_host = None
+		#if selected_host.to_dict()["running"] > 0: selected_host = None
+		if selected_host is not None:
+			runnings, _ = db.get_alive_jobs_per_host(selected_host.name)
+			if runnings > 0: selected_host = None
 	
 	# return the selected host, it can be None
 	return selected_host
@@ -96,12 +102,12 @@ def start_job(job_id, host):
 	# write the command line into a .cumulus.cmd file in the job dir
 	utils.write_local_file(job_id, "cmd", cmd)
 	# execute the command
-	pid, _, _ = remote_exec(host, cmd)
+	pid, _, _ = utils.remote_exec(host, cmd)
 	# also write the pid to a .cumulus.pid file
 	utils.write_local_file(job_id, "pid", pid)
 	# update the job
-	db.set_pid(job_id, pid)
-	db.set_host(job_id, host)
+	db.set_pid(job_id, str(pid))
+	db.set_host(job_id, host.name)
 	db.set_status(job_id, "RUNNING")
 	db.set_start_date(job_id)
 	# log the command
@@ -111,16 +117,20 @@ def start_job(job_id, host):
 def start_pending_jobs():
 	# get all the PENDING jobs, oldest ones first
 	for job_id in db.get_jobs_per_status("PENDING"):
+		job_dir = db.get_job_dir(job_id)
+		app_name = db.get_app_name(job_id)
+		settings = db.get_settings(job_id)
 		# check that all the files are present
-		if apps.are_all_files_transfered(db.get_job_dir(job_id), db.get_app_name(job_id), db.get_settings(job_id)):
+		#if apps.are_all_files_transfered(db.get_job_dir(job_id), db.get_app_name(job_id), db.get_settings(job_id)):
+		if apps.are_all_files_transfered(job_dir, app_name, settings):
 			# check that there is an available host matching the strategy
 			host = find_best_host(job_id)
 			# if all is ok, the job can start and its status can turn to RUNNING
-			if host is not None: start_job(job_id, selected_host)
+			if host is not None: start_job(job_id, host)
 
 def run():
-	# wait a minute before starting the daemon
-	time.sleep(60)
+	# wait a little before starting the daemon
+	time.sleep(10)
 	# possible statuses: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED
 	while True:
 		# check the running jobs to see if they are finished

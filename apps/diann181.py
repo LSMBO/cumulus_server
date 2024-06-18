@@ -1,3 +1,5 @@
+import os
+
 # declare some dictionnaries
 inference = {
 		"isoforms": " --pg-level 0",
@@ -46,12 +48,12 @@ def get_value(dictionnary, key):
 	elif "__default__" in dictionnary: return dictionnary["__default__"]
 	else: return ""
 
-def check_input_files(settings, data_dir, job_dir):
+def check_input_files(settings, data_dir):
 	# check the raw files
 	for file in settings["files"]:
-		if not os.path.isfile(data_dir + "/" + os.path.basename(file)): return False
+		if not os.path.exists(data_dir + "/" + os.path.basename(file)): return False
 	# check the fasta file
-	fasta = f"{job_dir}/{os.path.basename(settings['fasta'])}"
+	fasta = f"{data_dir}/{os.path.basename(settings['fasta'])}"
 	if not os.path.isfile(fasta): return False
 	# if all the expected files are present
 	return True

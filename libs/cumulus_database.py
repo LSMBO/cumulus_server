@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sqlite3
@@ -37,6 +38,7 @@ def set_value(job_id, field, value):
 	# connect to the database
 	cnx, cursor = connect()
 	# TODO test that it does not fail if the job_id does not exist
+	logger.warning(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
 	cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
 	# disconnect
 	cnx.close()
@@ -63,7 +65,7 @@ def set_stderr(job_id, text): set_value(job_id, "stderr", text)
 def get_stderr(job_id): return get_value(job_id, "stderr")
 def set_start_date(job_id): set_value(job_id, "start_date", int(time.time()))
 def set_end_date(job_id): set_value(job_id, "end_date", int(time.time()))
-def get_settings(job_id): return eval(get_value(job_id, "settings"))
+def get_settings(job_id): return json.loads(get_value(job_id, "settings"))
 def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
@@ -79,14 +81,14 @@ def add_to_stderr(job_id, text):
 def create_job(form, main_job_dir):
 	# connect to the database
 	cnx, cursor = connect()
-	# status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error
+	# status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error, CANCELLED if user chose to cancel it
 	# pid should be null if the job has not started yet, or if it's finished
 	# host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
-	#cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?)", (form["username"], form["app_name"], form["strategy"], form["description"], str(form["settings"]), "PENDING"))
 	owner = form["username"]
 	app_name = form["app_name"]
 	creation_date = int(time.time())
-	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], str(form["settings"]), "PENDING", "", 0, creation_date, None, None, "", "", ""))
+	# settings are already passed as a stringified json
+	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", None, creation_date, None, None, "", "", ""))
 	# return the id of the job
 	job_id = cursor.lastrowid
 	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
@@ -110,7 +112,7 @@ def get_job_details(job_id):
 	#  job = {"settings": settings, "strategy": strategy, "description": description, "username": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr}
 	response = cursor.fetchone()
 	if response:
-		job["settings"] = response[4]
+		job["settings"] = json.loads(response[4])
 		job["strategy"] = response[2]
 		job["description"] = response[3]
 		job["username"] = response[0]
@@ -176,7 +178,7 @@ def get_jobs_per_status(status):
 	results = cursor.execute("SELECT id from jobs WHERE status = ? ORDER BY id ASC", (status,))
 	# store the ids
 	jobs = []
-	for id in results: jobs.append(id)
+	for id, in results: jobs.append(id)
 	cnx.close()
 	# return a list of job ids
 	return jobs
@@ -189,7 +191,7 @@ def get_alive_jobs_per_host(host_name):
 	# count each type of job
 	pending = 0
 	running = 0
-	for status in results:
+	for status, in results:
 		if status == "PENDING": pending += 1
 		else: running += 1
 	cnx.close()

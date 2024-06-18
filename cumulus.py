@@ -35,7 +35,7 @@ def details(job_id):
 	# return the job's owner, its app, the settings, status, host, description, stdout, stderr, and all three dates
 	return jsonify(db.get_job_details(job_id))
 
-@app.route("/jobs/<string:owner>/<string:app_name>/<string:tag>/<int:number>/")
+@app.route("/jobs/<string:host>/<string:owner>/<string:app_name>/<string:tag>/<int:number>/")
 def jobs(host, owner, app_name, tag, number):
 	if host == "*": host = "%"
 	if owner == "*": owner = "%"
@@ -54,9 +54,9 @@ def cancel(owner, job_id):
 		logger.info(f"Cancel job ${job_id}")
 		# read the status file, only cancel if the status is RUNNING
 		status = db.get_status(job_id)
-		if status == "RUNNING": return utils.cancel_job(job_id)
+		if status == "PENDING" or status == "RUNNING": utils.cancel_job(job_id)
 		# a previous cancel may not have been able to remove the folder, try again now
-		elif status == "FAILED": return utils.delete_job_folder(job_id)
+		elif status == "FAILED" or status == "CANCELLED": utils.delete_job_folder(job_id)
 		return f"Job {job_id} has been deleted"
 	else: return f"You cannot delete this job"
 

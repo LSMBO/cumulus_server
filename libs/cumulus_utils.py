@@ -1,9 +1,9 @@
 import logging
 import os
 import paramiko
-import shutils
+from shutil import rmtree
 import time
-from flask import jsonify
+import json
 
 import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_database as db
@@ -38,7 +38,7 @@ def get_all_hosts(reload_list = False):
 		# get the list of hosts from the file
 		f = open(config.get("hosts.file.path"), "r")
 		for host in f.read().strip("\n").split("\n"):
-			name, address, port, user, rsa_key, cpu, ram = host.split("\t")
+			name, address, user, port, rsa_key, cpu, ram = host.split("\t")
 			HOSTS.append(Host(name, address, port, user, rsa_key, cpu, ram))
 		f.close()
 		# remove first item of the list, it's the header of the file
@@ -46,37 +46,17 @@ def get_all_hosts(reload_list = False):
 	# return the list
 	return HOSTS
 
-#def get_all_hosts():
-#  # TODO do not read the file everytime (but it would be nice to be able to add hosts without restarting the server)
-#  hosts = []
-#  # get the list of hosts from the file
-#  #f = open(HOST_FILE, "r")
-#  f = open(config.get("hosts.file.path"), "r")
-#  for host in f.read().strip("\n").split("\n"):
-#    # TODO does it send an array as the first argument?
-#    #hosts.append(Host(host.split("\t")))
-#    name, address, port, user, rsa_key, cpu, ram = host.split("\t")
-#    hosts.append(Host(name, address, port, user, rsa_key, cpu, ram))
-#  f.close()
-#  # remove first item of the list, it's the header of the file
-#  hosts.pop(0)
-#  # return the list
-#  return hosts
+def get_host(host_name):
+	matches = list(filter(lambda host: host.name == host_name, get_all_hosts()))
+	return None if len(matches) == 0 else matches[0]
 
-def get_credentials(ip):
-	# open the file to search for the ip and return the match
-	for host in get_all_hosts():
-		if host.address == ip: return host.user, host.rsa, host.port
-	# return empty values if there is no host with that ip address
-	return "", "", 0
-
-def remote_exec(ip, command):
-	# get the credentials
-	user, key, port = get_credentials(ip)
+def remote_exec(host, command):
 	# connect to the host
+	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	ssh.connect(ip, port = port, username = user, pkey = key)
+	#ssh.connect(ip, port = port, username = user, pkey = key)
+	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 	# execute the command remotely
 	_, stdout, stderr = ssh.exec_command("echo $$ && exec " + command)
 	pid = int(stdout.readline())
@@ -87,23 +67,19 @@ def remote_exec(ip, command):
 	ssh.close()
 	return pid, stdout, stderr
 
-#def get_job_dir(job_id):
-#  return JOB_DIR + "/" + str(job_id)
-
 def write_file(file_path, content):
 	f = open(file_path, "w")
-	f.write(content)
+	f.write(content + "\n")
 	f.close()
 
 def write_local_file(job_id, file_name, content):
 	write_file(db.get_job_dir(job_id) + "/.cumulus." + file_name, content)
 
-#def create_job_directory(job_id):
 def create_job_directory(job_dir, form):
 	#job_dir = get_job_dir(job_id)
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
-	write_file(job_dir + "/.cumulus.settings", jsonify(form))
+	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
 
 def get_size(file):
 	if os.path.isfile(file):
@@ -126,7 +102,7 @@ def get_raw_file_list():
 def get_file_list(job_id):
 	filelist = []
 	job_dir = db.get_job_dir(job_id)
-	if os.path.isfile(job_dir):
+	if os.path.isdir(job_dir):
 		# list all files including sub-directories
 		root_path = job_dir + "/"
 		for root, dirs, files in os.walk(root_path):
@@ -137,37 +113,41 @@ def get_file_list(job_id):
 				if not f.startswith(".cumulus."):
 					# return an array of tuples (name|size)
 					file = f if rel_path == "" else rel_path + "/" + f
-					filelist.append((file, get_size(file)))
+					filelist.append((file, get_size(root_path + "/" + file)))
 	# the user will select the files they want to retrieve
 	return filelist
 
 def delete_raw_file(file):
 	try:
 		if os.path.isfile(file): os.remove(file)
-		else: shutils.rmtree(file)
+		else: rmtree(file)
 	except OSError as o:
 		logger.error(f"Can't delete raw file {file}: {o.strerror}")
 
 def delete_job_folder(job_id):
 	try:
 		job_dir = db.get_job_dir(job_id)
-		shutils.rmtree(job_dir)
-		logger.info(f"Job folder '{job_dir}' has been deleted")
-		return true
+		if os.path.isdir(job_dir): 
+			rmtree(job_dir)
+			logger.info(f"Job folder '{job_dir}' has been deleted")
+		return True
 	except OSError as o:
 		db.set_status(job_id, "FAILED")
 		logger.error(f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
 		db.add_to_stderr(job_id, f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
-		return false
+		return False
 
 def cancel_job(job_id):
 	# get the pid and the host
 	pid = db.get_pid(job_id)
-	host = db.get_host(job_id)
-	# use ssh to kill the pid
-	remote_exec(host, f"kill -9 {pid}")
+	host_name = db.get_host(job_id)
+	# use ssh to kill the pid (may not be needed if the job is still pending)
+	# FIXME transform the host_name to host
+	host = get_host(host_name)
+	if pid is not None and pid > 0: remote_exec(host, f"kill -9 {pid}")
 	# change the status
 	db.set_status(job_id, "CANCELLED")
+	db.set_pid(job_id, None)
 	# delete the job directory
 	return delete_job_folder(job_id)
 
