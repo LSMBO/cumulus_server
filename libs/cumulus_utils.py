@@ -109,8 +109,8 @@ def get_file_list(job_id):
 			# make sure that the file pathes are relative to the root of the job folder
 			rel_path = root.replace(root_path, "")
 			for f in files:
-				# avoid the .cumulus.* files
-				if not f.startswith(".cumulus."):
+				# avoid the .cumulus.* files and .RSYNC_OK file
+				if f != config.get("final.file") and not f.startswith(".cumulus."):
 					# return an array of tuples (name|size)
 					file = f if rel_path == "" else rel_path + "/" + f
 					filelist.append((file, get_size(root_path + "/" + file)))

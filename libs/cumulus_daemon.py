@@ -104,9 +104,11 @@ def find_best_host(job_id):
 	# return the selected host, it can be None
 	return selected_host
 
-def start_job(job_id, host):
+#def start_job(job_id, host):
+def start_job(job_id, job_dir, app_name, settings, host):
 	# set the command line
-	cmd = apps.get_command_line(db.get_app_name(job_id), db.get_settings(job_id), host)
+	#cmd = apps.get_command_line(db.get_app_name(job_id), db.get_settings(job_id), host)
+	cmd = apps.get_command_line(job_dir, app_name, settings, host)
 	# write the command line into a .cumulus.cmd file in the job dir
 	utils.write_local_file(job_id, "cmd", cmd)
 	# execute the command
@@ -129,12 +131,14 @@ def start_pending_jobs():
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
 		# check that all the files are present
-		#if apps.are_all_files_transfered(db.get_job_dir(job_id), db.get_app_name(job_id), db.get_settings(job_id)):
+		# FIXME pending jobs are not running
 		if apps.are_all_files_transfered(job_dir, app_name, settings):
+			logger.info(f"Job {job_id} is ready to start")
 			# check that there is an available host matching the strategy
 			host = find_best_host(job_id)
 			# if all is ok, the job can start and its status can turn to RUNNING
-			if host is not None: start_job(job_id, host)
+			if host is not None: start_job(job_id, job_dir, app_name, settings, host)
+			else: logger.warning(f"No host available for job {job_id}...")
 
 def run():
 	# wait a little before starting the daemon
