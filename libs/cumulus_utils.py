@@ -93,7 +93,7 @@ def remote_check(host, pid):
 		# close the connection
 		ssh.close()
 		# the process is alive if the command did not fail
-		if stdout.endswith("0"): is_alive = True
+		if stdout.read().decode('ascii').endswith("0"): is_alive = True
 	return is_alive
 
 def remote_cancel(host, pid):
