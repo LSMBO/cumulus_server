@@ -67,13 +67,30 @@ def remote_exec(host, command):
 	ssh.close()
 	return pid, stdout, stderr
 
+def remote_exec_script(host, file):
+	# connect to the host
+	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+	ssh = paramiko.SSHClient()
+	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
+	# execute the script remotely
+	_, stdout, _ = ssh.exec_command("echo $$ && source " + file)
+	pid = int(stdout.readline())
+	# close the connection and return the pid
+	ssh.close()
+	return pid
+	
+
 def write_file(file_path, content):
 	f = open(file_path, "w")
 	f.write(content + "\n")
 	f.close()
 
 def write_local_file(job_id, file_name, content):
-	write_file(db.get_job_dir(job_id) + "/.cumulus." + file_name, content)
+	#write_file(db.get_job_dir(job_id) + "/.cumulus." + file_name, content)
+	file = db.get_job_dir(job_id) + "/.cumulus." + file_name
+	write_file(file, content)
+	return file
 
 def create_job_directory(job_dir, form):
 	#job_dir = get_job_dir(job_id)
@@ -110,7 +127,7 @@ def get_file_list(job_id):
 			rel_path = root.replace(root_path, "")
 			for f in files:
 				# avoid the .cumulus.* files and .RSYNC_OK file
-				if f != config.get("final.file") and not f.startswith(".cumulus."):
+				if not f.startswith(".cumulus."):
 					# return an array of tuples (name|size)
 					file = f if rel_path == "" else rel_path + "/" + f
 					filelist.append((file, get_size(root_path + "/" + file)))

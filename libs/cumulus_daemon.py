@@ -15,25 +15,29 @@ MAX_AGE = int(config.get("data.max.age.in.days"))
 def get_stdout(job_id):
 	content = ""
 	job_dir = db.get_job_dir(job_id)
-	if os.path.isfile(job_dir):
-		#settings = db.get_settings(job_id)
+	if os.path.isdir(job_dir):
 		app_name = db.get_app_name(job_id)
-		#f = open(f"{job_dir}/{utils.get_stdout_file_name(settings['app_name'])}", "r")
-		f = open(f"{job_dir}/{utils.get_stdout_file_name(app_name)}", "r")
-		content = f.read()
-		f.close()
+		file = f"{job_dir}/{utils.get_stdout_file_name(app_name)}"
+		if os.path.isfile(file):
+			f = open(file, "r")
+			content = f.read()
+			f.close()
+		else: logger.debug(f"Log file '${file}' is missing")
+	else: logger.debug(f"Job directory '${job_dir}' is missing")
 	return content
 
 def get_stderr(job_id): 
 	content = ""
 	job_dir = db.get_job_dir(job_id)
-	if os.path.isfile(job_dir):
-		#settings = db.get_settings(job_id)
+	if os.path.isdir(job_dir):
 		app_name = db.get_app_name(job_id)
-		#f = open(f"{job_dir}/{utils.get_stderr_file_name(settings['app_name'])}", "r")
-		f = open(f"{job_dir}/{utils.get_stderr_file_name(app_name)}", "r")
-		content = f.read()
-		f.close()
+		file = f"{job_dir}/{utils.get_stderr_file_name(app_name)}"
+		if os.path.isfile(file):
+			f = open(f"{job_dir}/{utils.get_stderr_file_name(app_name)}", "r")
+			content = f.read()
+			f.close()
+		else: logger.debug(f"Log file '${file}' is missing")
+	else: logger.debug(f"Job directory '${job_dir}' is missing")
 	return content
 
 def is_process_running(job_id):
@@ -51,7 +55,7 @@ def is_job_finished(job_id):
 	stdout = get_stdout(job_id)
 	stderr = get_stderr(job_id)
 	# ask the proper app module if the job is actually done
-	is_done = apps.is_finished(stdout)
+	is_done = apps.is_finished(db.get_app_name(job_id), stdout)
 	# store the logs at the end
 	db.set_stdout(job_id, stdout)
 	db.set_stderr(job_id, stderr)
@@ -110,9 +114,10 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	#cmd = apps.get_command_line(db.get_app_name(job_id), db.get_settings(job_id), host)
 	cmd = apps.get_command_line(job_dir, app_name, settings, host)
 	# write the command line into a .cumulus.cmd file in the job dir
-	utils.write_local_file(job_id, "cmd", cmd)
+	cmd_file = utils.write_local_file(job_id, "cmd", cmd)
 	# execute the command
-	pid, _, _ = utils.remote_exec(host, cmd)
+	#pid, _, _ = utils.remote_exec(host, cmd)
+	pid = utils.remote_exec_script(host, cmd_file)
 	# also write the pid to a .cumulus.pid file
 	utils.write_local_file(job_id, "pid", str(pid))
 	# update the job

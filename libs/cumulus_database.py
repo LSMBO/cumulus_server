@@ -38,7 +38,7 @@ def set_value(job_id, field, value):
 	# connect to the database
 	cnx, cursor = connect()
 	# TODO test that it does not fail if the job_id does not exist
-	logger.warning(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
+	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
 	cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
 	# disconnect
 	cnx.close()
@@ -161,7 +161,7 @@ def get_job_list(host = "%", owner = "%", app_name = "%", tag = "%", number = 10
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
-	logger.warning(f"SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE '{host}' AND owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND (description LIKE '{tag}' OR settings LIKE '{tag}') ORDER BY id DESC LIMIT '{number}'")
+	logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE '{host}' AND owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND (description LIKE '{tag}' OR settings LIKE '{tag}') ORDER BY id DESC LIMIT '{number}'")
 	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE ? AND owner LIKE ? AND app_name LIKE ? AND (description LIKE ? OR settings LIKE ?) ORDER BY id DESC LIMIT ?", (host, owner, app_name, tag, tag, number))
 	# put the results in a dict
 	jobs = []
