@@ -77,12 +77,16 @@ def is_process_running(job_id):
 
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
+		# update the stdout & stderr content
+		stdout = get_stdout(job_id)
+		stderr = get_stderr(job_id)
+		db.set_stdout(job_id, stdout)
+		db.set_stderr(job_id, stderr)
 		# check that the process still exist
 		if not is_process_running(job_id):
-			# if not, it means that the process either ended or failed
-			stdout = get_stdout(job_id)
-			stderr = get_stderr(job_id)
-			# ask the proper app module if the job is actually done or if it failed
+			# if not, the process has ended, record the end date
+			db.set_end_date(job_id)
+			# ask the proper app module if the job is finished or failed
 			if apps.is_finished(db.get_app_name(job_id), stdout): 
 				status = "DONE"
 				db.set_status(job_id, status)
@@ -91,10 +95,6 @@ def check_running_jobs():
 				status = "FAILED"
 				db.set_status(job_id, status)
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
-			# update the database
-			db.set_end_date(job_id)
-			db.set_stdout(job_id, stdout)
-			db.set_stderr(job_id, stderr)
 
 def find_best_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
