@@ -137,7 +137,7 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	## write the command line into a .cumulus.cmd file in the job dir
 	#cmd_file = utils.write_local_file(job_id, "cmd", cmd)
 	# generate the script to run
-	cmd_file = apps.generate_script(job_id, app_name, settings, host)
+	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
 	#pid, _, _ = utils.remote_exec(host, cmd)
 	pid = utils.remote_exec_script(host, cmd_file)

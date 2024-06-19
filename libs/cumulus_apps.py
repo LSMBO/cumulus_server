@@ -44,9 +44,8 @@ def are_all_files_transfered(job_dir, app_name, settings):
 #	if not cmd.endswith(" &"): cmd += " &"
 #	return cmd
 
-def generate_script(job_id, app_name, settings, host):
+def generate_script(job_id, job_dir app_name, settings, host):
 	# the working directory is the job directory
-	job_dir = db.get_job_dir(job_id)
 	content = "cd '{job_dir}'\n"
 	# the script then must call the proper command line
 	cmd = "sleep 60"
