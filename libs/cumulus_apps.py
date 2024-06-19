@@ -22,7 +22,7 @@ def are_all_files_transfered(job_dir, app_name, settings):
 		if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR)
 		elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR)
 		elif app_name == "test": return test.check_input_files(settings, utils.DATA_DIR)
-	else: logger.debug(f"Job {job_id} is still expecting files, {FINAL_FILE} is not there yet...")
+	else: logger.debug(f"{job_dir} is still expecting files, {FINAL_FILE} is not there yet...")
 	return False
 
 #def checkParameters(app_name, settings):
