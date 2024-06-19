@@ -74,7 +74,7 @@ def remote_exec_script(host, file):
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 	# execute the script remotely
-	_, stdout, _ = ssh.exec_command("echo $$ && source " + file)
+	_, stdout, _ = ssh.exec_command("echo $$ && source " + file + " &")
 	pid = int(stdout.readline())
 	# close the connection and return the pid
 	ssh.close()

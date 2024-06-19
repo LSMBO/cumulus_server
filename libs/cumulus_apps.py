@@ -29,20 +29,38 @@ def are_all_files_transfered(job_dir, app_name, settings):
 #  elif app_name == "diann_1.8.2": return diann182.checkParameters(utils.DATA_DIR, settings)
 #  else: return []
 
-def get_command_line(job_dir, app_name, settings, host):
-	# get the command line that corresponds to the application
-	cmd = f"cd '{job_dir}'; "
-	if app_name == "diann_1.8.1": cmd += diann181.get_command_line(settings, utils.DATA_DIR, host.cpu)
-	elif app_name == "diann_1.8.2": cmd += diann182.get_command_line(settings, utils.DATA_DIR, host.cpu)
-	elif app_name == "test": cmd += test.get_command_line(settings, utils.DATA_DIR)
-	# default test command
-	else: cmd += "sleep 60 &"
+#def get_command_line(job_dir, app_name, settings, host):
+#	# get the command line that corresponds to the application
+#	cmd = f"cd '{job_dir}'; "
+#	if app_name == "diann_1.8.1": cmd += diann181.get_command_line(settings, utils.DATA_DIR, host.cpu)
+#	elif app_name == "diann_1.8.2": cmd += diann182.get_command_line(settings, utils.DATA_DIR, host.cpu)
+#	elif app_name == "test": cmd += test.get_command_line(settings, utils.DATA_DIR)
+#	# default test command
+#	else: cmd += "sleep 60 &"
+#
+#	# make sure the command ends with the log redirection and the ampersand
+#	if "1>" not in cmd: cmd += f" 1> {utils.get_stdout_file_name(app_name)}"
+#	if "2>" not in cmd: cmd += f" 2> {utils.get_stderr_file_name(app_name)}"
+#	if not cmd.endswith(" &"): cmd += " &"
+#	return cmd
 
+def generate_script(job_id, app_name, settings, host):
+	# the working directory is the job directory
+	job_dir = db.get_job_dir(job_id)
+	content = "cd '{job_dir}'\n"
+	# the script then must call the proper command line
+	cmd = "sleep 60"
+	if app_name == "diann_1.8.1": cmd = diann181.get_command_line(settings, utils.DATA_DIR, host.cpu)
+	elif app_name == "diann_1.8.2": cmd = diann182.get_command_line(settings, utils.DATA_DIR, host.cpu)
+	elif app_name == "test": cmd = test.get_command_line(settings, utils.DATA_DIR)
 	# make sure the command ends with the log redirection and the ampersand
 	if "1>" not in cmd: cmd += f" 1> {utils.get_stdout_file_name(app_name)}"
 	if "2>" not in cmd: cmd += f" 2> {utils.get_stderr_file_name(app_name)}"
-	if not cmd.endswith(" &"): cmd += " &"
-	return cmd
+	content += cmd + "\n"
+	# then wait a few seconds to make sure that stdout and stderr are completely written
+	content += "sleep 5\n"
+	# write the script in the job directory and return the file
+	return utils.write_local_file(job_id, "cmd", content)
 
 def is_file_required(app_name, settings, file):
 	if app_name == "diann_1.8.1": return diann181.is_file_required(settings, file)

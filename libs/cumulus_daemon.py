@@ -49,31 +49,52 @@ def is_process_running(job_id):
 	#return False if stdout.at_eof() else True
 	return stdout != ""
 
-def is_job_finished(job_id):
-	#app_name = db.get_app_name(job_id)
-	# get latest logs
-	stdout = get_stdout(job_id)
-	stderr = get_stderr(job_id)
-	# ask the proper app module if the job is actually done
-	is_done = apps.is_finished(db.get_app_name(job_id), stdout)
-	# store the logs at the end
-	db.set_stdout(job_id, stdout)
-	db.set_stderr(job_id, stderr)
-	return is_done
+#def is_job_finished(job_id):
+#	#app_name = db.get_app_name(job_id)
+#	# get latest logs
+#	stdout = get_stdout(job_id)
+#	stderr = get_stderr(job_id)
+#	# ask the proper app module if the job is actually done
+#	is_done = apps.is_finished(db.get_app_name(job_id), stdout)
+#	# store the logs at the end
+#	db.set_stdout(job_id, stdout)
+#	db.set_stderr(job_id, stderr)
+#	return is_done
+#
+#def check_running_jobs():
+#	for job_id in db.get_jobs_per_status("RUNNING"):
+#		# check that the process still exist
+#		if not is_process_running(job_id):
+#			# if not, it means that the process either ended or failed
+#			status = "DONE" if is_job_finished(job_id) else "FAILED"
+#			db.set_status(job_id, status)
+#			db.set_end_date(job_id)
+#			if status == "DONE": logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
+#			else: logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
+#			# store stdout and stderr
+#			#db.set_stdout(job_id, get_stdout(job_id))
+#			#db.set_stderr(job_id, get_stderr(job_id))
 
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
 		# check that the process still exist
 		if not is_process_running(job_id):
 			# if not, it means that the process either ended or failed
-			status = "DONE" if is_job_finished(job_id) else "FAILED"
-			db.set_status(job_id, status)
+			stdout = get_stdout(job_id)
+			stderr = get_stderr(job_id)
+			# ask the proper app module if the job is actually done or if it failed
+			if apps.is_finished(db.get_app_name(job_id), stdout): 
+				status = "DONE"
+				db.set_status(job_id, status)
+				logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
+			else:
+				status = "FAILED"
+				db.set_status(job_id, status)
+				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
+			# update the database
 			db.set_end_date(job_id)
-			if status == "DONE": logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
-			else: logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
-			# store stdout and stderr
-			#db.set_stdout(job_id, get_stdout(job_id))
-			#db.set_stderr(job_id, get_stderr(job_id))
+			db.set_stdout(job_id, stdout)
+			db.set_stderr(job_id, stderr)
 
 def find_best_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
@@ -110,11 +131,13 @@ def find_best_host(job_id):
 
 #def start_job(job_id, host):
 def start_job(job_id, job_dir, app_name, settings, host):
-	# set the command line
-	#cmd = apps.get_command_line(db.get_app_name(job_id), db.get_settings(job_id), host)
-	cmd = apps.get_command_line(job_dir, app_name, settings, host)
-	# write the command line into a .cumulus.cmd file in the job dir
-	cmd_file = utils.write_local_file(job_id, "cmd", cmd)
+	## set the command line
+	##cmd = apps.get_command_line(db.get_app_name(job_id), db.get_settings(job_id), host)
+	#cmd = apps.get_command_line(job_dir, app_name, settings, host)
+	## write the command line into a .cumulus.cmd file in the job dir
+	#cmd_file = utils.write_local_file(job_id, "cmd", cmd)
+	# generate the script to run
+	cmd_file = apps.generate_script(job_id, app_name, settings, host)
 	# execute the command
 	#pid, _, _ = utils.remote_exec(host, cmd)
 	pid = utils.remote_exec_script(host, cmd_file)
