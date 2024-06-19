@@ -133,18 +133,10 @@ def find_best_host(job_id):
 	# return the selected host, it can be None
 	return selected_host
 
-#def start_job(job_id, host):
 def start_job(job_id, job_dir, app_name, settings, host):
-	## set the command line
-	##cmd = apps.get_command_line(db.get_app_name(job_id), db.get_settings(job_id), host)
-	#cmd = apps.get_command_line(job_dir, app_name, settings, host)
-	## write the command line into a .cumulus.cmd file in the job dir
-	#cmd_file = utils.write_local_file(job_id, "cmd", cmd)
 	# generate the script to run
 	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
-	#pid, _, _ = utils.remote_exec(host, cmd)
-	#pid = utils.remote_exec_script(host, cmd_file)
 	pid = utils.remote_script(host, cmd_file)
 	# also write the pid to a .cumulus.pid file
 	utils.write_local_file(job_id, "pid", str(pid))

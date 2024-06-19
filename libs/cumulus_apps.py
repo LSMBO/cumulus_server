@@ -1,4 +1,4 @@
-#import logging
+import logging
 import os
 
 import cumulus_server.libs.cumulus_config as config
@@ -7,7 +7,7 @@ import cumulus_server.apps.diann181 as diann181
 import cumulus_server.apps.diann182 as diann182
 import cumulus_server.apps.test_app as test
 
-#logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 FINAL_FILE = config.get("final.file")
 
 def is_finished(app_name, stdout):
@@ -22,6 +22,7 @@ def are_all_files_transfered(job_dir, app_name, settings):
 		if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR)
 		elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR)
 		elif app_name == "test": return test.check_input_files(settings, utils.DATA_DIR)
+	else: logger.debug(f"Job {job_id} is still expecting files, {FINAL_FILE} is not there yet...")
 	return False
 
 #def checkParameters(app_name, settings):
