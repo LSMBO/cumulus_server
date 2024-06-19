@@ -81,7 +81,6 @@ def remote_script(host, file):
 	return pid
 
 def remote_check(host, pid):
-	is_alive = False
 	if host is not None and pid is not None and pid > 0:
 		# connect to the host
 		key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
@@ -90,11 +89,13 @@ def remote_check(host, pid):
 		ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 		# execute the script remotely
 		_, stdout, _ = ssh.exec_command(f"ps -p {pid} -o comm= ; echo $?")
-		# close the connection
-		ssh.close()
 		# the process is alive if the command did not fail
-		if stdout.read().decode('ascii').endswith("0"): is_alive = True
-	return is_alive
+		stdout = stdout.read().decode('ascii').strip("\n")
+		logger.debug(f"Remote check: ps -p {pid}: "+stdout)
+		# close the connection after dealing with stdout
+		ssh.close()
+		if stdout.endswith("0"): return True
+	return False
 
 def remote_cancel(host, pid):
 	if host is not None and pid is not None and pid > 0:
