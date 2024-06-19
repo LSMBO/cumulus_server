@@ -1,4 +1,7 @@
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 def check_input_files(settings, data_dir):
 	# check the raw files
