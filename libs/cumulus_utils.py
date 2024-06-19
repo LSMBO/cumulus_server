@@ -92,9 +92,11 @@ def remote_check(host, pid):
 		# the process is alive if the command did not fail
 		stdout = stdout.read().decode('ascii').strip("\n")
 		logger.debug(f"Remote check: ps -p {pid}: "+stdout)
+		is_alive = stdout.splitlines()[-1] == "0"
 		# close the connection after dealing with stdout
 		ssh.close()
-		if stdout.endswith("0"): return True
+		#if stdout.endswith("0"): return True
+		return is_alive
 	return False
 
 def remote_cancel(host, pid):
