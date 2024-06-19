@@ -49,8 +49,8 @@ def is_process_running(job_id):
 	#logger.debug(f"Job {job_id} output from 'ps -p {pid}' at '{host.name}': '{stdout}'")
 	#return False if stdout.at_eof() else True
 	#return stdout != ""
-	logger.debug(f"Job {job_id} is alive? {is_alive}")
 	is_alive = utils.remote_check(host, pid)
+	logger.debug(f"Job {job_id} is alive? {is_alive}")
 	return is_alive
 
 #def is_job_finished(job_id):
