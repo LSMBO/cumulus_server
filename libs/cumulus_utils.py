@@ -50,24 +50,24 @@ def get_host(host_name):
 	matches = list(filter(lambda host: host.name == host_name, get_all_hosts()))
 	return None if len(matches) == 0 else matches[0]
 
-def remote_exec(host, command):
-	# connect to the host
-	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
-	ssh = paramiko.SSHClient()
-	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	#ssh.connect(ip, port = port, username = user, pkey = key)
-	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
-	# execute the command remotely
-	_, stdout, stderr = ssh.exec_command("echo $$ && exec " + command)
-	pid = int(stdout.readline())
-	# convert the outputs to text
-	stdout = stdout.read().decode('ascii').strip("\n")
-	stderr = stderr.read().decode('ascii').strip("\n")
-	# close the connection and return outputs
-	ssh.close()
-	return pid, stdout, stderr
+#def remote_exec(host, command):
+#	# connect to the host
+#	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+#	ssh = paramiko.SSHClient()
+#	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#	#ssh.connect(ip, port = port, username = user, pkey = key)
+#	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
+#	# execute the command remotely
+#	_, stdout, stderr = ssh.exec_command("echo $$ && exec " + command)
+#	pid = int(stdout.readline())
+#	# convert the outputs to text
+#	stdout = stdout.read().decode('ascii').strip("\n")
+#	stderr = stderr.read().decode('ascii').strip("\n")
+#	# close the connection and return outputs
+#	ssh.close()
+#	return pid, stdout, stderr
 
-def remote_exec_script(host, file):
+def remote_script(host, file):
 	# connect to the host
 	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
 	ssh = paramiko.SSHClient()
@@ -79,7 +79,34 @@ def remote_exec_script(host, file):
 	# close the connection and return the pid
 	ssh.close()
 	return pid
-	
+
+def remote_check(host, pid):
+	is_alive = False
+	if host is not None and pid is not None and pid > 0:
+		# connect to the host
+		key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+		ssh = paramiko.SSHClient()
+		ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
+		# execute the script remotely
+		_, stdout, _ = ssh.exec_command(f"ps -p {pid} -o comm= ; echo $?")
+		# close the connection
+		ssh.close()
+		# the process is alive if the command did not fail
+		if stdout.endswith("0"): is_alive = True
+	return is_alive
+
+def remote_cancel(host, pid):
+	if host is not None and pid is not None and pid > 0:
+		# connect to the host
+		key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+		ssh = paramiko.SSHClient()
+		ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
+		# execute the script remotely
+		ssh.exec_command(f"kill -9 {pid}")
+		# close the connection
+		ssh.close()
 
 def write_file(file_path, content):
 	f = open(file_path, "w")
@@ -159,9 +186,9 @@ def cancel_job(job_id):
 	pid = db.get_pid(job_id)
 	host_name = db.get_host(job_id)
 	# use ssh to kill the pid (may not be needed if the job is still pending)
-	# FIXME transform the host_name to host
-	host = get_host(host_name)
-	if pid is not None and pid > 0: remote_exec(host, f"kill -9 {pid}")
+	#host = get_host(host_name)
+	#if pid is not None and pid > 0: remote_exec(host, f"kill -9 {pid}")
+	remote_cancel(get_host(host_name), pid)
 	# change the status
 	db.set_status(job_id, "CANCELLED")
 	db.set_pid(job_id, None)

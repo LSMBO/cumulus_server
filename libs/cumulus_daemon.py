@@ -44,10 +44,14 @@ def is_process_running(job_id):
 	pid = db.get_pid(job_id)
 	host_name = db.get_host(job_id)
 	host = utils.get_host(host_name)
-	_, stdout, _ = utils.remote_exec(host, f"ps -p {pid} -o comm=")
+	#_, stdout, _ = utils.remote_exec(host, f"ps -p {pid} -o comm=")
 	# if the pid is still alive, it's RUNNING
+	#logger.debug(f"Job {job_id} output from 'ps -p {pid}' at '{host.name}': '{stdout}'")
 	#return False if stdout.at_eof() else True
-	return stdout != ""
+	#return stdout != ""
+	logger.debug(f"Job {job_id} is alive? {is_alive}")
+	is_alive = utils.remote_check(host, pid)
+	return is_alive
 
 #def is_job_finished(job_id):
 #	#app_name = db.get_app_name(job_id)
@@ -140,7 +144,8 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
 	#pid, _, _ = utils.remote_exec(host, cmd)
-	pid = utils.remote_exec_script(host, cmd_file)
+	#pid = utils.remote_exec_script(host, cmd_file)
+	pid = utils.remote_script(host, cmd_file)
 	# also write the pid to a .cumulus.pid file
 	utils.write_local_file(job_id, "pid", str(pid))
 	# update the job
