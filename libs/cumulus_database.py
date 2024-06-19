@@ -23,7 +23,6 @@ def connect():
 			settings TEXT NOT NULL,
 			status TEXT NOT NULL,
 			host TEXT,
-			pid INTEGER,
 			creation_date INTEGER,
 			start_date INTEGER,
 			end_date INTEGER,
@@ -57,8 +56,8 @@ def set_status(job_id, status): set_value(job_id, "status", status)
 def get_status(job_id): return get_value(job_id, "status")
 def set_host(job_id, host): set_value(job_id, "host", host)
 def get_host(job_id): return get_value(job_id, "host")
-def set_pid(job_id, pid): set_value(job_id, "pid", pid)
-def get_pid(job_id): return get_value(job_id, "pid")
+#def set_pid(job_id, pid): set_value(job_id, "pid", pid)
+#def get_pid(job_id): return get_value(job_id, "pid")
 def set_stdout(job_id, text): set_value(job_id, "stdout", text)
 def get_stdout(job_id): return get_value(job_id, "stdout")
 def set_stderr(job_id, text): set_value(job_id, "stderr", text)
@@ -88,7 +87,7 @@ def create_job(form, main_job_dir):
 	app_name = form["app_name"]
 	creation_date = int(time.time())
 	# settings are already passed as a stringified json
-	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", None, creation_date, None, None, "", "", ""))
+	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", ""))
 	# return the id of the job
 	job_id = cursor.lastrowid
 	# define the job directory "job_<num>_<user>_<app>_<timestamp>"

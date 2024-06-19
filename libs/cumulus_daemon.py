@@ -41,7 +41,8 @@ def get_stderr(job_id):
 	return content
 
 def is_process_running(job_id):
-	pid = db.get_pid(job_id)
+	#pid = db.get_pid(job_id)
+	pid = utils.get_pid(job_id)
 	host_name = db.get_host(job_id)
 	host = utils.get_host(host_name)
 	#_, stdout, _ = utils.remote_exec(host, f"ps -p {pid} -o comm=")
@@ -141,7 +142,7 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	# also write the pid to a .cumulus.pid file
 	utils.write_local_file(job_id, "pid", str(pid))
 	# update the job
-	db.set_pid(job_id, str(pid))
+	#db.set_pid(job_id, str(pid))
 	db.set_host(job_id, host.name)
 	db.set_status(job_id, "RUNNING")
 	db.set_start_date(job_id)

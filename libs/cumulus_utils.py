@@ -74,11 +74,14 @@ def remote_script(host, file):
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 	# execute the script remotely
-	_, stdout, _ = ssh.exec_command("echo $$ && source " + file + " &")
-	pid = int(stdout.readline())
+	# TODO is it the best way to get the pid??
+	#_, stdout, _ = ssh.exec_command("echo $$ && source " + file + " &")
+	#pid = int(stdout.readline())
+	# execute the script remotely (it will automatically create the pid file)
+	ssh.exec_command("source " + file + " &")
 	# close the connection and return the pid
 	ssh.close()
-	return pid
+	#return pid
 
 def remote_check(host, pid):
 	if host is not None and pid is not None and pid > 0:
@@ -95,7 +98,6 @@ def remote_check(host, pid):
 		is_alive = stdout.splitlines()[-1] == "0"
 		# close the connection after dealing with stdout
 		ssh.close()
-		#if stdout.endswith("0"): return True
 		return is_alive
 	return False
 
@@ -184,9 +186,21 @@ def delete_job_folder(job_id):
 		db.add_to_stderr(job_id, f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
 		return False
 
+def get_pid_file(job_id): return db.get_job_dir(job_id) + "/.cumulus.pid"
+
+def get_pid(job_id):
+	file = get_pid_file(job_id)
+	if os.path.isfile(file):
+		f = open(file, "r")
+		content = f.read()
+		f.close()
+		return int(content)
+	else: return 0
+
 def cancel_job(job_id):
 	# get the pid and the host
-	pid = db.get_pid(job_id)
+	#pid = db.get_pid(job_id)
+	pid = get_pid(job_id)
 	host_name = db.get_host(job_id)
 	# use ssh to kill the pid (may not be needed if the job is still pending)
 	#host = get_host(host_name)
@@ -194,7 +208,9 @@ def cancel_job(job_id):
 	remote_cancel(get_host(host_name), pid)
 	# change the status
 	db.set_status(job_id, "CANCELLED")
-	db.set_pid(job_id, None)
+	#db.set_pid(job_id, None)
+	pid_file = get_pid_file(job_id)
+	if os.path.isfile(pid_file): os.remove(pid_file)
 	# delete the job directory
 	return delete_job_folder(job_id)
 
