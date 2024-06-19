@@ -46,7 +46,7 @@ def are_all_files_transfered(job_dir, app_name, settings):
 
 def generate_script(job_id, job_dir, app_name, settings, host):
 	# the working directory is the job directory
-	content = "cd '{job_dir}'\n"
+	content = f"cd '{job_dir}'\n"
 	# the script then must call the proper command line
 	cmd = "sleep 60"
 	if app_name == "diann_1.8.1": cmd = diann181.get_command_line(settings, utils.DATA_DIR, host.cpu)
