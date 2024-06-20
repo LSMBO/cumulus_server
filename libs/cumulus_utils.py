@@ -50,33 +50,12 @@ def get_host(host_name):
 	matches = list(filter(lambda host: host.name == host_name, get_all_hosts()))
 	return None if len(matches) == 0 else matches[0]
 
-#def remote_exec(host, command):
-#	# connect to the host
-#	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
-#	ssh = paramiko.SSHClient()
-#	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#	#ssh.connect(ip, port = port, username = user, pkey = key)
-#	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
-#	# execute the command remotely
-#	_, stdout, stderr = ssh.exec_command("echo $$ && exec " + command)
-#	pid = int(stdout.readline())
-#	# convert the outputs to text
-#	stdout = stdout.read().decode('ascii').strip("\n")
-#	stderr = stderr.read().decode('ascii').strip("\n")
-#	# close the connection and return outputs
-#	ssh.close()
-#	return pid, stdout, stderr
-
 def remote_script(host, file):
 	# connect to the host
 	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
-	# execute the script remotely
-	# TODO is it the best way to get the pid??
-	#_, stdout, _ = ssh.exec_command("echo $$ && source " + file + " &")
-	#pid = int(stdout.readline())
 	# execute the script remotely (it will automatically create the pid file)
 	ssh.exec_command("source " + file + " &")
 	# close the connection and return the pid
@@ -118,14 +97,14 @@ def write_file(file_path, content):
 	f.write(content + "\n")
 	f.close()
 
-def write_local_file(job_id, file_name, content):
-	#write_file(db.get_job_dir(job_id) + "/.cumulus." + file_name, content)
-	file = db.get_job_dir(job_id) + "/.cumulus." + file_name
-	write_file(file, content)
-	return file
-
 def create_job_directory(job_dir, form):
-	#job_dir = get_job_dir(job_id)
+	# the job directory will contain some automatically created files:
+	# - .cumulus.cmd: the script that will 
+	# - .cumulus.pid: the pid of the script
+	# - .cumulus.rsync: a blank file that is sent once all the files have been transferred
+	# - .cumulus.settings: the user settings, it can be useful to know what the job is about without connecting to the interface or to sqlite
+	# - .<app_name>.stdout: the standard output of the script
+	# - .<app_name>.stderr: the standard error of the script
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
 	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
@@ -199,18 +178,12 @@ def get_pid(job_id):
 
 def cancel_job(job_id):
 	# get the pid and the host
-	#pid = db.get_pid(job_id)
 	pid = get_pid(job_id)
 	host_name = db.get_host(job_id)
 	# use ssh to kill the pid (may not be needed if the job is still pending)
-	#host = get_host(host_name)
-	#if pid is not None and pid > 0: remote_exec(host, f"kill -9 {pid}")
 	remote_cancel(get_host(host_name), pid)
 	# change the status
 	db.set_status(job_id, "CANCELLED")
-	#db.set_pid(job_id, None)
-	pid_file = get_pid_file(job_id)
-	if os.path.isfile(pid_file): os.remove(pid_file)
 	# delete the job directory
 	return delete_job_folder(job_id)
 

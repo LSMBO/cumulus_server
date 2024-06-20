@@ -45,40 +45,10 @@ def is_process_running(job_id):
 	pid = utils.get_pid(job_id)
 	host_name = db.get_host(job_id)
 	host = utils.get_host(host_name)
-	#_, stdout, _ = utils.remote_exec(host, f"ps -p {pid} -o comm=")
 	# if the pid is still alive, it's RUNNING
-	#logger.debug(f"Job {job_id} output from 'ps -p {pid}' at '{host.name}': '{stdout}'")
-	#return False if stdout.at_eof() else True
-	#return stdout != ""
 	is_alive = utils.remote_check(host, pid)
 	logger.debug(f"Job {job_id} is alive? {is_alive}")
 	return is_alive
-
-#def is_job_finished(job_id):
-#	#app_name = db.get_app_name(job_id)
-#	# get latest logs
-#	stdout = get_stdout(job_id)
-#	stderr = get_stderr(job_id)
-#	# ask the proper app module if the job is actually done
-#	is_done = apps.is_finished(db.get_app_name(job_id), stdout)
-#	# store the logs at the end
-#	db.set_stdout(job_id, stdout)
-#	db.set_stderr(job_id, stderr)
-#	return is_done
-#
-#def check_running_jobs():
-#	for job_id in db.get_jobs_per_status("RUNNING"):
-#		# check that the process still exist
-#		if not is_process_running(job_id):
-#			# if not, it means that the process either ended or failed
-#			status = "DONE" if is_job_finished(job_id) else "FAILED"
-#			db.set_status(job_id, status)
-#			db.set_end_date(job_id)
-#			if status == "DONE": logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
-#			else: logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
-#			# store stdout and stderr
-#			#db.set_stdout(job_id, get_stdout(job_id))
-#			#db.set_stderr(job_id, get_stderr(job_id))
 
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
@@ -126,7 +96,6 @@ def find_best_host(job_id):
 			for host in hosts:
 				if f"host:{host.name}" == strategy: selected_host = host
 		# reset the selected host if it is already in use
-		#if selected_host.to_dict()["running"] > 0: selected_host = None
 		if selected_host is not None:
 			runnings, _ = db.get_alive_jobs_per_host(selected_host.name)
 			if runnings > 0: selected_host = None
@@ -139,10 +108,9 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
 	pid = utils.remote_script(host, cmd_file)
-	# also write the pid to a .cumulus.pid file
-	utils.write_local_file(job_id, "pid", str(pid))
+	# write the pid to a .cumulus.pid file
+	utils.write_file(job_dir + "/.cumulus.pid", str(pid))
 	# update the job
-	#db.set_pid(job_id, str(pid))
 	db.set_host(job_id, host.name)
 	db.set_status(job_id, "RUNNING")
 	db.set_start_date(job_id)
@@ -157,7 +125,6 @@ def start_pending_jobs():
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
 		# check that all the files are present
-		# FIXME pending jobs are not running
 		if apps.are_all_files_transfered(job_dir, app_name, settings):
 			logger.info(f"Job {job_id} is ready to start")
 			# check that there is an available host matching the strategy

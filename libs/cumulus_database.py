@@ -80,8 +80,7 @@ def add_to_stderr(job_id, text):
 def create_job(form, main_job_dir):
 	# connect to the database
 	cnx, cursor = connect()
-	# status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error, CANCELLED if user chose to cancel it
-	# pid should be null if the job has not started yet, or if it's finished
+	# status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error, CANCELLED if user chose to cancel it, ARCHIVED if the job has been cleaned due to old age
 	# host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
 	owner = form["username"]
 	app_name = form["app_name"]
@@ -106,9 +105,6 @@ def get_job_details(job_id):
 	cursor.execute("SELECT owner, app_name, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr from jobs WHERE id = ?", (job_id,))
 	# put the results in a dict
 	job = {}
-	#if cursor.arraysize > 0:
-	#  owner, app_name, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr = cursor.fetchone()
-	#  job = {"settings": settings, "strategy": strategy, "description": description, "username": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr}
 	response = cursor.fetchone()
 	if response:
 		job["settings"] = json.loads(response[4])
@@ -165,8 +161,7 @@ def get_job_list(host = "%", owner = "%", app_name = "%", tag = "%", number = 10
 	# put the results in a dict
 	jobs = []
 	for id, owner, app_name, status, creation_date in results:
-		# TODO a dict could be returned, it would be cleaner
-		jobs.append(f"{id}:{status}:{app_name}:{owner}:{creation_date}")
+		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
 	cnx.close()
 	return jobs
 

@@ -67,18 +67,6 @@ def check_input_files(settings, data_dir):
 	# if all the expected files are present
 	return True
 
-#def checkParameters(data_dir, params):
-#    errors = []
-#    # check the input files
-#    for file in params["files"]:
-#        filename = os.path.basename(file)
-#        if not os.path.isfile(data_dir + "/" + file): errors.append(f"Raw file '{file}' not found")
-#    # check the fasta file
-#    fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
-#    if not os.path.isfile(fasta): errors.append(f"Fasta file '{fasta}' not found")
-#    return errors
-#    # check other parameters?
-
 # generic command from the module
 def get_command_line(params, data_dir, nb_cpu):
 		# it was put there to avoid the generation of .quant files, because it's not clear if we can choose where they are generated
