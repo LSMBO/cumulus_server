@@ -30,6 +30,7 @@ def connect():
 			stderr TEXT,
 			job_dir TEXT)
 	""")
+	cnx.commit()
 	return cnx, cursor
 
 ### getter and setter functions ###
@@ -39,6 +40,7 @@ def set_value(job_id, field, value):
 	# TODO test that it does not fail if the job_id does not exist
 	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
 	cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
+	cnx.commit()
 	# disconnect
 	cnx.close()
 
@@ -93,6 +95,7 @@ def create_job(form, main_job_dir):
 	job_dir = f"{main_job_dir}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
 	#set_job_dir(job_id, job_dir)
 	cursor.execute(f"UPDATE jobs SET job_dir = ? WHERE id = ?", (job_dir, job_id))
+	cnx.commit()
 	# disconnect
 	cnx.close()
 	# return the job_id
@@ -196,5 +199,6 @@ def delete_job(job_id):
 	cnx, cursor = connect()
 	# delete the job
 	cursor.execute(f"DELETE FROM jobs WHERE id = ?", (job_id,))
+	cnx.commit()
 	# disconnect
 	cnx.close()
