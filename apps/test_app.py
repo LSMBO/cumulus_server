@@ -4,6 +4,7 @@ import os
 logger = logging.getLogger(__name__)
 
 def check_input_files(settings, data_dir):
+	print(settings)
 	# check the raw files
 	for file in settings["files"]:
 		file_path = data_dir + "/" + os.path.basename(file)

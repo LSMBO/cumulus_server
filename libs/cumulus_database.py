@@ -190,3 +190,11 @@ def get_alive_jobs_per_host(host_name):
 		else: running += 1
 	cnx.close()
 	return pending, running
+
+def delete_job(job_id):
+	# connect to the database
+	cnx, cursor = connect()
+	# delete the job
+	cursor.execute(f"DELETE FROM jobs WHERE id = ?", (job_id,))
+	# disconnect
+	cnx.close()

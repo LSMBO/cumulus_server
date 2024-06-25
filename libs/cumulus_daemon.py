@@ -146,6 +146,7 @@ def run():
 		time.sleep(REFRESH_RATE)
 
 def clean():
+	# TODO this has not been tested yet!
 	# wait a minute before starting the daemon
 	time.sleep(60)
 	# clean the old files once a day
@@ -158,7 +159,8 @@ def clean():
 			if utils.get_file_age_in_days(job) > MAX_AGE:
 				status = db.get_status(job_id)
 				if status == "DONE" or status == "FAILED" or status == "CANCELLED":
-					db.set_status(job_id, "ARCHIVED")
+					#db.set_status(job_id, "ARCHIVED")
+					db.set_status(job_id, "ARCHIVED_" + status)
 					utils.delete_job_folder(job)
 		# list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
 		for file in os.listdir(utils.DATA_DIR):
