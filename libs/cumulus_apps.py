@@ -42,7 +42,9 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	# then wait a few seconds to make sure that stdout and stderr are completely written
 	content += "sleep 10\n"
 	# write the script in the job directory and return the file
-	return utils.write_file(job_dir + "/.cumulus.cmd", content)
+	cmd_file = job_dir + "/.cumulus.cmd"
+	utils.write_file(cmd_file, content)
+	return cmd_file
 
 def is_file_required(app_name, settings, file):
 	if app_name == "diann_1.8.1": return diann181.is_file_required(settings, file)

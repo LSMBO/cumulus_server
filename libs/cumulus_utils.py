@@ -185,7 +185,7 @@ def cancel_job(job_id):
 	# change the status
 	db.set_status(job_id, "CANCELLED")
 	# delete the job directory
-	return delete_job_folder(job_id)
+	#return delete_job_folder(job_id)
 
 def get_stdout_file_name(app_name): return f".{app_name}.stdout"
 def get_stderr_file_name(app_name): return f".{app_name}.stderr"
