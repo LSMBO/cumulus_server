@@ -59,7 +59,7 @@ def cancel(owner, job_id):
 			utils.cancel_job(job_id)
 			return f"Job {job_id} has been deleted"
 		else: return f"Job {job_id} cannot be cancelled, it is already stopped"
-	else: return f"You cannot delete this job"
+	else: return f"You cannot cancel this job"
 
 @app.route("/delete/<string:owner>/<int:job_id>")
 def delete(owner, job_id):
@@ -70,6 +70,7 @@ def delete(owner, job_id):
 		status = db.get_status(job_id)
 		#if status.endswith("DONE") or status.endswith("FAILED") or status.endswith("CANCELLED"):
 		if status != "PENDING" and status != "RUNNING":
+			db.delete_job(job_id)
 			utils.delete_job_folder(job_id)
 			return f"Job {job_id} has been deleted"
 		else: return f"You cannot delete a running job"
