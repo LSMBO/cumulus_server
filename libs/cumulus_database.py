@@ -187,18 +187,66 @@ def get_job_status(job_id):
 	cnx.close()
 	return response
 
-def get_job_list(host = "%", owner = "%", app_name = "%", tag = "%", number = 100):
+# TODO remove this function
+#def get_job_list(host = "%", owner = "%", app_name = "%", tag = "%", number = 100):
+#	# connect to the database
+#	cnx, cursor = connect()
+#	# search the jobs that fit the conditions
+#	logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE '{host}' AND owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND (description LIKE '{tag}' OR settings LIKE '{tag}') ORDER BY id DESC LIMIT '{number}'")
+#	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE ? AND owner LIKE ? AND app_name LIKE ? AND (description LIKE ? OR settings LIKE ?) ORDER BY id DESC LIMIT ?", (host, owner, app_name, tag, tag, number))
+#	# put the results in a dict
+#	jobs = []
+#	for id, owner, app_name, status, creation_date in results:
+#		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
+#	cnx.close()
+#	return jobs
+
+def get_last_jobs(number = 100):
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
-	logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE '{host}' AND owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND (description LIKE '{tag}' OR settings LIKE '{tag}') ORDER BY id DESC LIMIT '{number}'")
-	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs WHERE host LIKE ? AND owner LIKE ? AND app_name LIKE ? AND (description LIKE ? OR settings LIKE ?) ORDER BY id DESC LIMIT ?", (host, owner, app_name, tag, tag, number))
+	logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT '{number}'")
+	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT ?", (number))
 	# put the results in a dict
 	jobs = []
 	for id, owner, app_name, status, creation_date in results:
 		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
 	cnx.close()
 	return jobs
+
+def search_jobs(form) {
+	# get the user search parameters
+	owner = "%" if form["owner"] == "" else "%" + form["owner"] + "%"
+	app_name = "%" if form["app"] == "" else "%" + form["app"] + "%"
+	file = "%" if form["file"] == "" else "%" + form["file"] + "%"
+	desc = "%" if form["description"] == "" else "%" + form["description"] + "%"
+	
+	# prepare the part of the request for the status
+	statuses = []
+	if form["pending"] != None: statuses.append("status = 'PENDING'")
+	if form["running"] != None: statuses.append("status = 'RUNNING'")
+	if form["done"] != None: statuses.append("status = 'DONE'")
+	if form["failedrunning"] != None: statuses.append("status = 'FAILED'")
+	if form["cancelled"] != None: statuses.append("status = 'CANCELLED'")
+	if form["archived"] != None: statuses.append("status LIKE 'ARCHIVED%'")
+	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
+	
+	# prepare the part of the request for the date
+	date_field = form["date"]
+	date_from = 0 if form["from"] == "" else time.mktime(datetime.datetime.strptime(form["from"], "%Y-%m-%d").timetuple())
+	date_to = int(time.time())) if form["to"] == "" else time.mktime(datetime.datetime.strptime(form["to"], "%Y-%m-%d").timetuple())
+	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
+	
+	# connect to the database
+	cnx, cursor = connect()
+	results = cursor.execute(f"SELECT id, owner, app_name, status, creation_date from jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? AND settings LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, file, form["number"]))
+	# put the results in a dict
+	jobs = []
+	for id, owner, app_name, status, creation_date in results:
+		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
+	cnx.close()
+	return jobs
+}
 
 def get_jobs_per_status(status):
 	# connect to the database
