@@ -86,7 +86,7 @@ def job_list(number):
 @app.route("/search", methods=["POST"])
 def search_jobs():
 	logger.info("Search jobs")
-	return jsonify(db.search_jobs(request.form)
+	return jsonify(db.search_jobs(request.form))
 
 @app.route("/status/<int:job_id>")
 def status(job_id):
