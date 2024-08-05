@@ -81,7 +81,7 @@ def details(job_id):
 
 @app.route("/joblist/<int:number>/")
 def job_list(number):
-	return jsonify(db.get_last_jobs(number)
+	return jsonify(db.get_last_jobs(number))
 
 @app.route("/search", methods=["POST"])
 def search_jobs():
