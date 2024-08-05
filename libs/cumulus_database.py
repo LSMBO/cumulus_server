@@ -214,7 +214,7 @@ def get_last_jobs(number = 100):
 	cnx.close()
 	return jobs
 
-def search_jobs(form) {
+def search_jobs(form):
 	# get the user search parameters
 	owner = "%" if form["owner"] == "" else "%" + form["owner"] + "%"
 	app_name = "%" if form["app"] == "" else "%" + form["app"] + "%"
@@ -246,7 +246,6 @@ def search_jobs(form) {
 		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
 	cnx.close()
 	return jobs
-}
 
 def get_jobs_per_status(status):
 	# connect to the database
