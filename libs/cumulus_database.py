@@ -234,7 +234,7 @@ def search_jobs(form) {
 	# prepare the part of the request for the date
 	date_field = form["date"]
 	date_from = 0 if form["from"] == "" else time.mktime(datetime.datetime.strptime(form["from"], "%Y-%m-%d").timetuple())
-	date_to = int(time.time())) if form["to"] == "" else time.mktime(datetime.datetime.strptime(form["to"], "%Y-%m-%d").timetuple())
+	date_to = int(time.time()) if form["to"] == "" else time.mktime(datetime.datetime.strptime(form["to"], "%Y-%m-%d").timetuple())
 	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
 	
 	# connect to the database
