@@ -206,7 +206,7 @@ def get_last_jobs(number = 100):
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
 	logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT '{number}'")
-	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT ?", (number))
+	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT ?", (number,))
 	# put the results in a dict
 	jobs = []
 	for id, owner, app_name, status, creation_date in results:

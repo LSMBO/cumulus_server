@@ -48,9 +48,9 @@ import cumulus_server.libs.cumulus_daemon as daemon
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-	handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
-	#level = logging.DEBUG,
-	level = logging.INFO,
+	#handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
+	#level = logging.INFO,
+	level = logging.DEBUG,
 	format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
 	datefmt = '%Y/%m/%d %H:%M:%S')
 
