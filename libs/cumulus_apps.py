@@ -83,3 +83,10 @@ def is_file_required(app_name, settings, file):
 	elif app_name == "diann_1.8.2": return diann182.is_file_required(settings, file)
 	elif app_name == "test": return test.is_file_required(settings, file)
 	else: return False
+
+def search_file(app_name, settings, file):
+	if app_name == "diann_1.8.1": return diann181.search_file(settings, file)
+	elif app_name == "diann_1.8.2": return diann182.search_file(settings, file)
+	elif app_name == "test": return test.search_file(settings, file)
+	else: return False
+

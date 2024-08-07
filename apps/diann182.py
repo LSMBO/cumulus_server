@@ -139,3 +139,8 @@ def is_file_required(settings, file):
 	if os.path.basename(settings['fasta']) == file: return True
 	return False
 
+def search_file(settings, file_tag):
+	for raw in settings["files"]:
+		if file_tag in raw: return True
+	if file_tag in settings['fasta']: return True
+	return False

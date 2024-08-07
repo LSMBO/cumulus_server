@@ -70,15 +70,6 @@ def details(job_id):
 	# return the job's owner, its app, the settings, status, host, description, stdout, stderr, and all three dates
 	return jsonify(db.get_job_details(job_id))
 
-# TODO remove this function
-#@app.route("/jobs/<string:host>/<string:owner>/<string:app_name>/<string:tag>/<int:number>/")
-#def jobs(host, owner, app_name, tag, number):
-#	if host == "*": host = "%"
-#	if owner == "*": owner = "%"
-#	if app_name == "*": app_name = "%"
-#	if tag == "*": tag = "%"
-#	return jsonify(db.get_job_list(host, owner, app_name, tag, number))
-
 @app.route("/joblist/<int:number>/")
 def job_list(number):
 	return jsonify(db.get_last_jobs(number))
