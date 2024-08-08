@@ -226,7 +226,7 @@ def search_jobs(form):
 	results = cursor.execute(f"SELECT id, owner, app_name, status, creation_date, settings FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, form["number"]))
 	# put the results in a dict
 	jobs = []
-	for id, owner, app_name, status, creation_date in results:
+	for id, owner, app_name, status, creation_date, settings in results:
 		# filter by file here, so we can use a specific function for each app
 		if form["file"] == "" or search_file(app_name, settings, form["file"]):
 			jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
