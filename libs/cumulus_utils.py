@@ -184,12 +184,13 @@ def delete_raw_file(file):
 	except OSError as o:
 		logger.error(f"Can't delete raw file {file}: {o.strerror}")
 
-def delete_job_folder(job_id):
+def delete_job_folder(job_id, delete_job_in_database = False):
 	try:
 		job_dir = db.get_job_dir(job_id)
 		if os.path.isdir(job_dir): 
 			rmtree(job_dir)
 			logger.info(f"Job folder '{job_dir}' has been deleted")
+		if delete_job_in_database: db.delete_job(job_id)
 		return True
 	except OSError as o:
 		db.set_status(job_id, "FAILED")
