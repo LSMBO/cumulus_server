@@ -129,7 +129,7 @@ def write_file(file_path, content):
 	f.write(content + "\n")
 	f.close()
 
-def create_job_directory(job_dir, form):
+def create_job_directory(job_dir_name, form):
 	# the job directory will contain some automatically created files:
 	# - .cumulus.cmd: the script that will 
 	# - .cumulus.pid: the pid of the script
@@ -137,6 +137,7 @@ def create_job_directory(job_dir, form):
 	# - .cumulus.settings: the user settings, it can be useful to know what the job is about without connecting to the interface or to sqlite
 	# - .<app_name>.stdout: the standard output of the script
 	# - .<app_name>.stderr: the standard error of the script
+	job_dir = f"{JOB_DIR}/{job_dir_name}"
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
 	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
