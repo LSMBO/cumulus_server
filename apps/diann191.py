@@ -85,7 +85,7 @@ def check_input_files(settings, data_dir):
 	# check the raw files
 	for file in settings["files"]:
 		file_path = data_dir + "/" + os.path.basename(file)
-		if not os.path.exists(file_path):
+		if not os.path.isfile(file_path) and not os.path.isdir(file_path):
 			logger.debug(f"Expected input file '{file_path}' is missing")
 			return False
 	# check the fasta file
