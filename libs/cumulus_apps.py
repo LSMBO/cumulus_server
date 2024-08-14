@@ -63,7 +63,7 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	# the working directory is the job directory
 	content = f"cd '{job_dir}'\n"
 	# write the child pid to a local file
-	content += f"echo $BASHPID > .cumulus.pid\n"
+	# content += f"echo $BASHPID > .cumulus.pid\n"
 	# the script then must call the proper command line
 	cmd = "sleep 60"
 	if app_name == "diann_1.8.1": cmd = diann181.get_command_line(settings, utils.DATA_DIR, host.cpu)
@@ -74,9 +74,10 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	# TODO the stdout & stderr file names should be given by the apps, and this would be the backup names
 	if "1>" not in cmd: cmd += f" 1> {utils.get_stdout_file_name(app_name)}"
 	if "2>" not in cmd: cmd += f" 2> {utils.get_stderr_file_name(app_name)}"
-	content += cmd + "\n"
+	# content += cmd + "\n"
+	content += cmd + " & echo $! > .cumulus.pid\n"
 	# then wait a few seconds to make sure that stdout and stderr are completely written
-	content += "sleep 10\n"
+	# content += "sleep 10\n"
 	# write the script in the job directory and return the file
 	cmd_file = job_dir + "/.cumulus.cmd"
 	utils.write_file(cmd_file, content)

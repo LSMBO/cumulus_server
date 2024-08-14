@@ -139,16 +139,17 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	# generate the script to run
 	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
-	pid = utils.remote_script(host, cmd_file)
+	# pid = utils.remote_script(host, cmd_file)
+	utils.remote_script(host, cmd_file)
 	# write the pid to a .cumulus.pid file
-	utils.write_file(job_dir + "/.cumulus.pid", str(pid))
+	# utils.write_file(job_dir + "/.cumulus.pid", str(pid))
 	# update the job
 	db.set_host(job_id, host.name)
 	db.set_status(job_id, "RUNNING")
 	db.set_start_date(job_id)
 	# log the command
 	logger.info(f"Starting {db.get_job_to_string(job_id)}")
-	return pid
+	# return pid
 
 def start_pending_jobs():
 	# get all the PENDING jobs, oldest ones first
