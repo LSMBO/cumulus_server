@@ -52,10 +52,10 @@ def is_finished(app_name, stdout):
 
 def are_all_files_transfered(job_dir, app_name, settings):
 	if os.path.isfile(f"{job_dir}/{FINAL_FILE}"):
-		if app_name == "diann_1.8.1": return diann181.check_input_files(settings, utils.DATA_DIR)
+		if app_name == "diann_1.8.1": return diann181.check_input_files(settings, job_dir, utils.DATA_DIR)
 		#elif app_name == "diann_1.8.2": return diann182.check_input_files(settings, utils.DATA_DIR)
-		elif app_name == "diann_1.9.1": return diann191.check_input_files(settings, utils.DATA_DIR)
-		elif app_name == "test": return test.check_input_files(settings, utils.DATA_DIR)
+		elif app_name == "diann_1.9.1": return diann191.check_input_files(settings, job_dir, utils.DATA_DIR)
+		elif app_name == "test": return test.check_input_files(settings, job_dir, utils.DATA_DIR)
 	else: logger.debug(f"{job_dir} is still expecting files, {FINAL_FILE} is not there yet...")
 	return False
 

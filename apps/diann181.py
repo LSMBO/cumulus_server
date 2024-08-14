@@ -83,7 +83,7 @@ def get_value(dictionnary, key):
 	elif "__default__" in dictionnary: return dictionnary["__default__"]
 	else: return ""
 
-def check_input_files(settings, data_dir):
+def check_input_files(settings, job_dir, data_dir):
 	# check the raw files
 	for file in settings["files"]:
 		file_path = data_dir + "/" + os.path.basename(file)
@@ -92,7 +92,8 @@ def check_input_files(settings, data_dir):
 			return False
 	# check the fasta file
 	#fasta = f"{data_dir}/{os.path.basename(settings['fasta'])}"
-	fasta = os.path.basename(settings['fasta'])
+	#fasta = os.path.basename(settings['fasta'])
+	fasta = f"{job_dir}/{os.path.basename(settings['fasta'])}"
 	if not os.path.isfile(fasta):
 		logger.debug(f"Expected fasta file '{fasta}' is missing")
 		return False

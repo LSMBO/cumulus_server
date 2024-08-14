@@ -3,7 +3,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def check_input_files(settings, data_dir):
+def check_input_files(settings, job_dir, data_dir):
 	print(settings)
 	# check the raw files
 	for file in settings["files"]:
@@ -12,7 +12,7 @@ def check_input_files(settings, data_dir):
 			logger.debug(f"Expected input file '{file_path}' is missing")
 			return False
 	# check the fasta file
-	fasta = f"{data_dir}/{os.path.basename(settings['fasta'])}"
+	fasta = f"{job_dir}/{os.path.basename(settings['fasta'])}"
 	if not os.path.isfile(fasta):
 		logger.debug(f"Expected fasta file '{fasta}' is missing")
 		return False
