@@ -104,10 +104,11 @@ def get_command_line(params, data_dir, nb_cpu):
 	# it seems that they are always created where the raw files are, and it may be a problem when the same file is used twice at the same time
 	exe = "/storage/share/diann-1.9.1/diann-linux"
 	cmd = f"{exe} --dir '{data_dir}' --temp . --no-quant-files"
+	# cmd = f"{exe} --temp . --no-quant-files"
 	for filename in params["files"]:
 		# make sure that filename is just a file name, not a relative path
-		#cmd += f" --f '{os.path.basename(filename)}'"
-		cmd += f" --f '{data_dir}/{os.path.basename(filename)}'"
+		cmd += f" --f '{os.path.basename(filename)}'"
+		# cmd += f" --f '{data_dir}/{os.path.basename(filename)}'"
 	# add user arguments
 	# for the fasta, use the job dir which should be the current working directory
 	#fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
