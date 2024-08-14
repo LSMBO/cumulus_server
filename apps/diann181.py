@@ -91,7 +91,8 @@ def check_input_files(settings, data_dir):
 			logger.debug(f"Expected input file '{file_path}' is missing")
 			return False
 	# check the fasta file
-	fasta = f"{data_dir}/{os.path.basename(settings['fasta'])}"
+	#fasta = f"{data_dir}/{os.path.basename(settings['fasta'])}"
+	fasta = os.path.basename(settings['fasta'])
 	if not os.path.isfile(fasta):
 		logger.debug(f"Expected fasta file '{fasta}' is missing")
 		return False
@@ -106,9 +107,12 @@ def get_command_line(params, data_dir, nb_cpu):
 	cmd = f"{exe} --dir '{data_dir}' --temp . --no-quant-files"
 	for filename in params["files"]:
 		# make sure that filename is just a file name, not a relative path
-		cmd += f" --f '{os.path.basename(filename)}'"
+		#cmd += f" --f '{os.path.basename(filename)}'"
+		cmd += f" --f '{data_dir}/{os.path.basename(filename)}'"
 	# add user arguments
-	fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
+	# for the fasta, use the job dir which should be the current working directory
+	#fasta = f"{data_dir}/{os.path.basename(params['fasta'])}"
+	fasta = os.path.basename(params['fasta'])
 	cmd += f" --lib '' --fasta '{fasta}' --fasta-search --predictor"
 	cmd += f" --cut {params['protease']} --missed-cleavages {params['mc']}"
 	cmd += f" --var-mods {params['var-mods']}"
