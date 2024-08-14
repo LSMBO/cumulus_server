@@ -124,14 +124,17 @@ def create_job(form, main_job_dir):
 	# return the id of the job
 	job_id = cursor.lastrowid
 	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
-	job_dir = f"{main_job_dir}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
+	#job_dir = f"{main_job_dir}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
+	job_dir_name = f"Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
+	job_dir = f"{main_job_dir}/{job_dir_name}"
 	#set_job_dir(job_id, job_dir)
 	cursor.execute(f"UPDATE jobs SET job_dir = ? WHERE id = ?", (job_dir, job_id))
 	cnx.commit()
 	# disconnect
 	cnx.close()
-	# return the job_id
-	return job_id, job_dir
+	# return the job_id and the name of its directory
+	#return job_id, job_dir
+	return job_id, job_dir_name
 
 def get_job_details(job_id):
 	# connect to the database
