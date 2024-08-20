@@ -86,6 +86,7 @@ def remote_script(host, file):
 	# connect to the host
 	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
 	ssh = paramiko.SSHClient()
+	# TODO use a safer way (get/set_local_hosts)
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 	# execute the script remotely (it will automatically create the pid file)
