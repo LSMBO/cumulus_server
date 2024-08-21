@@ -37,6 +37,7 @@ import sqlite3
 import time
 
 import cumulus_server.libs.cumulus_config as config
+import cumulus_server.libs.cumulus_utils as utils
 
 logger = logging.getLogger(__name__)
 
@@ -190,16 +191,31 @@ def get_job_status(job_id):
 	cnx.close()
 	return response
 
-def get_last_jobs(number = 100):
+#def get_last_jobs(number = 100):
+#	# connect to the database
+#	cnx, cursor = connect()
+#	# search the jobs that fit the conditions
+#	#logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT '{number}'")
+#	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT ?", (number,))
+#	# put the results in a dict
+#	jobs = []
+#	for id, owner, app_name, status, creation_date in results:
+#		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
+#	cnx.close()
+#	return jobs
+
+def get_last_jobs(job_id, number = 100):
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
-	#logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT '{number}'")
-	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT ?", (number,))
+	results = cursor.execute("SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr from jobs ORDER BY id DESC LIMIT ?", (number,))
 	# put the results in a dict
 	jobs = []
-	for id, owner, app_name, status, creation_date in results:
-		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
+	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
+		if id == job_id:
+			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
+		else:
+			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
 	cnx.close()
 	return jobs
 
