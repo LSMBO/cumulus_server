@@ -19,7 +19,7 @@ def check_input_files(settings, job_dir, data_dir):
 	# if all the expected files are present
 	return True
 
-def get_command_line(settings, data_dir):
+def get_command_line(settings, data_dir, output_dir = "."):
 	args = []
 	for file in settings["files"]:
 		args.append(data_dir + "/" + os.path.basename(file))
