@@ -139,7 +139,8 @@ def get_command_line(params, data_dir, nb_cpu):
 	return cmd
 
 def is_finished(stdout):
-	return stdout.endswith("Finished\n\n")
+	#return stdout.endswith("Finished\n\n")
+	return "Finished\n\n\nHow to cite:\n" in stdout
 
 def is_file_required(settings, file):
 	file = os.path.basename(file)

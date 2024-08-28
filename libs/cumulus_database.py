@@ -221,6 +221,7 @@ def get_last_jobs(job_id, number = 100):
 
 def search_jobs(form):
 	# get the user search parameters
+	current_job_id = int(form["current_job_id"])
 	owner = "%" if form["owner"] == "" else "%" + form["owner"] + "%"
 	app_name = "%" if form["app"] == "" or form["app"] == "all" else "%" + form["app"] + "%"
 	desc = "%" if form["description"] == "" else "%" + form["description"] + "%"

@@ -75,7 +75,8 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	if "1>" not in cmd: cmd += f" 1> {utils.get_stdout_file_name(app_name)}"
 	if "2>" not in cmd: cmd += f" 2> {utils.get_stderr_file_name(app_name)}"
 	# content += cmd + "\n"
-	content += cmd + " && echo $! > .cumulus.pid\n"
+	# use a single & to put the command in background and directly store the pid
+	content += cmd + " & echo $! > .cumulus.pid\n"
 	# then wait a few seconds to make sure that stdout and stderr are completely written
 	# content += "sleep 10\n"
 	# write the script in the job directory and return the file
