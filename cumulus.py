@@ -41,6 +41,7 @@ import threading
 from urllib.parse import unquote
 
 # local modules
+import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_utils as utils
 import cumulus_server.libs.cumulus_database as db
 import cumulus_server.libs.cumulus_daemon as daemon
@@ -149,8 +150,8 @@ def storage():
 	# return the file names and sizes in /storage/data (as a string)
 	return jsonify(utils.get_raw_file_list())
 
-@app.route("/version")
-def version(): return utils.get_version()
+@app.route("/config")
+def config(): return jsonify(config.export())
 
 # start the daemons once all functions are defined
 threading.Thread(target=daemon.run, args=(), daemon=True).start()

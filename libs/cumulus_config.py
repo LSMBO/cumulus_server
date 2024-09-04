@@ -50,3 +50,11 @@ def load():
 def get(key): 
 	if len(CONFIG) == 0: load()
 	return CONFIG[key]
+
+def export():
+	return {
+		"output.folder": CONFIG["output.folder"],
+		"data.max.age.in.days": CONFIG["data.max.age.in.days"],
+		"controller.version": CONFIG["version"],
+		"client.min.version": CONFIG["client.min.version"]
+	}

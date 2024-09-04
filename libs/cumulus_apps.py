@@ -41,6 +41,7 @@ import cumulus_server.apps.test_app as test
 
 logger = logging.getLogger(__name__)
 FINAL_FILE = config.get("final.file")
+OUTPUT_DIR = config.get("output.folder")
 
 def is_finished(app_name, stdout):
 	if app_name == "diann_1.8.1": return diann181.is_finished(stdout)
@@ -60,7 +61,8 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	# the working directory is the job directory
 	content = f"cd '{job_dir}'\n"
 	# create a directory where the output files should be generated
-	output_dir = "./output"
+	#output_dir = "./output"
+	output_dir = f"./{OUTPUT_DIR}"
 	content += f"mkdir '{output_dir}'\n"
 	# the script then must call the proper command line
 	cmd = "sleep 60"
