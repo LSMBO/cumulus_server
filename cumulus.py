@@ -151,7 +151,7 @@ def storage():
 	return jsonify(utils.get_raw_file_list())
 
 @app.route("/config")
-def config(): return jsonify(config.export())
+def check(): return jsonify(config.export())
 
 # start the daemons once all functions are defined
 threading.Thread(target=daemon.run, args=(), daemon=True).start()
