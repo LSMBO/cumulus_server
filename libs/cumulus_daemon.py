@@ -195,7 +195,7 @@ def clean():
 					#db.set_status(job_id, "ARCHIVED")
 					db.set_status(job_id, "ARCHIVED_" + status)
 					utils.delete_job_folder(job)
-					log.warning(f"Job {job_id} has been archived and its content has been deleted")
+					logger.warning(f"Job {job_id} has been archived and its content has been deleted")
 		# list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
 		for file in os.listdir(utils.DATA_DIR):
 			file = utils.DATA_DIR + "/" + file
@@ -208,6 +208,6 @@ def clean():
 						break
 				if not is_used: 
 					utils.delete_raw_file(file)
-					log.warning(f"File {os.path.basename(file)} has been deleted due to old age")
+					logger.warning(f"File {os.path.basename(file)} has been deleted due to old age")
 		# wait 24 hours between each cleaning
 		time.sleep(86400)

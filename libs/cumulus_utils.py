@@ -42,8 +42,10 @@ import cumulus_server.libs.cumulus_database as db
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR = config.get("storage.data.path")
-JOB_DIR = config.get("storage.jobs.path")
+#DATA_DIR = config.get("storage.data.path")
+#JOB_DIR = config.get("storage.jobs.path")
+DATA_DIR = config.get("storage.path") + config.get("storage.data.subpath")
+JOB_DIR = config.get("storage.path") + config.get("storage.jobs.subpath")
 HOSTS = []
 
 class Host:
@@ -230,6 +232,9 @@ def get_file_age_in_days(file):
 	# time() is the current time
 	# divide by the number of seconds in a day to have the number of days
 	if file is None: return 0
-	return (time.time() - os.path.getmtime(file)) / 86400
+	#return (time.time() - os.path.getmtime(file)) / 86400
+	t = (time.time() - os.path.getmtime(file)) / 86400
+	logger.info(f"File '{os.path.basename(file)}': {t}")
+	return t
 
 def get_version(): return config.get("version")
