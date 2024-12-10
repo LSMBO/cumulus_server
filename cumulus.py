@@ -41,6 +41,7 @@ import threading
 from urllib.parse import unquote
 
 # local modules
+import cumulus_server.libs.cumulus_apps as apps
 import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_utils as utils
 import cumulus_server.libs.cumulus_database as db
@@ -97,7 +98,7 @@ def cancel(owner, job_id):
 		status = db.get_status(job_id)
 		if status == "PENDING" or status == "RUNNING": 
 			utils.cancel_job(job_id)
-			return f"Job {job_id} has been deleted"
+			return f"Job {job_id} has been cancelled"
 		else: return f"Job {job_id} cannot be cancelled, it is already stopped"
 	else: return f"You cannot cancel this job"
 
@@ -145,10 +146,20 @@ def info():
 	# each dict contains its name, the number of cpu, the amount of ram and the numbers of jobs running and pending
 	return jsonify(list(map(lambda host: host.to_dict(), utils.get_all_hosts(True))))
 
+@app.rouge("/apps")
+def apps():
+	# return an array of xml strings, let the client extract the information
+	return jsonify(apps.get_app_list())
+
 @app.route("/storage")
 def storage():
 	# return the file names and sizes in /storage/data (as a string)
 	return jsonify(utils.get_raw_file_list())
+
+@app.route("/diskusage")
+def diskusage():
+	print("/diskusage")
+	return utils.get_disk_usage()
 
 @app.route("/config")
 def check(): return jsonify(config.export())

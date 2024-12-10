@@ -33,7 +33,7 @@
 import logging
 import os
 import paramiko
-from shutil import rmtree
+import shutil
 import time
 import json
 
@@ -184,7 +184,7 @@ def get_file_list(job_id):
 def delete_raw_file(file):
 	try:
 		if os.path.isfile(file): os.remove(file)
-		else: rmtree(file)
+		else: shutil.rmtree(file)
 	except OSError as o:
 		logger.error(f"Can't delete raw file {file}: {o.strerror}")
 
@@ -192,7 +192,7 @@ def delete_job_folder(job_id, delete_job_in_database = False):
 	try:
 		job_dir = db.get_job_dir(job_id)
 		if os.path.isdir(job_dir): 
-			rmtree(job_dir)
+			shutil.rmtree(job_dir)
 			logger.info(f"Job folder '{job_dir}' has been deleted")
 		if delete_job_in_database: db.delete_job(job_id)
 		return True
@@ -236,5 +236,11 @@ def get_file_age_in_days(file):
 	t = (time.time() - os.path.getmtime(file)) / 86400
 	logger.info(f"File '{os.path.basename(file)}': {t}")
 	return t
+
+def get_disk_usage():
+	#return shutil.disk_usage(config.get("storage.path"))
+	total, used, free = shutil.disk_usage(config.get("storage.path"))
+	logger.info(f"Total: {total} ; Used: {used} ; Free: {free}")
+	return total, used, free
 
 def get_version(): return config.get("version")
