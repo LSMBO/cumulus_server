@@ -77,7 +77,7 @@ def is_finished(app_name, stdout):
 	#else: return True
 	if app_name in APPS:
 		# extract the end tag from the app xml file associated to this job
-		tag = = ET.fromstring(APPS[app_name]).attrib["end_tag"]
+		tag = ET.fromstring(APPS[app_name]).attrib["end_tag"]
 		# return True if the end_tag is in stdout, False otherwise
 		return tag in stdout
 	else: return True
