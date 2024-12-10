@@ -146,7 +146,7 @@ def info():
 	# each dict contains its name, the number of cpu, the amount of ram and the numbers of jobs running and pending
 	return jsonify(list(map(lambda host: host.to_dict(), utils.get_all_hosts(True))))
 
-@app.rouge("/apps")
+@app.route("/apps")
 def apps():
 	# return an array of xml strings, let the client extract the information
 	return jsonify(apps.get_app_list())
