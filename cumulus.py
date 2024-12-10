@@ -166,4 +166,4 @@ def check(): return jsonify(config.export())
 
 # start the daemons once all functions are defined
 threading.Thread(target=daemon.run, args=(), daemon=True).start()
-threading.Thread(target=daemon.clean, args=(), daemon=True).start()
+#threading.Thread(target=daemon.clean, args=(), daemon=True).start()

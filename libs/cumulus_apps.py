@@ -164,7 +164,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 		command_line = " ".join(cmd)
 		# replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
 		command_line = command_line.replace("%nb_threads%", f"{nb_cpu}")
-		command_line = command_line.replace("%output_dir%", output_dir))
+		command_line = command_line.replace("%output_dir%", output_dir)
 	# return the command line
 	return command_line
 
