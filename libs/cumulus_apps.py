@@ -144,9 +144,8 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 				command = param.get("command")
 				if param.get("type") == "select":
 					# TODO search in options
+					command = command
 				elif param.get("type") == "range":
-					#if "%value%" in command: command = command.replace("%value%", settings[key][0])
-					#if "%value2%" in command: command = command.replace("%value2%", settings[key][1])
 					command = replace_in_command(command, "%value%", settings[key][0])
 					command = replace_in_command(command, "%value2%", settings[key][1])
 				elif param.get("type") == "file-list" or param.get("type") == "folder-list":
