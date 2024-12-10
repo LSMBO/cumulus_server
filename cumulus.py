@@ -158,8 +158,7 @@ def storage():
 
 @app.route("/diskusage")
 def diskusage():
-	print("/diskusage")
-	return utils.get_disk_usage()
+	return jsonify(utils.get_disk_usage())
 
 @app.route("/config")
 def check(): return jsonify(config.export())
