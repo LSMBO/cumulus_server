@@ -91,25 +91,24 @@ def set_status(job_id, status): set_value(job_id, "status", status)
 def get_status(job_id): return get_value(job_id, "status")
 def set_host(job_id, host): set_value(job_id, "host", host)
 def get_host(job_id): return get_value(job_id, "host")
-#def set_pid(job_id, pid): set_value(job_id, "pid", pid)
-#def get_pid(job_id): return get_value(job_id, "pid")
-def set_stdout(job_id, text): set_value(job_id, "stdout", text)
-def get_stdout(job_id): return get_value(job_id, "stdout")
-def set_stderr(job_id, text): set_value(job_id, "stderr", text)
-def get_stderr(job_id): return get_value(job_id, "stderr")
+# def set_stdout(job_id, text): set_value(job_id, "stdout", text)
+# def get_stdout(job_id): return get_value(job_id, "stdout")
+# def set_stderr(job_id, text): set_value(job_id, "stderr", text)
+# def get_stderr(job_id): return get_value(job_id, "stderr")
 def set_start_date(job_id): set_value(job_id, "start_date", int(time.time()))
 def set_end_date(job_id): set_value(job_id, "end_date", int(time.time()))
 def get_settings(job_id): return json.loads(get_value(job_id, "settings"))
 def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
-#def set_job_dir(job_id, dir): set_value(job_id, "job_dir", text)
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
 def add_to_stderr(job_id, text):
-	stderr = get_stderr(job_id)
-	if stderr == "": stderr = f"Cumulus: {text}"
-	else: stderr += f"\nCumulus: {text}"
+	# stderr = get_stderr(job_id)
+	# if stderr == "": stderr = f"Cumulus: {text}"
+	# else: stderr += f"\nCumulus: {text}"
+	with open(utils.get_final_stderr_path(job_id), "a") as f:
+    f.write(f"\nCumulus: {text}")
 
 ### specific functions ###
 def create_job(form, main_job_dir):
@@ -125,16 +124,13 @@ def create_job(form, main_job_dir):
 	# return the id of the job
 	job_id = cursor.lastrowid
 	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
-	#job_dir = f"{main_job_dir}/Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
 	job_dir_name = f"Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
 	job_dir = f"{main_job_dir}/{job_dir_name}"
-	#set_job_dir(job_id, job_dir)
 	cursor.execute(f"UPDATE jobs SET job_dir = ? WHERE id = ?", (job_dir, job_id))
 	cnx.commit()
 	# disconnect
 	cnx.close()
 	# return the job_id and the name of its directory
-	#return job_id, job_dir
 	return job_id, job_dir_name
 
 def get_job_details(job_id):
@@ -156,9 +152,7 @@ def get_job_details(job_id):
 		job["creation_date"] = response[7]
 		job["start_date"] = response[8]
 		job["end_date"] = response[9]
-		# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
-		#job["stdout"] = response[10]
-		#job["stderr"] = response[11]
+		# stdout and stderr for old jobs used to be kept in the database
 		job["stdout"] = response[10] == "" ? utils.get_stdout_content(job_id) : response[10]
 		job["stderr"] = response[11] == "" ? utils.get_stderr_content(job_id) : response[11]
 	# disconnect and return the job
@@ -188,27 +182,12 @@ def get_job_status(job_id):
 	if cursor.arraysize > 0:
 		status, stdout, stderr = cursor.fetchone()
 		response.append(status)
-		# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
-		#response.append(stdout)
-		#response.append(stderr)
+		# stdout and stderr for old jobs used to be kept in the database
 		response.append(stdout == "" ? utils.get_stdout_content(job_id) : stdout)
 		response.append(stderr == "" ? utils.get_stderr_content(job_id) : stderr)
 	# disconnect and return the status with stdout and stderr
 	cnx.close()
 	return response
-
-#def get_last_jobs(number = 100):
-#	# connect to the database
-#	cnx, cursor = connect()
-#	# search the jobs that fit the conditions
-#	#logger.debug(f"SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT '{number}'")
-#	results = cursor.execute("SELECT id, owner, app_name, status, creation_date from jobs ORDER BY id DESC LIMIT ?", (number,))
-#	# put the results in a dict
-#	jobs = []
-#	for id, owner, app_name, status, creation_date in results:
-#		jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
-#	cnx.close()
-#	return jobs
 
 def get_last_jobs(job_id, number = 100):
 	# connect to the database
@@ -219,7 +198,7 @@ def get_last_jobs(job_id, number = 100):
 	jobs = []
 	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
 		if id == job_id:
-			# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
+			# stdout and stderr for old jobs used to be kept in the database
 			if stdout == "": stdout = utils.get_stdout_content(job_id)
 			if stderr == "": stderr = utils.get_stderr_content(job_id)
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
@@ -256,13 +235,11 @@ def search_jobs(form):
 	results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, form["number"]))
 	# put the results in a dict
 	jobs = []
-	#for id, owner, app_name, status, creation_date, settings in results:
 	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
 		# filter by file here, so we can use a specific function for each app
 		if form["file"] == "" or search_file(app_name, settings, form["file"]):
-			#jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
 			if id == form["current_job_id"]:
-				# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
+				# stdout and stderr for old jobs used to be kept in the database
 				if stdout == "": stdout = utils.get_stdout_content(job_id)
 				if stderr == "": stderr = utils.get_stderr_content(job_id)
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
@@ -305,7 +282,7 @@ def delete_job(job_id):
 	cnx.commit()
 	# disconnect
 	cnx.close()
-	# TODO also remove the log files
+	# also remove the log files
 	stdout = utils.get_final_stdout_path(job_id)
 	if os.path.isfile(stdout): os.remove(stdout)
 	stderr = utils.get_final_stderr_path(job_id)

@@ -1,6 +1,30 @@
 <tool id="alphadia_1.8.2" name="AlphaDIA" version="1.8.2" description="">
 
     <section name="input" title="Input files" expanded="true">
+        <conditional name="library">
+            <select name="format" label="Select library format" help="Specify the type of library you want to use">
+                <option value="fasta" selected="true">Library-free</option>
+                <option value="speclib">Spectral library</option>
+            </select>
+            <when value="fasta">
+                <filelist name="fasta-file" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" command="--lib '' --fasta-search --predictor" repeated_command="--fasta '%value%'" help="Specify the FASTA file you want to use" />
+            </when>
+            <when value="speclib">
+                <filelist name="speclib-path" label="Spectra library file" format="speclib" is_raw_input="false" multiple="false" is_folder="false" value="" command="--lib '%value%'" help="Specify the spectral library" />
+            </when>
+        </conditional>
+        <conditional name="raw">
+            <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
+                <option value="bruker-d" selected="true">Bruker .d folders</option>
+                <option value="thermo-raw">Thermo .raw files</option>
+            </select>
+            <when value="bruker-d">
+                <filelist name="bruker" label="Select Bruker .d analyses" format="d" is_raw_input="true" multiple="true" is_folder="true" value="" repeated_command="-f '%value%'" help=".d folders will be expected" />
+            </when>
+            <when value="thermo-raw">
+                <filelist name="thermo" label="Select Thermo RAW files" format="raw" is_raw_input="true" multiple="true" is_folder="false" value="" repeated_command="-f '%value%'" help="Warning: Thermo RAW files cannot be read for now, the files will be automatically converted to mzML files" />
+            </when>
+        </conditional>
     </section>
 
     <section name="general" title="General" expanded="true">

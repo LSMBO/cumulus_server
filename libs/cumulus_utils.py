@@ -42,8 +42,6 @@ import cumulus_server.libs.cumulus_database as db
 
 logger = logging.getLogger(__name__)
 
-#DATA_DIR = config.get("storage.data.path")
-#JOB_DIR = config.get("storage.jobs.path")
 DATA_DIR = config.get("storage.path") + config.get("storage.data.subpath")
 JOB_DIR = config.get("storage.path") + config.get("storage.jobs.subpath")
 HOSTS = []
@@ -95,7 +93,6 @@ def remote_script(host, file):
 	ssh.exec_command("source " + file + " &")
 	# close the connection and return the pid
 	ssh.close()
-	#return pid
 
 def remote_check(host, pid):
 	if host is not None and pid is not None and pid > 0:
@@ -221,43 +218,12 @@ def cancel_job(job_id):
 	remote_cancel(get_host(host_name), pid)
 	# change the status
 	db.set_status(job_id, "CANCELLED")
-	# delete the job directory
-	#return delete_job_folder(job_id)
-
-def get_stdout_file_name(app_name): return f".{app_name}.stdout"
-def get_stderr_file_name(app_name): return f".{app_name}.stderr"
 
 def get_final_stdout_path(job_id):
-	#log_dir = config.get("storage.logs.subpath")
-	#if not os.path.isfile(log_dir): os.mkdir(log_dir)
-	#return f"{log_dir}/job_{job_id}.stdout"
 	return f"{config.get_log_dir()}/job_{job_id}.stdout"
 
 def get_final_stderr_path(job_id):
-	#log_dir = config.get("storage.logs.subpath")
-	#if not os.path.isfile(log_dir): os.mkdir(log_dir)
-	#return f"{log_dir}/job_{job_id}.stderr"
 	return f"{config.get_log_dir()}/job_{job_id}.stderr"
-
-def store_stdout(job_id):
-	job_dir = db.get_job_dir(job_id)
-	if os.path.isdir(job_dir):
-		app_name = db.get_app_name(job_id)
-		source = f"{job_dir}/{get_stdout_file_name(app_name)}"
-		destination = get_final_stdout_path(job_id)
-		shutil.copyfile(source, destination)
-	else:
-		logger.debug(f"Job directory '${job_dir}' is missing")
-
-def store_stderr(job_id):
-	job_dir = db.get_job_dir(job_id)
-	if os.path.isdir(job_dir):
-		app_name = db.get_app_name(job_id)
-		source = f"{job_dir}/{get_stderr_file_name(app_name)}"
-		destination = get_final_stderr_path(job_id)
-		shutil.copyfile(source, destination)
-	else:
-		logger.debug(f"Job directory '${job_dir}' is missing")
 
 def get_log_file_content(job_id, is_stdout = True):
 	content = ""
@@ -285,7 +251,6 @@ def get_file_age_in_days(file):
 	return t
 
 def get_disk_usage():
-	#return shutil.disk_usage(config.get("storage.path"))
 	total, used, free = shutil.disk_usage(config.get("storage.path"))
 	logger.info(f"Total: {total} ; Used: {used} ; Free: {free}")
 	return total, used, free

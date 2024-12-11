@@ -44,34 +44,6 @@ logger = logging.getLogger(__name__)
 REFRESH_RATE = int(config.get("refresh.rate.in.seconds"))
 MAX_AGE = int(config.get("data.max.age.in.days"))
 
-#def get_stdout(job_id):
-#	content = ""
-#	job_dir = db.get_job_dir(job_id)
-#	if os.path.isdir(job_dir):
-#		app_name = db.get_app_name(job_id)
-#		file = f"{job_dir}/{utils.get_stdout_file_name(app_name)}"
-#		if os.path.isfile(file):
-#			f = open(file, "r")
-#			content = f.read()
-#			f.close()
-#		else: logger.debug(f"Log file '${file}' is missing")
-#	else: logger.debug(f"Job directory '${job_dir}' is missing")
-#	return content
-
-#def get_stderr(job_id): 
-#	content = ""
-#	job_dir = db.get_job_dir(job_id)
-#	if os.path.isdir(job_dir):
-#		app_name = db.get_app_name(job_id)
-#		file = f"{job_dir}/{utils.get_stderr_file_name(app_name)}"
-#		if os.path.isfile(file):
-#			f = open(f"{job_dir}/{utils.get_stderr_file_name(app_name)}", "r")
-#			content = f.read()
-#			f.close()
-#		else: logger.debug(f"Log file '${file}' is missing")
-#	else: logger.debug(f"Job directory '${job_dir}' is missing")
-#	return content
-
 def is_process_running(job_id):
 	#pid = db.get_pid(job_id)
 	pid = utils.get_pid(job_id)
@@ -84,14 +56,9 @@ def is_process_running(job_id):
 
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
-		## update the stdout & stderr content
-		#stdout = get_stdout(job_id)
-		#stderr = get_stderr(job_id)
-		#db.set_stdout(job_id, stdout)
-		#db.set_stderr(job_id, stderr)
-		# copy the logs in the log directory
-		utils.store_stdout(job_id)
-		utils.store_stderr(job_id)
+		# # copy the logs in the log directory
+		# utils.store_stdout(job_id)
+		# utils.store_stderr(job_id)
 		# get stdout
 		stdout = utils.get_stdout_content(job_id)
 		# check that the process still exist
@@ -146,8 +113,6 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	# execute the command
 	# pid = utils.remote_script(host, cmd_file)
 	utils.remote_script(host, cmd_file)
-	# write the pid to a .cumulus.pid file
-	# utils.write_file(job_dir + "/.cumulus.pid", str(pid))
 	# update the job
 	db.set_host(job_id, host.name)
 	db.set_status(job_id, "RUNNING")
@@ -216,6 +181,3 @@ def clean():
 					logger.warning(f"File {os.path.basename(file)} has been deleted due to old age")
 		# wait 24 hours between each cleaning
 		time.sleep(86400)
-
-# TODO create another daemon to convert raw files to mzml, unless they already exist
-# TODO what to do if a job that requires the mzml is started before all mzml are converted?

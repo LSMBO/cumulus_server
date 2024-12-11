@@ -14,7 +14,7 @@
                 <filelist name="slice-pasef-list" label="Select slicePASEF analyses" format="d" is_raw_input="true" multiple="true" is_folder="true" value="" repeated_command="--f '%value%'" help=".d folders will be expected" />
             </when>
             <when value="thermo-raw">
-                <filelist name="thermo-raw-list" label="Select RAW files" format="raw" is_raw_input="true" multiple="true" is_folder="false" value="" repeated_command="--f '%value%'" help="Warning: Thermo RAW files cannot be read for now, the files will be automatically converted to mzML files" />
+                <filelist name="thermo-raw-list" label="Select RAW files" format="raw" is_raw_input="true" convert_to_mzml="true" multiple="true" is_folder="false" value="" repeated_command="--f '%value%'" help="Warning: Thermo RAW files cannot be read for now, the files will be automatically converted to mzML files" />
             </when>
             <when value="mzml">
                 <filelist name="mzml-list" label="Select mzML files" format="mzML" is_raw_input="true" multiple="true" is_folder="false" value="" repeated_command="--f '%value%'" help=".mzML files will be expected" />

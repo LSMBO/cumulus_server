@@ -72,8 +72,8 @@ def details(job_id):
 	# return the job's owner, its app, the settings, status, host, description, stdout, stderr, and all three dates
 	return jsonify(db.get_job_details(job_id))
 
-@app.route("/joblist/<int:number>/")
-#def job_list(number):
+# @app.route("/joblist/<int:number>/")
+# def job_list(number):
 #	return jsonify(db.get_last_jobs(number))
 
 @app.route("/joblist/<int:job_id>/<int:number>/")
@@ -109,9 +109,7 @@ def delete(owner, job_id):
 		logger.info(f"Delete job ${job_id}")
 		# read the status file, only delete if the status is DONE, FAILED or ARCHIVED
 		status = db.get_status(job_id)
-		#if status.endswith("DONE") or status.endswith("FAILED") or status.endswith("CANCELLED"):
 		if status != "PENDING" and status != "RUNNING":
-			#db.delete_job(job_id)
 			utils.delete_job_folder(job_id, True)
 			return f"Job {job_id} has been deleted"
 		else: return f"You cannot delete a running job"
