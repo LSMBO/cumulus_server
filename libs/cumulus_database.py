@@ -156,8 +156,11 @@ def get_job_details(job_id):
 		job["creation_date"] = response[7]
 		job["start_date"] = response[8]
 		job["end_date"] = response[9]
-		job["stdout"] = response[10]
-		job["stderr"] = response[11]
+		# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
+		#job["stdout"] = response[10]
+		#job["stderr"] = response[11]
+		job["stdout"] = response[10] == "" ? utils.get_stdout_content(job_id) : response[10]
+		job["stderr"] = response[11] == "" ? utils.get_stderr_content(job_id) : response[11]
 	# disconnect and return the job
 	cnx.close()
 	return job
@@ -185,8 +188,11 @@ def get_job_status(job_id):
 	if cursor.arraysize > 0:
 		status, stdout, stderr = cursor.fetchone()
 		response.append(status)
-		response.append(stdout)
-		response.append(stderr)
+		# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
+		#response.append(stdout)
+		#response.append(stderr)
+		response.append(stdout == "" ? utils.get_stdout_content(job_id) : stdout)
+		response.append(stderr == "" ? utils.get_stderr_content(job_id) : stderr)
 	# disconnect and return the status with stdout and stderr
 	cnx.close()
 	return response
@@ -213,6 +219,9 @@ def get_last_jobs(job_id, number = 100):
 	jobs = []
 	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
 		if id == job_id:
+			# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
+			if stdout == "": stdout = utils.get_stdout_content(job_id)
+			if stderr == "": stderr = utils.get_stderr_content(job_id)
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 		else:
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
@@ -253,6 +262,9 @@ def search_jobs(form):
 		if form["file"] == "" or search_file(app_name, settings, form["file"]):
 			#jobs.append({"id": id, "status": status, "app_name": app_name, "owner": owner, "creation_date": creation_date})
 			if id == form["current_job_id"]:
+				# TODO if stdout is empty, search for it in /storage/logs/{job_id}.stdout, same for stderr
+				if stdout == "": stdout = utils.get_stdout_content(job_id)
+				if stderr == "": stderr = utils.get_stderr_content(job_id)
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 			else:
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
@@ -293,3 +305,8 @@ def delete_job(job_id):
 	cnx.commit()
 	# disconnect
 	cnx.close()
+	# TODO also remove the log files
+	stdout = utils.get_final_stdout_path(job_id)
+	if os.path.isfile(stdout): os.remove(stdout)
+	stderr = utils.get_final_stderr_path(job_id)
+	if os.path.isfile(stderr): os.remove(stderr)

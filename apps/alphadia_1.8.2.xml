@@ -1,4 +1,4 @@
-<tool id="alphadia182" name="AlphaDIA" version="1.8.2" description="">
+<tool id="alphadia_1.8.2" name="AlphaDIA" version="1.8.2" description="">
 
     <section name="input" title="Input files" expanded="true">
     </section>

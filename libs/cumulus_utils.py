@@ -227,6 +227,53 @@ def cancel_job(job_id):
 def get_stdout_file_name(app_name): return f".{app_name}.stdout"
 def get_stderr_file_name(app_name): return f".{app_name}.stderr"
 
+def get_final_stdout_path(job_id):
+	#log_dir = config.get("storage.logs.subpath")
+	#if not os.path.isfile(log_dir): os.mkdir(log_dir)
+	#return f"{log_dir}/job_{job_id}.stdout"
+	return f"{config.get_log_dir()}/job_{job_id}.stdout"
+
+def get_final_stderr_path(job_id):
+	#log_dir = config.get("storage.logs.subpath")
+	#if not os.path.isfile(log_dir): os.mkdir(log_dir)
+	#return f"{log_dir}/job_{job_id}.stderr"
+	return f"{config.get_log_dir()}/job_{job_id}.stderr"
+
+def store_stdout(job_id):
+	job_dir = db.get_job_dir(job_id)
+	if os.path.isdir(job_dir):
+		app_name = db.get_app_name(job_id)
+		source = f"{job_dir}/{get_stdout_file_name(app_name)}"
+		destination = get_final_stdout_path(job_id)
+		shutil.copyfile(source, destination)
+	else:
+		logger.debug(f"Job directory '${job_dir}' is missing")
+
+def store_stderr(job_id):
+	job_dir = db.get_job_dir(job_id)
+	if os.path.isdir(job_dir):
+		app_name = db.get_app_name(job_id)
+		source = f"{job_dir}/{get_stderr_file_name(app_name)}"
+		destination = get_final_stderr_path(job_id)
+		shutil.copyfile(source, destination)
+	else:
+		logger.debug(f"Job directory '${job_dir}' is missing")
+
+def get_log_file_content(job_id, is_stdout = True):
+	content = ""
+	# read log file
+	log_file = is_stdout ? get_final_stdout_path(job_id) : get_final_stderr_path(job_id)
+	if os.path.isfile(log_file):
+		f = open(log_file, "r")
+		content = f.read()
+		f.close()
+	else: logger.debug(f"Log file for job '${job_id}' is missing")
+	# return its content
+	return content
+
+def get_stdout_content(job_id): return get_log_file_content(job_id, True)
+def get_stderr_content(job_id): return get_log_file_content(job_id, False)
+
 def get_file_age_in_days(file):
 	# mtime is the date in seconds since epoch since the last modification
 	# time() is the current time

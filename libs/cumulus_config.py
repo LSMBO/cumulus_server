@@ -30,6 +30,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
+import os
 import re
 
 CONFIG = {}
@@ -58,3 +59,8 @@ def export():
 		"controller.version": CONFIG["version"],
 		"client.min.version": CONFIG["client.min.version"]
 	}
+
+def get_log_dir():
+	log_dir = get("storage.logs.subpath")
+	if not os.path.isfile(log_dir): os.mkdir(log_dir)
+	return log_dir

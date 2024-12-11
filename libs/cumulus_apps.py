@@ -38,9 +38,9 @@ import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_database as db
 import cumulus_server.libs.cumulus_utils as utils
 # TODO comment the following apps import
-import cumulus_server.apps.diann181 as diann181
-import cumulus_server.apps.diann191 as diann191
-import cumulus_server.apps.test_app as test
+#import cumulus_server.apps.diann181 as diann181
+#import cumulus_server.apps.diann191 as diann191
+#import cumulus_server.apps.test_app as test
 
 logger = logging.getLogger(__name__)
 FINAL_FILE = config.get("final.file")
@@ -54,7 +54,8 @@ APPS = {}
 def get_app_list():
 	app_list = []
 	for f in os.listdir("apps"):
-		# TODO f path may be wrong
+		# add the path to the file
+		f = f"apps/{f}"
 		if f.endswith(".xml"):
 			# store the link between the id of the app and the content of the file
 			id = ET.parse(f).getroot().attrib["id"]
@@ -135,37 +136,94 @@ def replace_in_command(command, tag, value):
 def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 	cmd = []
 	if app_name in APPS:
+		# loop through all params in the xml file, if the param name is in the settings then get its command attribute
 		root = ET.fromstring(APPS[app_name])
 		cmd.append(root.attrib["command"])
-		for param in root.findall(".//param"):
+		for param in root.findall(".//select"):
 			key = param.get("name")
-			# get the command if the name is in the settings
-			if key in settings: 
+			if key in settings:
+				value = settings[key]
 				command = param.get("command")
-				if param.get("type") == "select":
-					# TODO search in options
-					command = command
-				elif param.get("type") == "range":
-					command = replace_in_command(command, "%value%", settings[key][0])
-					command = replace_in_command(command, "%value2%", settings[key][1])
-				elif param.get("type") == "file-list" or param.get("type") == "folder-list":
-					repeated_command = param.find("repeated_command")
-					if repeated_command is None:
-						command = replace_in_command(command, "%value%", settings[key])
-					else: 
-						for file in settings[key]:
-							command += " " + replace_in_command(repeated_command, "%value%", get_file_path(job_dir, file, param.get("is_raw_input")))
-				else:
-					#if "%value%" in command: command = command.replace("%value%", settings[key])
-					command = replace_in_command(command, "%value%", settings[key])
+				# if there is a command associated to the main select (in this case, no variable is expected)
+				if param.get("command") != None: cmd.append(param.get("command"))
+				# get the option with the selected value, add the command if there is one (no variable expected)
+				option = param.find(f"option[@value='{value}']")
+				if option.get("command") != None: cmd.append(option.get("command"))
+		for param in root.findall(".//checkbox"):
+			# add the command line if the key is in the settings (if it is, it means that it's checked)
+			# no variable is expected there
+			if param.get("name") in settings: cmd.append(param.get("command"))
+		for param in root.findall(".//string"):
+			# add the command line if the key is in the settings, variable %value% can be expected
+			key = param.get("name")
+			if key in settings: cmd.append(replace_in_command(param.get("command"), "%value%", settings[key]))
+		for param in root.findall(".//number"):
+			# add the command line if the key is in the settings, variable %value% can be expected
+			key = param.get("name")
+			if key in settings: cmd.append(replace_in_command(param.get("command"), "%value%", settings[key]))
+		for param in root.findall(".//range"):
+			# add the command line if the keys for min and max are in the settings, variables %value% and %value2% can be expected
+			key_min = param.get("name") + "-min"
+			key_max = param.get("name") + "-max"
+			if key_min in settings and key_max in settings:
+				command = param.get("command")
+				command = replace_in_command(command, "%value%", settings[key_min])
+				command = replace_in_command(command, "%value2%", settings[key_max])
 				cmd.append(command)
-		# create the full command line as text
-		command_line = " ".join(cmd)
-		# replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
-		command_line = command_line.replace("%nb_threads%", f"{nb_cpu}")
-		command_line = command_line.replace("%output_dir%", output_dir)
+		for param in root.findall(".//filelist"):
+			# this param can be either a single file/folder or a list of file/folder
+			key = param.get("name")
+			if key in settings:
+				# add the command if there is one
+				command = param.get("command")
+				if command != None: cmd.append(replace_in_command(command, "%value%", settings[key]))
+				# it's also possible to have one command per file, even when it only allows one file
+				repeated_command = param.get("repeated_command")
+				if repeated_command != None:
+					if param.get("multiple") == "true":
+						for file in settings[key]: 
+							file = get_file_path(job_dir, file, param.get("is_raw_input"))
+							cmd.append(replace_in_command(repeated_command, "%value%", file))
+					else:
+						file = get_file_path(job_dir, settings[key], param.get("is_raw_input"))
+						cmd.append(replace_in_command(repeated_command, "%value%", file))
+	# create the full command line as text
+	command_line = " ".join(cmd)
+	# replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
+	command_line = command_line.replace("%nb_threads%", f"{nb_cpu}")
+	command_line = command_line.replace("%output_dir%", output_dir)
 	# return the command line
 	return command_line
+			
+		# for param in root.findall(".//param"):
+			# key = param.get("name")
+			# # get the command if the name is in the settings
+			# if key in settings: 
+				# command = param.get("command")
+				# if param.get("type") == "select":
+					# # TODO search in options
+					# command = command
+				# elif param.get("type") == "range":
+					# command = replace_in_command(command, "%value%", settings[key][0])
+					# command = replace_in_command(command, "%value2%", settings[key][1])
+				# elif param.get("type") == "file-list" or param.get("type") == "folder-list":
+					# repeated_command = param.find("repeated_command")
+					# if repeated_command is None:
+						# command = replace_in_command(command, "%value%", settings[key])
+					# else: 
+						# for file in settings[key]:
+							# command += " " + replace_in_command(repeated_command, "%value%", get_file_path(job_dir, file, param.get("is_raw_input")))
+				# else:
+					# #if "%value%" in command: command = command.replace("%value%", settings[key])
+					# command = replace_in_command(command, "%value%", settings[key])
+				# cmd.append(command)
+		# # create the full command line as text
+		# command_line = " ".join(cmd)
+		# # replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
+		# command_line = command_line.replace("%nb_threads%", f"{nb_cpu}")
+		# command_line = command_line.replace("%output_dir%", output_dir)
+	# # return the command line
+	# return command_line
 
 def generate_script(job_id, job_dir, app_name, settings, host):
 	# the working directory is the job directory
