@@ -77,7 +77,8 @@ def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 		# search in the settings if the key exists
 		if key in settings:
 			# get the files as an array
-			current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+			#current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+			current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 			for file in current_files:
 				file = get_file_path(job_dir, file, is_raw_input)
 				# if the file is marked as to be converted, add the converted file instead
@@ -93,7 +94,8 @@ def get_all_files_in_settings(job_dir, app_name, settings, only_convert_to_mzml 
 		# search in the settings if the key exists
 		if key in settings:
 			# get the files as an array
-			current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+			# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+			current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 			for file in current_files:
 				file = get_file_path(job_dir, file, is_raw_input)
 				# if the file is marked as to be converted, add the converted file instead
@@ -166,7 +168,8 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 				# it's also possible to have one command per file, even when it only allows one file
 				repeated_command = param.get("repeated_command")
 				if repeated_command != None:
-					current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+					# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+					current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 					for file in settings[key]: 
 							file = get_file_path(job_dir, file, is_raw_input)
 							if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
