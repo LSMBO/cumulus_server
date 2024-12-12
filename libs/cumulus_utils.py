@@ -228,7 +228,8 @@ def get_final_stderr_path(job_id):
 def get_log_file_content(job_id, is_stdout = True):
 	content = ""
 	# read log file
-	log_file = is_stdout ? get_final_stdout_path(job_id) : get_final_stderr_path(job_id)
+	# log_file = is_stdout ? get_final_stdout_path(job_id) : get_final_stderr_path(job_id)
+	log_file = get_final_stdout_path(job_id) if is_stdout else get_final_stderr_path(job_id)
 	if os.path.isfile(log_file):
 		f = open(log_file, "r")
 		content = f.read()

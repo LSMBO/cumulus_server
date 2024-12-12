@@ -108,7 +108,7 @@ def add_to_stderr(job_id, text):
 	# if stderr == "": stderr = f"Cumulus: {text}"
 	# else: stderr += f"\nCumulus: {text}"
 	with open(utils.get_final_stderr_path(job_id), "a") as f:
-    f.write(f"\nCumulus: {text}")
+		f.write(f"\nCumulus: {text}")
 
 ### specific functions ###
 def create_job(form, main_job_dir):
@@ -153,8 +153,10 @@ def get_job_details(job_id):
 		job["start_date"] = response[8]
 		job["end_date"] = response[9]
 		# stdout and stderr for old jobs used to be kept in the database
-		job["stdout"] = response[10] == "" ? utils.get_stdout_content(job_id) : response[10]
-		job["stderr"] = response[11] == "" ? utils.get_stderr_content(job_id) : response[11]
+		# job["stdout"] = response[10] == "" ? utils.get_stdout_content(job_id) : response[10]
+		# job["stderr"] = response[11] == "" ? utils.get_stderr_content(job_id) : response[11]
+		job["stdout"] = utils.get_stdout_content(job_id) if response[10] == "" else response[10]
+		job["stderr"] = utils.get_stderr_content(job_id) if response[11] == "" else response[11]
 	# disconnect and return the job
 	cnx.close()
 	return job
@@ -183,8 +185,12 @@ def get_job_status(job_id):
 		status, stdout, stderr = cursor.fetchone()
 		response.append(status)
 		# stdout and stderr for old jobs used to be kept in the database
-		response.append(stdout == "" ? utils.get_stdout_content(job_id) : stdout)
-		response.append(stderr == "" ? utils.get_stderr_content(job_id) : stderr)
+		# response.append(stdout == "" ? utils.get_stdout_content(job_id) : stdout)
+		# response.append(stderr == "" ? utils.get_stderr_content(job_id) : stderr)
+		if stdout == "": response.append(utils.get_stdout_content(job_id))
+		else: response.append(stdout)
+		if stderr == "": response.append(utils.get_stderr_content(job_id))
+		else: response.append(stderr)
 	# disconnect and return the status with stdout and stderr
 	cnx.close()
 	return response
