@@ -37,6 +37,9 @@ import re
 import subprocess
 import sys
 
+# TODO this script does not work if the host is not already in ~/.ssh/known_hosts
+# TODO the addition to the cumulus host file does not seem to work
+
 # get the arguments
 address = sys.argv[1]
 user = sys.argv[2] # default should be ubuntu
@@ -72,6 +75,7 @@ def is_connected():
 def connection():
 	global ssh
 	if not is_connected():
+		# TODO if paramiko cannot add the host to the known_hosts, maybe use this command: "ssh-keyscan -H {address} >> ~/.ssh/known_hosts"
 		ssh = paramiko.SSHClient()
 		ssh.load_system_host_keys()
 		#ssh.connect(address, port, username = user, key_filename = rsa_file)

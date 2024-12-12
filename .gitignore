@@ -1,3 +1,5 @@
 .gitignore
 .venv
 test.py
+apps/apps.zip
+hosts.tsv
