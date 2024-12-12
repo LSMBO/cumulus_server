@@ -61,6 +61,6 @@ def export():
 	}
 
 def get_log_dir():
-	log_dir = get("storage.logs.subpath")
+	log_dir = get("storage.path") + get("storage.logs.subpath")
 	if not os.path.isfile(log_dir): os.mkdir(log_dir)
 	return log_dir
