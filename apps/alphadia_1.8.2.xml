@@ -1,4 +1,4 @@
-<tool id="alphadia_1.8.2" name="AlphaDIA" version="1.8.2" description="">
+<tool id="alphadia_1.8.2" name="AlphaDIA" version="1.8.2" description="" command="alphadia -o '%output_dir%'" end_tag="TODO">
 
     <section name="input" title="Input files" expanded="true">
         <conditional name="library">
@@ -7,10 +7,10 @@
                 <option value="speclib">Spectral library</option>
             </select>
             <when value="fasta">
-                <filelist name="fasta-file" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" command="--lib '' --fasta-search --predictor" repeated_command="--fasta '%value%'" help="Specify the FASTA file you want to use" />
+                <filelist name="fasta-file" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" command="--fasta '%value%'" help="Specify the FASTA file you want to use" />
             </when>
             <when value="speclib">
-                <filelist name="speclib-path" label="Spectra library file" format="speclib" is_raw_input="false" multiple="false" is_folder="false" value="" command="--lib '%value%'" help="Specify the spectral library" />
+                <filelist name="speclib-path" label="Spectra library file" format="speclib" is_raw_input="false" multiple="false" is_folder="false" value="" command="--library '%value%'" help="Specify the spectral library" />
             </when>
         </conditional>
         <conditional name="raw">
@@ -121,7 +121,7 @@
                     <option value="orbitrap-tribrid">Orbitrap Tribrid</option>
                     <option value="thermo-tribrid">Thermo Tribrid</option>
                 </select>
-                <filelist name="peptdeep-model-path" label="PeptDeep Model Path" multiple="true" is_folder="false" is_raw_input="false" format="" value="" max="1" help="" />
+                <filelist name="peptdeep-model-path" label="PeptDeep Model Path" multiple="false" is_folder="true" is_raw_input="false" format="" value="" help="" />
                 <select name="peptdeep-model-type" label="PeptDeep Model Type" help="">
                     <option value="generic" selected="true">Generic</option>
                     <option value="phospho">phospho</option>
