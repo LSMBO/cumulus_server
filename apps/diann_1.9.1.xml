@@ -77,7 +77,7 @@
         <number name="scan-window" label="Scan window" value="0" min="0" max="1000" command="--window %value%" help="Radius (in scans) of the retention time window that is used to scan extracted chromatograms of precursor ions; this parameter allows to override its automatic inference (which is performed for the first run in the experiment)" />
         <checkbox name="unrelated-runs" label="Unrelated runs" value="false" command="--individual-mass-acc --individual-windows" help="Different runs will be treated as unrelated, i.e. mass accuracy (when automatic) will be determined separately, as well as the retention time window" />
         <checkbox name="peptidoforms" label="Peptidoforms" value="false" command="--peptidoforms" help="Score peptidoform confidence and use it for output filtering" />
-        <checkbox name="mbr" label="MBR" value="false" command="--reanalyse" help="Match between runs: create a spectra library from DIA data and reanalyse using this library" />
+        <checkbox name="mbr" label="MBR" value="true" command="--reanalyse" help="Match between runs: create a spectra library from DIA data and reanalyse using this library" />
         <checkbox name="no-shared-spectra" label="No shared spectra" value="true" command="--int-removal 0" help="Make sure that a single spectrum is not used to identify multiple peptides that have shared fragment masses" />
         <select name="machine-learning" label="Neural network classifier" help="Double-pass mode is the best in most cases but is twice slower than single-pass">
             <option value="off" command="--no-nn">Off</option>
