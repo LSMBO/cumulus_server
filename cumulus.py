@@ -47,14 +47,27 @@ import cumulus_server.libs.cumulus_utils as utils
 import cumulus_server.libs.cumulus_database as db
 import cumulus_server.libs.cumulus_daemon as daemon
 
+IS_DEBUG = False
+
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-	# handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
-	# level = logging.INFO,
-	level = logging.DEBUG,
-	format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
-	datefmt = '%Y/%m/%d %H:%M:%S')
+log_format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+log_date = "%Y/%m/%d %H:%M:%S"
+if IS_DEBUG: logging.basicConfig(level = logging.DEBUG, format = log_format, datefmt = log_date)
+else:
+	logging.basicConfig(
+		handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
+		level = logging.INFO,
+		format = log_format,
+		datefmt = log_date
+	)
+
+# logging.basicConfig(
+	# # handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
+	# # level = logging.INFO,
+	# level = logging.DEBUG,
+	# format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+	# datefmt = '%Y/%m/%d %H:%M:%S')
 
 # this has to be a POST message
 @app.route("/start", methods=["POST"])
