@@ -80,6 +80,7 @@ def find_best_host(job_id):
 	strategy = db.get_strategy(job_id)
 	selected_host = None
 	hosts = utils.get_all_hosts()
+	logger.debug(f"Strategy: '{strategy}'")
 	
 	if strategy == "first_available":
 		# if the strategy is to take the first available host, return the first host who is not running anything
@@ -98,7 +99,9 @@ def find_best_host(job_id):
 		elif strategy.startswith("host:"):
 			# the strategy name may contain the name of an host
 			for host in hosts:
+				logger.debug(host.name)
 				if f"host:{host.name}" == strategy: selected_host = host
+				
 		# reset the selected host if it is already in use
 		if selected_host is not None:
 			runnings, _ = db.get_alive_jobs_per_host(selected_host.name)
@@ -179,7 +182,7 @@ def clean():
 				# verify if this file is used or will be used
 				is_used = False
 				for job_id in db.get_jobs_per_status("RUNNING") + db.get_jobs_per_status("PENDING"):
-					if apps.is_file_required(db.get_app_name(job_id), db.get_settings(job_id), file):
+					if apps.is_file_required(db.get_job_dir(job_id), db.get_app_name(job_id), db.get_settings(job_id), file):
 						is_used = True
 						break
 				if not is_used: 

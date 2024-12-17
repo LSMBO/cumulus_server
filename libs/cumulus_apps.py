@@ -298,7 +298,7 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	utils.write_file(cmd_file, content)
 	return cmd_file
 
-def is_file_required(app_name, settings, file):
+def is_file_required(job_dir, app_name, settings, file):
 	# search in the settings for each input file
 	for input_file in get_all_files_in_settings(job_dir, app_name, settings):
 		# return True if the searched file name is one of the files in the settings
