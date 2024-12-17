@@ -163,7 +163,7 @@ def clean():
 				# if job does not exist in the database, delete its folder
 				if not db.check_job_existency(job_id):
 					logger.warning(f"Job {job_id} had content but was not found in the database, deleting all content")
-					utils.delete_job_folder(job)
+					utils.delete_job_folder_no_db(job)
 				else:
 					status = db.get_status(job_id)
 					if status == "DONE" or status == "FAILED" or status == "CANCELLED":
