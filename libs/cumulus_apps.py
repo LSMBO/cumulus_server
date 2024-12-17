@@ -49,11 +49,13 @@ def get_app_list():
 		# add the path to the file
 		f = f"apps/{f}"
 		if f.endswith(".xml"):
+			root = ET.parse(f).getroot()
 			# store the link between the id of the app and the content of the file
-			id = ET.parse(f).getroot().attrib["id"]
+			# id = ET.parse(f).getroot().attrib["id"]
+			id = root.attrib["id"]
 			# do not return the app if it's tagged as hidden (probably an old version)
-			hidden = ET.parse(f).getroot().attrib["hidden"]
-			if hidden == None or hidden == "false":
+			hidden = root.attrib["hidden"]
+			if hidden is None or hidden == "false":
 				# get the xml content
 				with open(f, 'r') as xml:
 					APPS[id] = xml.read()
