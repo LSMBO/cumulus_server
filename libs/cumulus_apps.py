@@ -170,7 +170,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 				if repeated_command != None:
 					# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
 					current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
-					for file in settings[key]: 
+					for file in current_files: 
 							file = get_file_path(job_dir, file, is_raw_input)
 							if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
 							cmd.append(replace_in_command(repeated_command, "%value%", file))
