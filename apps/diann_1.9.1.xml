@@ -40,7 +40,7 @@
                 </select>
                 <number name="mc" label="Missed cleavages" value="1" min="0" max="5" command="--missed-cleavages %value%" help="Maximum number of missed cleavages allowed" />
                 <checkbox name="met-excision" label="N-term M excision" value="true" command="--met-excision" help="Enable N-terminal methionine excision" />
-                <range name="peptide-length" label="Peptide length range" value="7" value2="30" min="5" max="100" command="--min-pep-length %value% --max-pep-length %value2%" help="Set the minimum and maximum precursor length" />
+                <range name="peptide-length" label="Peptide length range" value="7" value2="30" min="5" max="100" command="--min-pep-len %value% --max-pep-len %value2%" help="Set the minimum and maximum precursor length" />
                 <range name="precursor-charge" label="Precursor charge range" value="1" value2="4" min="1" max="10" command="--min-pr-charge %value% --max-pr-charge %value2%" help="Set the minimum and maximum precursor charge" />
                 <range name="precursor-mz" label="Precursor m/z range" value="300" value2="1800" min="0" max="2000" command="--min-pr-mz %value% --max-pr-mz %value2%" help="Set the minimum and maximum precursor m/z" />
                 <range name="fragment-mz" label="Fragment ion m/z range" value="200" value2="1800" min="0" max="2000" command="--min-fr-mz %value% --max-fr-mz %value2%" help="Set the minimum and maximum fragment m/z" />
@@ -61,7 +61,7 @@
     <section name="output" title="Output" expanded="true" >
         <checkbox name="matrices" value="true" label="Quantities matrices" command="--matrices" help="Generate precursor/protein x samples quantification matrics at a fixed FDR cutoff" />
         <checkbox name="xic" value="false" label="XICs" command="--xic" help="Generate XICs for visualisation, makes analysis a bit slower" />
-        <checkbox name="prosit" value="true" label="Generate Prosit input" command="--prosit" help="In silico digest the FASTA file and save the list of precursors in a format compatible with Prosit" />
+        <checkbox name="prosit" value="false" label="Generate Prosit input" command="--prosit" help="In silico digest the FASTA file and save the list of precursors in a format compatible with Prosit. Warning, enabling Prosit export forces C(cam) as a fixed modification" />
         <number name="fdr" value="1.0" label="Precursor FDR (%)" command="--qvalue %value%" help="False discovery rate level at which the output files will be filtered" />
         <number name="loglevel" label="Log level" value="1" command="--verbose %value%" help="Specify how detailed the information reported during the analysis should be" min="0" max="5" />
     </section>
@@ -69,14 +69,14 @@
         <number name="max-var-mod" label="Maximum number of variable modifications" value="0" min="0" max="5" command="--var-mods %value%" help="" />
         <checkbox name="ptm-carba" label="C carbamidomethylation" value="true" command="--unimod4" help="Enable cysteine carbamidomethylation as a fixed modification" />
         <checkbox name="ptm-ox" label="Ox (M)" value="false" command="--var-mod UniMod:35,15.994915,M" help="Enable methionine oxidation as a variable modification" />
-        <checkbox name="ptm-ac" label="AC(N-term)" value="false" command="--var-mod UniMod:1,42.010565,*n --monitor-mod UniMod:1" help="Enable protein N-terminal acetylation as a variable modification / score sites" />
-        <checkbox name="ptm-phospho" label="Phospho" value="false" command="--var-mod UniMod:21,79.966331,STY --monitor-mod UniMod:21" help="Enable S, T, Y phosphorylation as a variable modification / score sites" />
-        <checkbox name="ptm-kgg" label="K-GG" value="false" command="--var-mod UniMod:121,114.042927,K --monitor-mod UniMod:121 --no-cut-after-mod UniMod:121" help="Enable -GG adducts on lysines (left after tryptic digest of an attached ubiquitin) as a variable modification / score sites" />
+        <checkbox name="ptm-ac" label="AC(N-term)" value="false" command="--var-mod UniMod:1,42.010565,*n" help="Enable protein N-terminal acetylation as a variable modification / score sites" />
+        <checkbox name="ptm-phospho" label="Phospho" value="false" command="--var-mod UniMod:21,79.966331,STY" help="Enable S, T, Y phosphorylation as a variable modification / score sites" />
+        <checkbox name="ptm-kgg" label="K-GG" value="false" command="--var-mod UniMod:121,114.042927,K --no-cut-after-mod UniMod:121" help="Enable -GG adducts on lysines (left after tryptic digest of an attached ubiquitin) as a variable modification / score sites" />
         <number name="ms1-acc" label="MS1 accuracy" value="0.0" min="0" max="100" command="--mass-acc-ms1 %value%" help="MS1 mass accuracy (ppm) - Use '0.0' for automatic inference for the first run in the experiment. Any other value will turn off automatic inference for MS2 mass accuracy" />
         <number name="ms2-acc" label="MS2 accuracy" value="0.0" min="0" max="100" command="--mass-acc %value%" help="MS2 mass accuracy (ppm) - Use '0.0' for automatic inference for the first run in the experiment" />
         <number name="scan-window" label="Scan window" value="0" min="0" max="1000" command="--window %value%" help="Radius (in scans) of the retention time window that is used to scan extracted chromatograms of precursor ions; this parameter allows to override its automatic inference (which is performed for the first run in the experiment)" />
         <checkbox name="unrelated-runs" label="Unrelated runs" value="false" command="--individual-mass-acc --individual-windows" help="Different runs will be treated as unrelated, i.e. mass accuracy (when automatic) will be determined separately, as well as the retention time window" />
-        <checkbox name="peptidoforms" label="Peptidoforms" value="false" command="--peptidoforms" help="Score peptidoform confidence and use it for output filtering" />
+        <checkbox name="peptidoforms" label="Peptidoforms" value="true" command="--peptidoforms" help="Score peptidoform confidence and use it for output filtering (this will be automatically activated if variable modifications are declared)" />
         <checkbox name="mbr" label="MBR" value="true" command="--reanalyse" help="Match between runs: create a spectra library from DIA data and reanalyse using this library" />
         <checkbox name="no-shared-spectra" label="No shared spectra" value="true" command="--int-removal 0" help="Make sure that a single spectrum is not used to identify multiple peptides that have shared fragment masses" />
         <select name="machine-learning" label="Neural network classifier" help="Double-pass mode is the best in most cases but is twice slower than single-pass">

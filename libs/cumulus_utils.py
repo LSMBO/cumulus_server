@@ -234,7 +234,7 @@ def get_log_file_content(job_id, is_stdout = True):
 		f = open(log_file, "r")
 		content = f.read()
 		f.close()
-	else: logger.debug(f"Log file for job '${job_id}' is missing")
+	# else: logger.debug(f"Log file for job '${job_id}' is missing")
 	# return its content
 	return content
 

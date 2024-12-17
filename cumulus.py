@@ -50,8 +50,8 @@ import cumulus_server.libs.cumulus_daemon as daemon
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-	#handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
-	#level = logging.INFO,
+	# handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
+	# level = logging.INFO,
 	level = logging.DEBUG,
 	format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
 	datefmt = '%Y/%m/%d %H:%M:%S')
@@ -145,7 +145,7 @@ def info():
 	return jsonify(list(map(lambda host: host.to_dict(), utils.get_all_hosts(True))))
 
 @app.route("/apps")
-def apps():
+def listapps():
 	# return an array of xml strings, let the client extract the information
 	return jsonify(apps.get_app_list())
 
@@ -163,4 +163,4 @@ def check(): return jsonify(config.export())
 
 # start the daemons once all functions are defined
 threading.Thread(target=daemon.run, args=(), daemon=True).start()
-#threading.Thread(target=daemon.clean, args=(), daemon=True).start()
+threading.Thread(target=daemon.clean, args=(), daemon=True).start()

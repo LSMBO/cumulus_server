@@ -66,7 +66,8 @@ def is_finished(app_name, stdout):
 
 def get_file_path(job_dir, file_path, is_raw_input):
 	if is_raw_input == "true": return utils.DATA_DIR + "/" + os.path.basename(file_path)
-	else: return f"{job_dir}/{os.path.basename(file_path)}"
+	# else: return f"{job_dir}/{os.path.basename(file_path)}"
+	else: return os.path.basename(file_path)
 
 def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 	files = []
@@ -120,60 +121,145 @@ def replace_in_command(command, tag, value):
 	if tag in command: return command.replace(tag, value)
 	else: return command
 
+def check_conditional(xml, param_name, settings):
+	# search for a <conditional> in the parents
+	# if there is one
+		# get the only param from the children of the conditional
+		# get its name from xml and value from settings
+		# search for the first parent that is a <when>
+		# compare when.value and settings.name
+		# return True if they math, otherwise False
+	# else return True
+	return True
+
+def get_param_command_line(param, settings):
+	cmd = []
+	key = param.get("name")
+	command = param.get("command")
+	if param.tag == "select":
+		if key in settings:
+			value = settings[key]
+			# if there is a command associated to the main select (in this case, no variable is expected)
+			if command != None: cmd.append(command)
+			# get the option with the selected value, add the command if there is one (no variable expected)
+			option = param.find(f"option[@value='{value}']")
+			if option.get("command") != None: cmd.append(option.get("command"))
+	elif param.tag == "checkbox":
+		# add the command line if the key is in the settings (if it is, it means that it's checked)
+		# no variable is expected there
+		if param.get("name") in settings: cmd.append(command)
+	elif param.tag == "string":
+		# add the command line if the key is in the settings, variable %value% can be expected
+		if key in settings: cmd.append(replace_in_command(command, "%value%", settings[key]))
+	elif param.tag == "number":
+		# add the command line if the key is in the settings, variable %value% can be expected
+		if key in settings: cmd.append(replace_in_command(command, "%value%", settings[key]))
+	elif param.tag == "range":
+		# add the command line if the keys for min and max are in the settings, variables %value% and %value2% can be expected
+		key_min = param.get("name") + "-min"
+		key_max = param.get("name") + "-max"
+		if key_min in settings and key_max in settings:
+			command = replace_in_command(command, "%value%", settings[key_min])
+			command = replace_in_command(command, "%value2%", settings[key_max])
+			cmd.append(command)
+	elif param.tag == "filelist":
+		# this param can be either a single file/folder or a list of file/folder
+		if key in settings:
+			# add the command if there is one
+			is_raw_input = param.get("is_raw_input")
+			if command != None: cmd.append(replace_in_command(command, "%value%", settings[key]))
+			# it's also possible to have one command per file, even when it only allows one file
+			repeated_command = param.get("repeated_command")
+			if repeated_command != None:
+				# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
+				for file in current_files: 
+						file = get_file_path(job_dir, file, is_raw_input)
+						if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
+						cmd.append(replace_in_command(repeated_command, "%value%", file))
+	return " ".join(cmd)
+
 def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 	cmd = []
+	# TODO if the param is in a conditional, make sure it belongs to the chosen <when>
 	if app_name in APPS:
 		# loop through all params in the xml file, if the param name is in the settings then get its command attribute
 		root = ET.fromstring(APPS[app_name])
 		cmd.append(root.attrib["command"])
-		for param in root.findall(".//select"):
-			key = param.get("name")
-			if key in settings:
-				value = settings[key]
-				command = param.get("command")
-				# if there is a command associated to the main select (in this case, no variable is expected)
-				if param.get("command") != None: cmd.append(param.get("command"))
-				# get the option with the selected value, add the command if there is one (no variable expected)
-				option = param.find(f"option[@value='{value}']")
-				if option.get("command") != None: cmd.append(option.get("command"))
-		for param in root.findall(".//checkbox"):
-			# add the command line if the key is in the settings (if it is, it means that it's checked)
-			# no variable is expected there
-			if param.get("name") in settings: cmd.append(param.get("command"))
-		for param in root.findall(".//string"):
-			# add the command line if the key is in the settings, variable %value% can be expected
-			key = param.get("name")
-			if key in settings: cmd.append(replace_in_command(param.get("command"), "%value%", settings[key]))
-		for param in root.findall(".//number"):
-			# add the command line if the key is in the settings, variable %value% can be expected
-			key = param.get("name")
-			if key in settings: cmd.append(replace_in_command(param.get("command"), "%value%", settings[key]))
-		for param in root.findall(".//range"):
-			# add the command line if the keys for min and max are in the settings, variables %value% and %value2% can be expected
-			key_min = param.get("name") + "-min"
-			key_max = param.get("name") + "-max"
-			if key_min in settings and key_max in settings:
-				command = param.get("command")
-				command = replace_in_command(command, "%value%", settings[key_min])
-				command = replace_in_command(command, "%value2%", settings[key_max])
-				cmd.append(command)
-		for param in root.findall(".//filelist"):
-			# this param can be either a single file/folder or a list of file/folder
-			key = param.get("name")
-			if key in settings:
-				# add the command if there is one
-				command = param.get("command")
-				is_raw_input = param.get("is_raw_input")
-				if command != None: cmd.append(replace_in_command(command, "%value%", settings[key]))
-				# it's also possible to have one command per file, even when it only allows one file
-				repeated_command = param.get("repeated_command")
-				if repeated_command != None:
-					# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
-					current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
-					for file in current_files: 
-							file = get_file_path(job_dir, file, is_raw_input)
-							if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
-							cmd.append(replace_in_command(repeated_command, "%value%", file))
+		
+		# for param in root.findall(".//select"):
+			# key = param.get("name")
+			# if key in settings:
+				# value = settings[key]
+				# command = param.get("command")
+				# # if there is a command associated to the main select (in this case, no variable is expected)
+				# if param.get("command") != None: cmd.append(param.get("command"))
+				# # get the option with the selected value, add the command if there is one (no variable expected)
+				# option = param.find(f"option[@value='{value}']")
+				# if option.get("command") != None: cmd.append(option.get("command"))
+		# for param in root.findall(".//checkbox"):
+			# # add the command line if the key is in the settings (if it is, it means that it's checked)
+			# # no variable is expected there
+			# if param.get("name") in settings: cmd.append(param.get("command"))
+		# for param in root.findall(".//string"):
+			# # add the command line if the key is in the settings, variable %value% can be expected
+			# key = param.get("name")
+			# if key in settings: cmd.append(replace_in_command(param.get("command"), "%value%", settings[key]))
+		# for param in root.findall(".//number"):
+			# # add the command line if the key is in the settings, variable %value% can be expected
+			# key = param.get("name")
+			# if key in settings: cmd.append(replace_in_command(param.get("command"), "%value%", settings[key]))
+		# for param in root.findall(".//range"):
+			# # add the command line if the keys for min and max are in the settings, variables %value% and %value2% can be expected
+			# key_min = param.get("name") + "-min"
+			# key_max = param.get("name") + "-max"
+			# if key_min in settings and key_max in settings:
+				# command = param.get("command")
+				# command = replace_in_command(command, "%value%", settings[key_min])
+				# command = replace_in_command(command, "%value2%", settings[key_max])
+				# cmd.append(command)
+		# for param in root.findall(".//filelist"):
+			# # this param can be either a single file/folder or a list of file/folder
+			# key = param.get("name")
+			# if key in settings:
+				# # add the command if there is one
+				# command = param.get("command")
+				# is_raw_input = param.get("is_raw_input")
+				# if command != None: cmd.append(replace_in_command(command, "%value%", settings[key]))
+				# # it's also possible to have one command per file, even when it only allows one file
+				# repeated_command = param.get("repeated_command")
+				# if repeated_command != None:
+					# # current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+					# current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
+					# for file in current_files: 
+							# file = get_file_path(job_dir, file, is_raw_input)
+							# if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
+							# cmd.append(replace_in_command(repeated_command, "%value%", file))
+	
+		for section in root:
+			# print(f"\t{section.tag} {section.get('name')}")
+			for child in section:
+				# section can contain param or conditional
+				if child.tag.lower() == "conditional":
+					# conditional contain a param and a series of when
+					condition = child[0]
+					command = get_param_command_line(condition)
+					if command != "": cmd.append(command)
+					#print(f"\t\t{condition.tag} {condition.get('name')}")
+					for when in child.findall("when"):
+						#print(f"\t\twhen value='{when.get('value')}'")
+						# TODO check that this when is the selected one
+						if when.get('value') == settings[condition.get('name')]:
+							for param in when:
+								#print(f"\t\t\t{param.tag} {param.get('name')}")
+								command = get_param_command_line(param)
+								if command != "": cmd.append(command)
+				else:
+					#print(f"\t\t{child.tag} {child.get('name')}")
+					command = get_param_command_line(param)
+					if command != "": cmd.append(command)
+
+	
 	# create the full command line as text
 	command_line = " ".join(cmd)
 	# replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
