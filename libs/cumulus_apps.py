@@ -70,8 +70,8 @@ def is_finished(app_name, stdout):
 
 def get_file_path(job_dir, file_path, is_raw_input):
 	if is_raw_input == "true": return utils.DATA_DIR + "/" + os.path.basename(file_path)
-	# else: return f"{job_dir}/{os.path.basename(file_path)}"
-	else: return os.path.basename(file_path)
+	else: return f"{job_dir}/{os.path.basename(file_path)}"
+	# else: return os.path.basename(file_path)
 
 def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 	files = []
@@ -180,6 +180,7 @@ def get_param_command_line(param, settings):
 				for file in current_files: 
 						file = get_file_path(job_dir, file, is_raw_input)
 						if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
+						if is_raw_input == "false": file = os.path.basename(file)
 						cmd.append(replace_in_command(repeated_command, "%value%", file))
 	return " ".join(cmd)
 

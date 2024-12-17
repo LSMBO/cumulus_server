@@ -160,6 +160,7 @@ def clean():
 			job = utils.JOB_DIR + "/" + job
 			#logger.warning(f"Checking job {job_id} stored in '{job}'")
 			if utils.get_file_age_in_days(job) > MAX_AGE:
+				# TODO if job does not exist in the database, delete its folder
 				status = db.get_status(job_id)
 				if status == "DONE" or status == "FAILED" or status == "CANCELLED":
 					#db.set_status(job_id, "ARCHIVED")
