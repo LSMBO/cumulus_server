@@ -86,7 +86,7 @@ def get_value(job_id, field):
 	value = ""
 	if cursor.arraysize > 0:
 		response = cursor.fetchone()
-		value = response[0]
+		if response is not None: value = response[0]
 	# disconnect and return the value
 	cnx.close()
 	return value
