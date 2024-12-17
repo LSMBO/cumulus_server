@@ -136,7 +136,7 @@ def check_conditional(xml, param_name, settings):
 	# else return True
 	return True
 
-def get_param_command_line(param, settings):
+def get_param_command_line(param, settings, job_dir):
 	cmd = []
 	key = param.get("name")
 	command = param.get("command")
@@ -178,10 +178,10 @@ def get_param_command_line(param, settings):
 				# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
 				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 				for file in current_files: 
-						file = get_file_path(job_dir, file, is_raw_input)
-						if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
-						if is_raw_input == "false": file = os.path.basename(file)
-						cmd.append(replace_in_command(repeated_command, "%value%", file))
+					file = get_file_path(job_dir, file, is_raw_input)
+					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
+					if is_raw_input == "false": file = os.path.basename(file)
+					cmd.append(replace_in_command(repeated_command, "%value%", file))
 	return " ".join(cmd)
 
 def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
@@ -248,7 +248,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 				if child.tag.lower() == "conditional":
 					# conditional contain a param and a series of when
 					condition = child[0]
-					command = get_param_command_line(condition, settings)
+					command = get_param_command_line(condition, settings, job_dir)
 					if command != "": cmd.append(command)
 					#print(f"\t\t{condition.tag} {condition.get('name')}")
 					for when in child.findall("when"):
@@ -257,11 +257,11 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 						if when.get('value') == settings[condition.get('name')]:
 							for param in when:
 								#print(f"\t\t\t{param.tag} {param.get('name')}")
-								command = get_param_command_line(param, settings)
+								command = get_param_command_line(param, settings, job_dir)
 								if command != "": cmd.append(command)
 				else:
 					#print(f"\t\t{child.tag} {child.get('name')}")
-					command = get_param_command_line(param, settings)
+					command = get_param_command_line(param, settings, job_dir)
 					if command != "": cmd.append(command)
 
 	
