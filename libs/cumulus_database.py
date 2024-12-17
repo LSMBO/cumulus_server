@@ -144,6 +144,8 @@ def check_job_existency(job_id):
 	cursor.execute("SELECT COUNT(*) from jobs WHERE id = ?", (job_id,))
 	# return true if there is a match
 	response = cursor.fetchone()
+	# disconnect
+	cnx.close()
 	return response[0] > 0
 
 def get_job_details(job_id):

@@ -260,7 +260,7 @@ def get_file_age_in_days(file):
 	if file is None: return 0
 	#return (time.time() - os.path.getmtime(file)) / 86400
 	t = (time.time() - os.path.getmtime(file)) / 86400
-	logger.info(f"File '{os.path.basename(file)}': {t}")
+	logger.debug(f"File '{os.path.basename(file)}': {t}")
 	return t
 
 def get_disk_usage():
