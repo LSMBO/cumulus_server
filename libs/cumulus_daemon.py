@@ -160,13 +160,16 @@ def clean():
 			job = utils.JOB_DIR + "/" + job
 			#logger.warning(f"Checking job {job_id} stored in '{job}'")
 			if utils.get_file_age_in_days(job) > MAX_AGE:
-				# TODO if job does not exist in the database, delete its folder
-				status = db.get_status(job_id)
-				if status == "DONE" or status == "FAILED" or status == "CANCELLED":
-					#db.set_status(job_id, "ARCHIVED")
-					db.set_status(job_id, "ARCHIVED_" + status)
+				# if job does not exist in the database, delete its folder
+				if not db.check_job_existency(job_id):
+					logger.warning(f"Job {job_id} had content but was not found in the database, deleting all content")
 					utils.delete_job_folder(job)
-					logger.warning(f"Job {job_id} has been archived and its content has been deleted")
+				else:
+					status = db.get_status(job_id)
+					if status == "DONE" or status == "FAILED" or status == "CANCELLED":
+						db.set_status(job_id, "ARCHIVED_" + status)
+						utils.delete_job_folder(job)
+						logger.warning(f"Job {job_id} has been archived and its content has been deleted")
 		# list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
 		for file in os.listdir(utils.DATA_DIR):
 			file = utils.DATA_DIR + "/" + file

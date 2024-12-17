@@ -133,6 +133,15 @@ def create_job(form, main_job_dir):
 	# return the job_id and the name of its directory
 	return job_id, job_dir_name
 
+def check_job_existency(job_id):
+	# connect to the database
+	cnx, cursor = connect()
+	# search the job that corresponds to the id
+	cursor.execute("SELECT COUNT(*) from jobs WHERE id = ?", (job_id,))
+	# return true if there is a match
+	response = cursor.fetchone()
+	return response[0] > 0
+
 def get_job_details(job_id):
 	# connect to the database
 	cnx, cursor = connect()

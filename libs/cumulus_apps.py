@@ -248,7 +248,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 				if child.tag.lower() == "conditional":
 					# conditional contain a param and a series of when
 					condition = child[0]
-					command = get_param_command_line(condition)
+					command = get_param_command_line(condition, settings)
 					if command != "": cmd.append(command)
 					#print(f"\t\t{condition.tag} {condition.get('name')}")
 					for when in child.findall("when"):
@@ -257,11 +257,11 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 						if when.get('value') == settings[condition.get('name')]:
 							for param in when:
 								#print(f"\t\t\t{param.tag} {param.get('name')}")
-								command = get_param_command_line(param)
+								command = get_param_command_line(param, settings)
 								if command != "": cmd.append(command)
 				else:
 					#print(f"\t\t{child.tag} {child.get('name')}")
-					command = get_param_command_line(param)
+					command = get_param_command_line(param, settings)
 					if command != "": cmd.append(command)
 
 	
