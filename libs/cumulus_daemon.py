@@ -112,6 +112,7 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
 	# pid = utils.remote_script(host, cmd_file)
+	logger.info(f"Sending SSH request to start job {job_id} on host '{host}'")
 	utils.remote_script(host, cmd_file)
 	# update the job
 	db.set_host(job_id, host.name)
@@ -157,18 +158,19 @@ def clean():
 		# list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
 		for job in os.listdir(utils.JOB_DIR):
 			job_id = int(job.split("_")[1])
-			job = utils.JOB_DIR + "/" + job
+			job_dir = utils.JOB_DIR + "/" + job
 			#logger.warning(f"Checking job {job_id} stored in '{job}'")
-			if utils.get_file_age_in_days(job) > MAX_AGE:
+			if utils.get_file_age_in_days(job_dir) > MAX_AGE:
 				# if job does not exist in the database, delete its folder
 				if not db.check_job_existency(job_id):
 					logger.warning(f"Job {job_id} had content but was not found in the database, deleting all content")
-					utils.delete_job_folder_no_db(job)
+					utils.delete_job_folder_no_db(job_dir)
+					# TODO also delete log files
 				else:
 					status = db.get_status(job_id)
 					if status == "DONE" or status == "FAILED" or status == "CANCELLED":
 						db.set_status(job_id, "ARCHIVED_" + status)
-						utils.delete_job_folder(job)
+						utils.delete_job_folder(job_dir)
 						logger.warning(f"Job {job_id} has been archived and its content has been deleted")
 		# list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
 		for file in os.listdir(utils.DATA_DIR):

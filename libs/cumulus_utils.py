@@ -196,7 +196,7 @@ def delete_job_folder_no_db(job_dir):
 def delete_job_folder(job_id, delete_job_in_database = False):
 	try:
 		job_dir = db.get_job_dir(job_id)
-		if os.path.isdir(job_dir): 
+		if job_dir != "" and os.path.isdir(job_dir): 
 			shutil.rmtree(job_dir)
 			logger.info(f"Job folder '{job_dir}' has been deleted")
 		if delete_job_in_database: db.delete_job(job_id)
@@ -204,7 +204,7 @@ def delete_job_folder(job_id, delete_job_in_database = False):
 	except OSError as o:
 		db.set_status(job_id, "FAILED")
 		logger.error(f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
-		db.add_to_stderr(job_id, f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
+		add_to_stderr(job_id, f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
 		return False
 
 def get_pid_file(job_id): return db.get_job_dir(job_id) + "/.cumulus.pid"
@@ -232,6 +232,10 @@ def get_final_stdout_path(job_id):
 
 def get_final_stderr_path(job_id):
 	return f"{config.get_log_dir()}/job_{job_id}.stderr"
+
+def add_to_stderr(job_id, text):
+	with open(get_final_stderr_path(job_id), "a") as f:
+		f.write(f"\nCumulus: {text}")
 
 def get_log_file_content(job_id, is_stdout = True):
 	content = ""
@@ -261,7 +265,7 @@ def get_file_age_in_days(file):
 
 def get_disk_usage():
 	total, used, free = shutil.disk_usage(config.get("storage.path"))
-	logger.info(f"Total: {total} ; Used: {used} ; Free: {free}")
+	logger.debug(f"Total: {total} ; Used: {used} ; Free: {free}")
 	return total, used, free
 
 def get_version(): return config.get("version")

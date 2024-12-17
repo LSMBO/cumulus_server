@@ -133,7 +133,7 @@ def get_results(owner, job_id, file_name):
 			try:
 				return send_file(file)
 			except Exception as e:
-				db.add_to_stderr(job_id, f"Error on [get_results], {e.strerror}: {file}")
+				utils.add_to_stderr(job_id, f"Error on [get_results], {e.strerror}: {file}")
 				return str(e)
 	# in every other case, return an empty string?
 	return ""

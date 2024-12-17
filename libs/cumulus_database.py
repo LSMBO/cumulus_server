@@ -82,7 +82,11 @@ def get_value(job_id, field):
 	cnx, cursor = connect()
 	# TODO test that it does not fail if the job_id does not exist
 	cursor.execute(f"SELECT {field} FROM jobs WHERE id = ?", (job_id,))
-	value = cursor.fetchone()[0] if cursor.arraysize > 0 else ""
+	# value = cursor.fetchone()[0] if cursor.arraysize > 0 else ""
+	value = ""
+	if cursor.arraysize > 0:
+		response = cursor.fetchone()
+		value = response[0]
 	# disconnect and return the value
 	cnx.close()
 	return value
@@ -103,12 +107,12 @@ def get_strategy(job_id): return get_value(job_id, "strategy")
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
-def add_to_stderr(job_id, text):
-	# stderr = get_stderr(job_id)
-	# if stderr == "": stderr = f"Cumulus: {text}"
-	# else: stderr += f"\nCumulus: {text}"
-	with open(utils.get_final_stderr_path(job_id), "a") as f:
-		f.write(f"\nCumulus: {text}")
+# def add_to_stderr(job_id, text):
+	# # stderr = get_stderr(job_id)
+	# # if stderr == "": stderr = f"Cumulus: {text}"
+	# # else: stderr += f"\nCumulus: {text}"
+	# with open(utils.get_final_stderr_path(job_id), "a") as f:
+		# f.write(f"\nCumulus: {text}")
 
 ### specific functions ###
 def create_job(form, main_job_dir):
