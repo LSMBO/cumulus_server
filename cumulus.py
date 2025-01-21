@@ -51,7 +51,7 @@ IS_DEBUG = False
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
-log_format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+log_format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s"
 log_date = "%Y/%m/%d %H:%M:%S"
 if IS_DEBUG: logging.basicConfig(level = logging.DEBUG, format = log_format, datefmt = log_date)
 else:
