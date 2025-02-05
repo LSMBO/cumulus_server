@@ -139,7 +139,8 @@ def get_file_list(owner, job_id):
 def get_results(owner, job_id, file_name):
 	file = f"{db.get_job_dir(job_id)}/{unquote(file_name)}"
 	# check that the user can download the results
-	if db.is_owner(job_id, owner) and db.get_status(job_id) == "DONE":
+	# if db.is_owner(job_id, owner) and db.get_status(job_id) == "DONE":
+	if db.is_owner(job_id, owner):
 		# check that the file exists
 		if os.path.isfile(file):
 			# return the file
