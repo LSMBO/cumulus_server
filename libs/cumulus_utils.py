@@ -76,6 +76,8 @@ def get_all_hosts(reload_list = False):
 		f.close()
 		# remove first item of the list, it's the header of the file
 		HOSTS.pop(0)
+		# make sure the pids directory exists
+		if not os.path.isdir(PIDS_DIR): os.mkdir(PIDS_DIR)
 	# return the list
 	return HOSTS
 
@@ -96,8 +98,10 @@ def remote_script(host, file):
 	ssh.close()
 
 def remote_check(host, pid):
-	# TODO maybe there is a way to avoid an ssh connection everytime we want to check this
-	# TODO maybe a service running on each host?
+	# this function is now only called as a backup, when the default system is not working
+	# each host should have a process that puts all alive pids in a shared file
+	# this function is called if this file does not exist, or has not been updated for a while
+	# but if we are in this function, it probably means that something is not right on the remote host
 	if host is not None and pid is not None and pid > 0:
 		# connect to the host
 		key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
