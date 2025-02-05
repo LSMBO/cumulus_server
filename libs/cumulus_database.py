@@ -224,7 +224,9 @@ def get_last_jobs(job_id, number = 100):
 			if stderr == "": stderr = utils.get_stderr_content(job_id)
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 		else:
-			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
+			# TODO add more information? host, end_date?
+			# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
+			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
 	return jobs
 
@@ -265,7 +267,8 @@ def search_jobs(form):
 				if stderr == "": stderr = utils.get_stderr_content(job_id)
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 			else:
-				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
+				# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
+				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
 	return jobs
 
