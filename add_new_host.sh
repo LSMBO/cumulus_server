@@ -39,6 +39,7 @@
 # get the user inputs
 controller=$1
 mountdir="$2"
+ntpserver="$3"
 # get the user login
 user=`whoami`
 
@@ -46,7 +47,7 @@ user=`whoami`
 if [[ ! -d $mountdir ]]
 then
 	# install required components (this may not work if the system is not up-to-date)
-	sudo apt --yes install nfs-common libgomp1 mono-complete
+	sudo apt --yes install nfs-common libgomp1 mono-complete chrony
 	# create the directory that will be used as a mounting point
 	sudo install -d -m 0755 -o $user -g $user $mountdir
 	# update the fstab file
@@ -62,6 +63,9 @@ then
 	echo "Number of CPU: $cpu"
 	ram=`grep MemTotal /proc/meminfo|sed 's/[^0-9]//g'`
 	echo "Amount of RAM: $ram"
+	# add the ntp server to the chrony config file (TODO the echo will not work)
+	sudo echo "server $ntpserver" >> /etc/chrony/chrony.conf
+	sudo systemctl restart chronyd
 	# make sure that the folder for the pids is existing
 	mkdir -p /storage/pids/
 	# add a job to the crontab, to monitor the pids every minutes (so we don't have to connect all the time to check whether a pid is alive)

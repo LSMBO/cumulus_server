@@ -45,6 +45,7 @@ import sys
 # - install some components
 # - mount the NFS shared directory
 # - return some information to put in the hosts.tsv file
+# - add the ntp server and activate it
 # - add the script monitor_pids.sh to the crontab (have it run every minute)
 
 # get the arguments
@@ -61,6 +62,7 @@ def read_config():
 	storage = ""
 	hosts_file = ""
 	local_ip = subprocess.run(['hostname', '-I'], capture_output=True, text=True).stdout.strip()
+	ntp_server = ""
 	f = open(os.path.abspath("cumulus.conf"), "r")
 	for line in f.read().strip("\n").split("\n"):
 		line = re.sub(r"\s*\t*#.*", "", line.replace("//", "#"))
@@ -68,8 +70,9 @@ def read_config():
 			key, value = line.split("=")
 			if key.strip() == "storage.path": storage = value.strip()
 			elif key.strip() == "hosts.file.path": hosts_file = value.strip()
+			elif key.strip() == "ntp.server": ntp_server = value.strip()
 	f.close()
-	return storage, hosts_file, local_ip
+	return storage, hosts_file, local_ip, ntp_server
 
 def get_local_ip_address():
 	return subprocess.run(['hostname', '-I'], capture_output=True, text=True).stdout.strip()
@@ -114,13 +117,13 @@ def read_stdout(stdout):
 def main():
 	try:
 		# get local information
-		storage, hosts_file, local_ip = read_config()
+		storage, hosts_file, local_ip, ntp_server = read_config()
 		# send the script to the new host
 		script = "add_new_host.sh"
 		remote_script = f"/tmp/{script}"
 		send_file(script, remote_script)
 		# execute the script remotely
-		stdin, stdout, stderr = run_command(f"source {remote_script} {local_ip} {storage}")
+		stdin, stdout, stderr = run_command(f"source {remote_script} {local_ip} {storage} {ntp_server}")
 		# extract values from stdout
 		name, cpu, ram = read_stdout(stdout)
 		# deal with eventual errors
