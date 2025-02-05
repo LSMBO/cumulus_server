@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = config.get("storage.path") + config.get("storage.data.subpath")
 JOB_DIR = config.get("storage.path") + config.get("storage.jobs.subpath")
+PIDS_DIR = config.get("storage.path") + config.get("storage.pids.subpath")
 HOSTS = []
 
 class Host:
@@ -95,6 +96,8 @@ def remote_script(host, file):
 	ssh.close()
 
 def remote_check(host, pid):
+	# TODO maybe there is a way to avoid an ssh connection everytime we want to check this
+	# TODO maybe a service running on each host?
 	if host is not None and pid is not None and pid > 0:
 		# connect to the host
 		key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
@@ -111,6 +114,25 @@ def remote_check(host, pid):
 		ssh.close()
 		return is_alive
 	return False
+
+def is_alive(host, pid):
+	# each VM should be storing their current pids in a shared file
+	pid_file = f"{PIDS_DIR}/{host}"
+	# check that this file exists and has been changed in the last 2 minutes
+	if os.path.isfile(pid_file) and time.time() - os.path.getmtime(pid_file) < 120:
+		# check that the pid is in the file
+		is_alive = False
+		f = open(pid_file, "r")
+		for p in f.read().strip("\n").split("\n"):
+			if p.lstrip() == pid:
+				is_alive = True
+				break
+		f.close()
+		return is_alive
+	else:
+		# send a warning and connect with ssh to check if the pid is alive
+		logger.warning(f"The PID file '{pid_file}' is either not found or not updated for too long, connecting to the host to check if the PID is alive")
+		return remote_check(host, pid)
 
 def remote_cancel(host, pid):
 	if host is not None and pid is not None and pid > 0:

@@ -37,8 +37,15 @@ import re
 import subprocess
 import sys
 
-# TODO this script does not work if the host is not already in ~/.ssh/known_hosts
 # TODO the addition to the cumulus host file does not seem to work
+# TODO this script does not work if the host is not already in ~/.ssh/known_hosts
+
+# Note: This script was not used on our current VMs, and everything was done manually.
+# See the file add_new_host.sh to see what needs to be done on the new VM. Basically we want to: 
+# - install some components
+# - mount the NFS shared directory
+# - return some information to put in the hosts.tsv file
+# - add the script monitor_pids.sh to the crontab (have it run every minute)
 
 # get the arguments
 address = sys.argv[1]

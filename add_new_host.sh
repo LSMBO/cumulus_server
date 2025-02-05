@@ -62,6 +62,10 @@ then
 	echo "Number of CPU: $cpu"
 	ram=`grep MemTotal /proc/meminfo|sed 's/[^0-9]//g'`
 	echo "Amount of RAM: $ram"
+	# make sure that the folder for the pids is existing
+	mkdir -p /storage/pids/
+	# add a job to the crontab, to monitor the pids every minutes (so we don't have to connect all the time to check whether a pid is alive)
+	crontab -l | echo "* * * * * /storage/utils/monitor_pids.sh" | crontab -
 else
 	# if mountdir exists, it can mean that the host has already been added
 	# or that the directory is already used for something else

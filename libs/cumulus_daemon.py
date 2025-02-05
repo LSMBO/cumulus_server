@@ -45,12 +45,11 @@ REFRESH_RATE = int(config.get("refresh.rate.in.seconds"))
 MAX_AGE = int(config.get("data.max.age.in.days"))
 
 def is_process_running(job_id):
-	#pid = db.get_pid(job_id)
 	pid = utils.get_pid(job_id)
 	host_name = db.get_host(job_id)
 	host = utils.get_host(host_name)
 	# if the pid is still alive, it's RUNNING
-	is_alive = utils.remote_check(host, pid)
+	is_alive = utils.is_alive(host, pid)
 	logger.debug(f"Job {job_id} is alive? {is_alive}")
 	return is_alive
 
