@@ -252,6 +252,7 @@ def cancel_job(job_id):
 	remote_cancel(get_host(host_name), pid)
 	# change the status
 	db.set_status(job_id, "CANCELLED")
+	db.set_end_date(job_id)
 
 def get_final_stdout_path(job_id):
 	return f"{config.get_log_dir()}/job_{job_id}.stdout"

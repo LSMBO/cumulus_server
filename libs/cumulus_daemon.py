@@ -72,6 +72,7 @@ def check_running_jobs():
 			else:
 				status = "FAILED"
 				db.set_status(job_id, status)
+				db.set_end_date(job_id)
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
 
 def find_best_host(job_id):
