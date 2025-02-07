@@ -37,7 +37,6 @@ from flask import send_file
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-import sys
 import threading
 from urllib.parse import unquote
 
@@ -48,9 +47,8 @@ import cumulus_server.libs.cumulus_utils as utils
 import cumulus_server.libs.cumulus_database as db
 import cumulus_server.libs.cumulus_daemon as daemon
 
-IS_DEBUG = True
-for arg in sys.argv:
-    if arg == "--cumulus-debug": IS_DEBUG = True
+IS_DEBUG = False
+if os.getenv("CUMULUS_DEBUG"): IS_DEBUG = True
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
