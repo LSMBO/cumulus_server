@@ -128,6 +128,7 @@ def start_job(job_id, job_dir, app_name, settings, host):
 def start_pending_jobs():
 	# get all the PENDING jobs, oldest ones first
 	for job_id in db.get_jobs_per_status("PENDING"):
+		logger.debug(f"Job {job_id} is PENDING")
 		job_dir = db.get_job_dir(job_id)
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
@@ -139,6 +140,8 @@ def start_pending_jobs():
 			# if all is ok, the job can start and its status can turn to RUNNING
 			if host is not None: start_job(job_id, job_dir, app_name, settings, host)
 			else: logger.warning(f"No host available for job {job_id}...")
+		else:
+			logger.debug(f"Job {job_id} is NOT ready to start YET")
 
 def run():
 	# wait a little before starting the daemon

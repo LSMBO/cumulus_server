@@ -107,6 +107,7 @@ def get_all_files_in_settings(job_dir, app_name, settings, only_convert_to_mzml 
 				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
 				# add the file to the list
 				files.append(file)
+	logger.debug(f"get_all_files_in_settings({job_dir}):\n- {"\n- ".join(files)}")
 	return files
 
 def are_all_files_transfered(job_dir, app_name, settings):
@@ -119,7 +120,9 @@ def are_all_files_transfered(job_dir, app_name, settings):
 		# return True if they all exist, False otherwise
 		return True
 	# return False if the final file is not there yet
-	else: return False
+	else: 
+		logger.debug(f"{job_dir}/{FINAL_FILE} is not there yet")
+		return False
 
 def replace_in_command(command, tag, value):
 	if tag in command: return command.replace(tag, value)
