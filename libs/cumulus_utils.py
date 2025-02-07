@@ -163,7 +163,7 @@ def get_heartbeats_file(job_dir):
 
 def get_missing_heartbeats(job_dir):
 	f = open(get_heartbeats_file(job_dir), "r")
-	nb = f.decode('ascii').strip("\n")
+	nb = f.read().decode('ascii').strip("\n")
 	f.close()
 	return nb
 
