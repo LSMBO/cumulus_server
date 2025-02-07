@@ -128,6 +128,7 @@ def is_alive(host_name, pid):
 		is_alive = False
 		f = open(pid_file, "r")
 		for p in f.read().strip("\n").split("\n"):
+			logger.debug(f"{p.lstrip()} == {pid} ? {p.lstrip() == pid}")
 			if p.lstrip() == pid:
 				is_alive = True
 				break
