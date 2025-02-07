@@ -107,7 +107,8 @@ def get_all_files_in_settings(job_dir, app_name, settings, only_convert_to_mzml 
 				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
 				# add the file to the list
 				files.append(file)
-	logger.debug(f"get_all_files_in_settings({job_dir}):\n- {"\n- ".join(files)}")
+	joined_files = "\n- ".join(files)
+	logger.debug(f"get_all_files_in_settings({job_dir}):\n- {joined_files}")
 	return files
 
 def are_all_files_transfered(job_dir, app_name, settings):
