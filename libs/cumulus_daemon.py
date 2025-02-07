@@ -114,7 +114,7 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
 	logger.info(f"Sending SSH request to start job {job_id} on host '{host.name}'")
-	utils.remote_script(host, cmd_file)
+	utils.remote_script(job_dir, host, cmd_file)
 	# update the job
 	db.set_host(job_id, host.name)
 	db.set_status(job_id, "RUNNING")

@@ -245,14 +245,15 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	cmd += f"touch {stderr}\n"
 	cmd += f"ln -s {stderr} .cumulus.stderr\n"
 	for file in get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
-		cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr} & echo $! > .cumulus.pid\n"
+		cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr}\n"
 	# generate the command line based on the xml file and the given settings
 	cmd += get_command_line(app_name, job_dir, settings, host.cpu, output_dir)
 	# redirect the output to the log directory
 	cmd += f" 1>> {stdout}"
 	cmd += f" 2>> {stderr}"
 	# use a single & to put the command in background and directly store the pid
-	content += cmd + " & echo $! > .cumulus.pid\n"
+	# content += cmd + " & echo $! > .cumulus.pid\n"
+	content += cmd + "\n"
 	# write the script in the job directory and return the file
 	cmd_file = job_dir + "/.cumulus.cmd"
 	utils.write_file(cmd_file, content)

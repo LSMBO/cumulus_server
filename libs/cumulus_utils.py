@@ -85,7 +85,7 @@ def get_host(host_name):
 	matches = list(filter(lambda host: host.name == host_name, get_all_hosts()))
 	return None if len(matches) == 0 else matches[0]
 
-def remote_script(host, file):
+def remote_script(job_dir, host, file):
 	# connect to the host
 	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
 	ssh = paramiko.SSHClient()
@@ -94,6 +94,7 @@ def remote_script(host, file):
 	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 	# execute the script remotely (it will automatically create the pid file)
 	ssh.exec_command("source " + file + " &")
+	ssh.exec_command(f"source {file} & echo $! > {job_dir}/.cumulus.pid")
 	# close the connection and return the pid
 	ssh.close()
 
