@@ -32,6 +32,7 @@
 
 import logging
 import os
+import re
 import xml.etree.ElementTree as ET
 
 import cumulus_server.libs.cumulus_config as config
@@ -66,10 +67,10 @@ def is_finished(app_name, stdout):
 		# extract the end tag from the app xml file associated to this job
 		tag = ET.fromstring(APPS[app_name]).attrib["end_tag"]
 		# return True if the end_tag is in stdout, False otherwise
-		# TODO this does not work!
-		logger.debug(tag)
-		logger.debug(f"is_finished => {tag in stdout}")
-		return tag in stdout
+		is_tag_found = re.search(tag, stdout) != None
+		# logger.debug(tag)
+		logger.debug(f"is_finished => {is_tag_found}")
+		return is_tag_found
 	else: return True
 
 def get_file_path(job_dir, file_path, is_raw_input):
