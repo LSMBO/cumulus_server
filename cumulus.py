@@ -37,6 +37,7 @@ from flask import send_file
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+import sys
 import threading
 from urllib.parse import unquote
 
@@ -47,7 +48,9 @@ import cumulus_server.libs.cumulus_utils as utils
 import cumulus_server.libs.cumulus_database as db
 import cumulus_server.libs.cumulus_daemon as daemon
 
-IS_DEBUG = False
+IS_DEBUG = True
+for arg in sys.argv:
+    if arg == "--cumulus_debug": IS_DEBUG = True
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
@@ -61,13 +64,6 @@ else:
 		format = log_format,
 		datefmt = log_date
 	)
-
-# logging.basicConfig(
-	# # handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
-	# # level = logging.INFO,
-	# level = logging.DEBUG,
-	# format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
-	# datefmt = '%Y/%m/%d %H:%M:%S')
 
 # this has to be a POST message
 @app.route("/start", methods=["POST"])
@@ -84,10 +80,6 @@ def start():
 def details(job_id):
 	# return the job's owner, its app, the settings, status, host, description, stdout, stderr, and all three dates
 	return jsonify(db.get_job_details(job_id))
-
-# @app.route("/joblist/<int:number>/")
-# def job_list(number):
-#	return jsonify(db.get_last_jobs(number))
 
 @app.route("/joblist/<int:job_id>/<int:number>/")
 def job_list(job_id, number):
