@@ -50,7 +50,7 @@ import cumulus_server.libs.cumulus_daemon as daemon
 
 IS_DEBUG = True
 for arg in sys.argv:
-    if arg == "--cumulus_debug": IS_DEBUG = True
+    if arg == "--cumulus-debug": IS_DEBUG = True
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
