@@ -221,7 +221,7 @@ def get_file_list(job_id):
 				if not f.startswith(".cumulus."):
 					# return an array of tuples (name|size)
 					file = f if rel_path == "" else rel_path + "/" + f
-					logger.debug(f"get_file_list->add({file})")
+					# logger.debug(f"get_file_list->add({file})")
 					filelist.append((file, get_size(root_path + "/" + file)))
 	# the user will select the files they want to retrieve
 	return filelist
