@@ -113,7 +113,7 @@ def remote_check(host, pid):
 		_, stdout, _ = ssh.exec_command(f"ps -p {pid} -o comm= ; echo $?")
 		# the process is alive if the command did not fail
 		stdout = stdout.read().decode('ascii').strip("\n")
-		logger.debug(f"Remote check: ps -p {pid}: "+stdout)
+		# logger.debug(f"Remote check: ps -p {pid}: "+stdout)
 		is_alive = stdout.splitlines()[-1] == "0"
 		# close the connection after dealing with stdout
 		ssh.close()
@@ -129,7 +129,7 @@ def is_alive(host_name, pid):
 		is_alive = False
 		f = open(pid_file, "r")
 		for p in f.read().strip("\n").split("\n"):
-			logger.debug(f"{p.lstrip()} == {pid} ? {p.lstrip() == pid}")
+			# logger.debug(f"{p.lstrip()} == {pid} ? {p.lstrip() == pid}")
 			if p.lstrip() == pid:
 				is_alive = True
 				break

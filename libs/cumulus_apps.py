@@ -66,6 +66,8 @@ def is_finished(app_name, stdout):
 		# extract the end tag from the app xml file associated to this job
 		tag = ET.fromstring(APPS[app_name]).attrib["end_tag"]
 		# return True if the end_tag is in stdout, False otherwise
+		# TODO this does not work!
+		logger.debug(tag)
 		logger.debug(f"is_finished => {tag in stdout}")
 		return tag in stdout
 	else: return True
@@ -111,7 +113,7 @@ def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converte
 				# add the file to the list
 				files.append(file)
 	joined_files = "\n- ".join(files)
-	logger.debug(f"get_all_files_in_settings({job_dir}):\n- {joined_files}")
+	# logger.debug(f"get_all_files_in_settings({job_dir}):\n- {joined_files}")
 	return files
 
 def are_all_files_transfered(job_dir, app_name, settings):

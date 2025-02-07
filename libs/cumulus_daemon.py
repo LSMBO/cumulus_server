@@ -49,7 +49,7 @@ def is_process_running(job_id):
 	host_name = db.get_host(job_id)
 	# if the pid is still alive, it's RUNNING
 	is_alive = utils.is_alive(host_name, pid)
-	logger.debug(f"Job {job_id} is alive? {is_alive}")
+	# logger.debug(f"Job {job_id} is alive? {is_alive}")
 	return is_alive
 
 def check_running_jobs():
@@ -91,7 +91,7 @@ def find_best_host(job_id):
 		db.set_strategy(job_id, "first_available")
 	selected_host = None
 	hosts = utils.get_all_hosts()
-	logger.debug(f"Strategy: '{strategy}'")
+	# logger.debug(f"Strategy: '{strategy}'")
 	
 	# strategy should not be empty, but just in case the default value will be first_available
 	if strategy.startswith !=" best_ram" and strategy != "best_cpu" and not strategy.startswith("host:"):
@@ -111,7 +111,7 @@ def find_best_host(job_id):
 		elif strategy.startswith("host:"):
 			# the strategy name may contain the name of an host
 			for host in hosts:
-				logger.debug(host.name)
+				# logger.debug(host.name)
 				if f"host:{host.name}" == strategy: selected_host = host
 		# reset the selected host if it is already in use
 		if selected_host is not None:
