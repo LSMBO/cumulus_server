@@ -86,8 +86,9 @@ def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 			current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 			for file in current_files:
 				file = get_file_path(job_dir, file, is_raw_input)
-				# if the file is marked as to be converted, add the converted file instead
-				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": files.append(file)
+				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": 
+					# do not add the file if it has already been converted
+					if not os.path.isfile(file.replace(os.path.splitext(file)[1], f".mzml")): files.append(file)
 	return files
 
 def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converted_files = False):
@@ -240,11 +241,11 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	cmd = ""
 	# create the stdout and stderr files
 	cmd += f"touch {stdout}\n"
-	cmd += f"ln -s {stdout} stdout.txt\n"
+	cmd += f"ln -s {stdout} .cumulus.stdout\n"
 	cmd += f"touch {stderr}\n"
-	cmd += f"ln -s {stderr} stderr.txt\n"
+	cmd += f"ln -s {stderr} .cumulus.stderr\n"
 	for file in get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
-		cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr}\n"
+		cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr} & echo $! > .cumulus.pid\n"
 	# generate the command line based on the xml file and the given settings
 	cmd += get_command_line(app_name, job_dir, settings, host.cpu, output_dir)
 	# redirect the output to the log directory
