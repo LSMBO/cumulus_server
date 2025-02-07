@@ -166,10 +166,10 @@ def get_missing_heartbeats(job_dir):
 
 def increase_missing_heartbeats(job_dir):
 	nb = get_missing_heartbeats(job_dir)
-	write_file(get_heartbeats_file(job_dir), nb + 1)
+	write_file(get_heartbeats_file(job_dir), str(nb + 1))
 
 def reset_missing_heartbeats(job_dir):
-	write_file(get_heartbeats_file(job_dir), 0)
+	write_file(get_heartbeats_file(job_dir), "0")
 
 def create_job_directory(job_dir_name, form):
 	# the job directory will contain some automatically created files:
