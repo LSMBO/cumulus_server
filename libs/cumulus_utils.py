@@ -119,9 +119,9 @@ def remote_check(host, pid):
 		return is_alive
 	return False
 
-def is_alive(host, pid):
+def is_alive(host_name, pid):
 	# each VM should be storing their current pids in a shared file
-	pid_file = f"{PIDS_DIR}/{host}"
+	pid_file = f"{PIDS_DIR}/{host_name}"
 	# check that this file exists and has been changed in the last 2 minutes
 	if os.path.isfile(pid_file) and time.time() - os.path.getmtime(pid_file) < 120:
 		# check that the pid is in the file
@@ -136,6 +136,7 @@ def is_alive(host, pid):
 	else:
 		# send a warning and connect with ssh to check if the pid is alive
 		logger.warning(f"The PID file '{pid_file}' is either not found or not updated for too long, connecting to the host to check if the PID is alive")
+		host = get_host(host_name)
 		return remote_check(host, pid)
 
 def remote_cancel(host, pid):
