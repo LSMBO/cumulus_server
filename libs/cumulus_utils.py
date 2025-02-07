@@ -93,7 +93,7 @@ def remote_script(job_dir, host, file):
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 	# execute the script remotely (it will automatically create the pid file)
-	ssh.exec_command("source " + file + " &")
+	# ssh.exec_command("source " + file + " &")
 	ssh.exec_command(f"source {file} & echo $! > {job_dir}/.cumulus.pid")
 	# close the connection and return the pid
 	ssh.close()
