@@ -165,7 +165,7 @@ def get_missing_heartbeats(job_dir):
 	f = open(get_heartbeats_file(job_dir), "r")
 	nb = f.read().strip("\n")
 	f.close()
-	return nb
+	return int(nb)
 
 def increase_missing_heartbeats(job_dir):
 	nb = get_missing_heartbeats(job_dir)
