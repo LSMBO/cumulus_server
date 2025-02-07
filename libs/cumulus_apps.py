@@ -88,7 +88,7 @@ def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 				file = get_file_path(job_dir, file, is_raw_input)
 				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": 
 					# do not add the file if it has already been converted
-					if not os.path.isfile(file.replace(os.path.splitext(file)[1], f".mzml")): files.append(file)
+					if not os.path.isfile(file.replace(os.path.splitext(file)[1], f".mzML")): files.append(file)
 	return files
 
 def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converted_files = False):
@@ -105,7 +105,7 @@ def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converte
 			for file in current_files:
 				file = get_file_path(job_dir, file, is_raw_input)
 				# if the file is marked as to be converted, add the converted file instead
-				if include_mzml_converted_files and param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
+				if include_mzml_converted_files and param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
 				# add the file to the list
 				files.append(file)
 	joined_files = "\n- ".join(files)
@@ -184,7 +184,7 @@ def get_param_command_line(param, settings, job_dir):
 				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 				for file in current_files: 
 					file = get_file_path(job_dir, file, is_raw_input)
-					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
+					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
 					if is_raw_input == "false": file = os.path.basename(file)
 					cmd.append(replace_in_command(repeated_command, "%value%", file))
 	return " ".join(cmd)
