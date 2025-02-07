@@ -113,8 +113,7 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	# generate the script to run
 	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
 	# execute the command
-	# pid = utils.remote_script(host, cmd_file)
-	logger.info(f"Sending SSH request to start job {job_id} on host '{host}'")
+	logger.info(f"Sending SSH request to start job {job_id} on host '{host.name}'")
 	utils.remote_script(host, cmd_file)
 	# update the job
 	db.set_host(job_id, host.name)
