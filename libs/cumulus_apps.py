@@ -90,7 +90,7 @@ def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": files.append(file)
 	return files
 
-def get_all_files_in_settings(job_dir, app_name, settings, only_convert_to_mzml = False):
+def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converted_files = False):
 	files = []
 	# get the list of keys from the xml that match an input file
 	for param in ET.fromstring(APPS[app_name]).findall(".//filelist"):
@@ -104,7 +104,7 @@ def get_all_files_in_settings(job_dir, app_name, settings, only_convert_to_mzml 
 			for file in current_files:
 				file = get_file_path(job_dir, file, is_raw_input)
 				# if the file is marked as to be converted, add the converted file instead
-				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
+				if include_mzml_converted_files and param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzml")
 				# add the file to the list
 				files.append(file)
 	joined_files = "\n- ".join(files)
@@ -253,7 +253,7 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 
 def is_file_required(job_dir, app_name, settings, file):
 	# search in the settings for each input file
-	for input_file in get_all_files_in_settings(job_dir, app_name, settings):
+	for input_file in get_all_files_in_settings(job_dir, app_name, settings, True):
 		# return True if the searched file name is one of the files in the settings
 		if os.path.basename(file) == os.path.basename(input_file): return True
 	# return False in any other case
