@@ -61,10 +61,12 @@ def get_app_list():
 	return APPS
 
 def is_finished(app_name, stdout):
+	logger.debug(f"is_finished({app_name}, stdout)")
 	if app_name in APPS:
 		# extract the end tag from the app xml file associated to this job
 		tag = ET.fromstring(APPS[app_name]).attrib["end_tag"]
 		# return True if the end_tag is in stdout, False otherwise
+		logger.debug(f"is_finished => {tag in stdout}")
 		return tag in stdout
 	else: return True
 
