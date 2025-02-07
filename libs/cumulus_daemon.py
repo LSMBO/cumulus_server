@@ -65,6 +65,7 @@ def check_running_jobs():
 		if not is_process_running(job_id):
 			# the pid may not be in the pid file yet, as it is reloaded every 60 seconds
 			if utils.get_missing_heartbeats(job_dir) * REFRESH_RATE <= 60:
+				logger.debug(f"Job {job_id} PID was not found this time, but do not give up!")
 				utils.increase_missing_heartbeats(job_dir)
 			else:
 				# if not, the process has ended, record the end date

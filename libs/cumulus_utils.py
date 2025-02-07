@@ -162,7 +162,10 @@ def get_heartbeats_file(job_dir):
 	return f"{job_dir}/.cumulus.nhb"
 
 def get_missing_heartbeats(job_dir):
-	return get_heartbeats_file(job_dir).read().decode('ascii').strip("\n")
+	f = open(get_heartbeats_file(job_dir), "r")
+	nb = f.decode('ascii').strip("\n")
+	f.close()
+	return nb
 
 def increase_missing_heartbeats(job_dir):
 	nb = get_missing_heartbeats(job_dir)
