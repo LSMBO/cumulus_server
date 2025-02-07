@@ -237,10 +237,11 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	stderr = utils.get_final_stderr_path(job_id)
 	# convert the input files eventually
 	converter = config.get("converter.raw.to.mzml")
+	cmd = ""
 	for file in get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 		cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr}"
 	# generate the command line based on the xml file and the given settings
-	cmd = get_command_line(app_name, job_dir, settings, host.cpu, output_dir)
+	cmd += get_command_line(app_name, job_dir, settings, host.cpu, output_dir)
 	# redirect the output to the log directory
 	cmd += f" 1>> {stdout}"
 	cmd += f" 2>> {stderr}"
