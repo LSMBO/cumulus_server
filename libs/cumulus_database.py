@@ -104,6 +104,7 @@ def set_end_date(job_id): set_value(job_id, "end_date", int(time.time()))
 def get_settings(job_id): return json.loads(get_value(job_id, "settings"))
 def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
+def set_strategy(job_id, strategy): set_value(job_id, "strategy", strategy)
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 

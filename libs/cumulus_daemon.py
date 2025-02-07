@@ -86,6 +86,7 @@ def check_running_jobs():
 def find_best_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
 	strategy = db.get_strategy(job_id)
+	if strategy == "": db.set_strategy(job_id, "first_available")
 	selected_host = None
 	hosts = utils.get_all_hosts()
 	logger.debug(f"Strategy: '{strategy}'")
