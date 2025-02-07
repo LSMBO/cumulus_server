@@ -90,8 +90,9 @@ def find_best_host(job_id):
 	hosts = utils.get_all_hosts()
 	logger.debug(f"Strategy: '{strategy}'")
 	
-	if strategy == "first_available":
-		# if the strategy is to take the first available host, return the first host who is not running anything
+	# strategy should not be empty, but just in case the default value will be first_available
+	if strategy.startswith !=" best_ram" and strategy != "best_cpu" and not strategy.startswith("host:"):
+		# the default strategy is to take the first available host, return the first host who is not running anything
 		for host in hosts:
 			#if host.to_dict()["running"] == 0: selected_host = host
 			runnings, _ = db.get_alive_jobs_per_host(host.name)
@@ -109,7 +110,6 @@ def find_best_host(job_id):
 			for host in hosts:
 				logger.debug(host.name)
 				if f"host:{host.name}" == strategy: selected_host = host
-				
 		# reset the selected host if it is already in use
 		if selected_host is not None:
 			runnings, _ = db.get_alive_jobs_per_host(selected_host.name)
