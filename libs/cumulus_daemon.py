@@ -59,20 +59,28 @@ def check_running_jobs():
 		# utils.store_stderr(job_id)
 		# get stdout
 		stdout = utils.get_stdout_content(job_id)
+		# get job_dir
+		job_dir = db.get_job_dir(job_id)
 		# check that the process still exist
 		if not is_process_running(job_id):
-			# if not, the process has ended, record the end date
-			db.set_end_date(job_id)
-			# ask the proper app module if the job is finished or failed
-			if apps.is_finished(db.get_app_name(job_id), stdout): 
-				status = "DONE"
-				db.set_status(job_id, status)
-				logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
+			# the pid may not be in the pid file yet, as it is reloaded every 60 seconds
+			if utils.get_missing_heartbeats(job_dir) * REFRESH_RATE <= 60:
+				utils.increase_missing_heartbeats(job_dir)
 			else:
-				status = "FAILED"
-				db.set_status(job_id, status)
+				# if not, the process has ended, record the end date
 				db.set_end_date(job_id)
-				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
+				# ask the proper app module if the job is finished or failed
+				if apps.is_finished(db.get_app_name(job_id), stdout): 
+					status = "DONE"
+					db.set_status(job_id, status)
+					logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
+				else:
+					status = "FAILED"
+					db.set_status(job_id, status)
+					db.set_end_date(job_id)
+					logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
+		else:
+			utils.reset_missing_heartbeats(job_dir)
 
 def find_best_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)

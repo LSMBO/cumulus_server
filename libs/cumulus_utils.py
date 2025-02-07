@@ -158,6 +158,19 @@ def write_file(file_path, content):
 	f.write(content + "\n")
 	f.close()
 
+def get_heartbeats_file(job_dir):
+	return f"{job_dir}/.cumulus.nhb"
+
+def get_missing_heartbeats(job_dir):
+	return get_heartbeats_file(job_dir).read().decode('ascii').strip("\n")
+
+def increase_missing_heartbeats(job_dir):
+	nb = get_missing_heartbeats(job_dir)
+	write_file(get_heartbeats_file(job_dir), nb + 1)
+
+def reset_missing_heartbeats(job_dir):
+	write_file(get_heartbeats_file(job_dir), 0)
+
 def create_job_directory(job_dir_name, form):
 	# the job directory will contain some automatically created files:
 	# - .cumulus.cmd: the script that will 
@@ -170,6 +183,8 @@ def create_job_directory(job_dir_name, form):
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
 	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
+	# prepare the heartbeats file
+	reset_missing_heartbeats(job_dir)
 
 def get_size(file):
 	if os.path.isfile(file):
