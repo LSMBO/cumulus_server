@@ -56,7 +56,7 @@ def is_process_running(job_id):
 	else:
 		logger.debug(f"Job {job_id} was not found in the pid file, sending a request to {host_name}")
 		host = utils.get_host(host_name)
-		return remote_check(host, pid)
+		return utils.remote_check(host, pid)
 
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
