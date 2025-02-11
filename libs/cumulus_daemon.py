@@ -50,7 +50,13 @@ def is_process_running(job_id):
 	# if the pid is still alive, it's RUNNING
 	is_alive = utils.is_alive(host_name, pid)
 	# logger.debug(f"Job {job_id} is alive? {is_alive}")
-	return is_alive
+	# return is_alive
+	if is_alive: 
+		return True
+	else:
+		logger.debug(f"Job {job_id} was not found in the pid file, sending a request to {host_name}")
+		host = get_host(host_name)
+		return remote_check(host, pid)
 
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
@@ -64,24 +70,24 @@ def check_running_jobs():
 		# check that the process still exist
 		if not is_process_running(job_id):
 			# the pid may not be in the pid file yet, as it is reloaded every 60 seconds
-			if utils.get_missing_heartbeats(job_dir) * REFRESH_RATE <= 60:
-				logger.debug(f"Job {job_id} PID was not found this time, but do not give up!")
-				utils.increase_missing_heartbeats(job_dir)
+			# if utils.get_missing_heartbeats(job_dir) * REFRESH_RATE <= 60:
+				# logger.debug(f"Job {job_id} PID was not found this time, but do not give up!")
+				# utils.increase_missing_heartbeats(job_dir)
+			# else:
+			# if not, the process has ended, record the end date
+			db.set_end_date(job_id)
+			# ask the proper app module if the job is finished or failed
+			if apps.is_finished(db.get_app_name(job_id), stdout): 
+				status = "DONE"
+				db.set_status(job_id, status)
+				logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
 			else:
-				# if not, the process has ended, record the end date
+				status = "FAILED"
+				db.set_status(job_id, status)
 				db.set_end_date(job_id)
-				# ask the proper app module if the job is finished or failed
-				if apps.is_finished(db.get_app_name(job_id), stdout): 
-					status = "DONE"
-					db.set_status(job_id, status)
-					logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
-				else:
-					status = "FAILED"
-					db.set_status(job_id, status)
-					db.set_end_date(job_id)
-					logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
-		else:
-			utils.reset_missing_heartbeats(job_dir)
+				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
+		# else:
+			# utils.reset_missing_heartbeats(job_dir)
 
 def find_best_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)

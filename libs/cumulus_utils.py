@@ -138,8 +138,9 @@ def is_alive(host_name, pid):
 	else:
 		# send a warning and connect with ssh to check if the pid is alive
 		logger.warning(f"The PID file '{pid_file}' is either not found or not updated for too long, connecting to the host to check if the PID is alive")
-		host = get_host(host_name)
-		return remote_check(host, pid)
+		# host = get_host(host_name)
+		# return remote_check(host, pid)
+		return False
 
 def remote_cancel(host, pid):
 	if host is not None and pid is not None and pid > 0:
@@ -158,21 +159,21 @@ def write_file(file_path, content):
 	f.write(content + "\n")
 	f.close()
 
-def get_heartbeats_file(job_dir):
-	return f"{job_dir}/.cumulus.nhb"
+# def get_heartbeats_file(job_dir):
+	# return f"{job_dir}/.cumulus.nhb"
 
-def get_missing_heartbeats(job_dir):
-	f = open(get_heartbeats_file(job_dir), "r")
-	nb = f.read().strip("\n")
-	f.close()
-	return int(nb)
+# def get_missing_heartbeats(job_dir):
+	# f = open(get_heartbeats_file(job_dir), "r")
+	# nb = f.read().strip("\n")
+	# f.close()
+	# return int(nb)
 
-def increase_missing_heartbeats(job_dir):
-	nb = get_missing_heartbeats(job_dir)
-	write_file(get_heartbeats_file(job_dir), str(nb + 1))
+# def increase_missing_heartbeats(job_dir):
+	# nb = get_missing_heartbeats(job_dir)
+	# write_file(get_heartbeats_file(job_dir), str(nb + 1))
 
-def reset_missing_heartbeats(job_dir):
-	write_file(get_heartbeats_file(job_dir), "0")
+# def reset_missing_heartbeats(job_dir):
+	# write_file(get_heartbeats_file(job_dir), "0")
 
 def create_job_directory(job_dir_name, form):
 	# the job directory will contain some automatically created files:
@@ -187,7 +188,7 @@ def create_job_directory(job_dir_name, form):
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
 	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
 	# prepare the heartbeats file
-	reset_missing_heartbeats(job_dir)
+	# reset_missing_heartbeats(job_dir)
 
 def get_size(file):
 	if os.path.isfile(file):
