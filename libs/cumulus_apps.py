@@ -220,7 +220,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 								if command != "": cmd.append(command)
 				else:
 					#print(f"\t\t{child.tag} {child.get('name')}")
-					command = get_param_command_line(param, settings, job_dir)
+					command = get_param_command_line(child, settings, job_dir)
 					if command != "": cmd.append(command)
 
 	
