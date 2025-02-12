@@ -212,6 +212,7 @@ def get_raw_file_list():
 	return filelist
 
 def get_file_list(job_id):
+	# this function will only return files, empty folders will be disregarded
 	filelist = []
 	job_dir = db.get_job_dir(job_id)
 	if os.path.isdir(job_dir):
@@ -221,7 +222,7 @@ def get_file_list(job_id):
 			# make sure that the file pathes are relative to the root of the job folder
 			rel_path = root.replace(root_path, "")
 			for f in files:
-				# avoid the .cumulus.* files and .RSYNC_OK file
+				# avoid the .cumulus.* files
 				if not f.startswith(".cumulus."):
 					# return an array of tuples (name|size)
 					file = f if rel_path == "" else rel_path + "/" + f
