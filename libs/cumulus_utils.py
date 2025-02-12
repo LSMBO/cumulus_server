@@ -187,6 +187,9 @@ def create_job_directory(job_dir_name, form):
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
 	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
+	# create a temp folder that the apps may use eventually
+	temp_dir = f"{job_dir}/temp"
+	if not os.path.isfile(temp_dir): os.mkdir(temp_dir)
 	# prepare the heartbeats file
 	# reset_missing_heartbeats(job_dir)
 
