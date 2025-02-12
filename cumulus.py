@@ -51,13 +51,17 @@ IS_DEBUG = False
 if os.getenv("CUMULUS_DEBUG"): IS_DEBUG = True
 
 app = Flask(__name__)
+
+# prepare the logs
+LOGS_DIR = "logs"
+if not os.path.isdir(LOGS_DIR): os.mkdir(LOGS_DIR)
 logger = logging.getLogger(__name__)
 log_format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s"
 log_date = "%Y/%m/%d %H:%M:%S"
 if IS_DEBUG: logging.basicConfig(level = logging.DEBUG, format = log_format, datefmt = log_date)
 else:
 	logging.basicConfig(
-		handlers = [RotatingFileHandler(filename = "cumulus.log", maxBytes = 100000, backupCount = 10)],
+		handlers = [RotatingFileHandler(filename = f"{LOGS_DIR}/cumulus-rsync.log", maxBytes = 10000000, backupCount = 10)],
 		level = logging.INFO,
 		format = log_format,
 		datefmt = log_date
