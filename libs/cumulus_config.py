@@ -55,6 +55,7 @@ def get(key):
 def export():
 	return {
 		"output.folder": CONFIG["output.folder"],
+		"temp.folder": CONFIG["temp.folder"],
 		"data.max.age.in.days": CONFIG["data.max.age.in.days"],
 		"controller.version": CONFIG["version"],
 		"client.min.version": CONFIG["client.min.version"]
