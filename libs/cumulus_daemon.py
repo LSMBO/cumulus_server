@@ -48,7 +48,7 @@ def is_process_running(job_id):
 	pid = utils.get_pid(job_id)
 	host_name = db.get_host(job_id)
 	# if the pid is still alive, it's RUNNING
-	is_alive = utils.is_alive(host_name, pid)
+	is_alive = utils.is_alive(host_name, str(pid))
 	# logger.debug(f"Job {job_id} is alive? {is_alive}")
 	# return is_alive
 	if is_alive: 
