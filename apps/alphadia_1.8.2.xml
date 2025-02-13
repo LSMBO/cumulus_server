@@ -1,4 +1,4 @@
-<tool id="alphadia_1.8.2" name="AlphaDIA" version="1.8.2" description="" command="alphadia -o '%output_dir%'" end_tag="TODO">
+<tool id="alphadia_1.8.2" name="AlphaDIA" version="1.8.2" description="" command="alphadia -o '%output_dir%'" end_tag="TODO" category="__work_in_progress__">
 
     <section name="input" title="Input files" expanded="true">
         <conditional name="library">
