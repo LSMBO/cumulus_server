@@ -161,7 +161,10 @@ def get_param_command_line(param, settings, job_dir):
 	elif param.tag == "checkbox":
 		# add the command line if the key is in the settings (if it is, it means that it's checked)
 		# no variable is expected there
-		if param.get("name") in settings: cmd.append(command)
+		# if param.get("name") in settings: cmd.append(command)
+		if param.get("name") in settings: 
+			if settings[key]: cmd.append(command)
+			elif param.get("command_if_unchecked") != None: cmd.append(param.get("command_if_unchecked"))
 	elif param.tag == "string":
 		# add the command line if the key is in the settings, variable %value% can be expected
 		if key in settings: cmd.append(replace_in_command(command, "%value%", settings[key]))
