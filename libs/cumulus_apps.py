@@ -53,12 +53,9 @@ def get_app_list():
 			root = ET.parse(f).getroot()
 			# store the link between the id of the app and the content of the file
 			id = root.attrib["id"]
-			# do not return the app if it's tagged as hidden (probably an old version)
-			hidden = root.get("hidden")
-			if hidden is None or hidden == "false":
-				# get the xml content
-				with open(f, 'r') as xml:
-					APPS[id] = xml.read()
+			# get the xml content
+			with open(f, 'r') as xml:
+				APPS[id] = xml.read()
 	return APPS
 
 def is_finished(app_name, stdout):
