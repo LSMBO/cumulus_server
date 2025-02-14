@@ -192,6 +192,8 @@ def get_param_command_line(param, settings, job_dir):
 					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
 					if is_raw_input == "false": file = os.path.basename(file)
 					cmd.append(replace_in_command(repeated_command, "%value%", file))
+	# if cmd contains None, log the content of cmd
+	if None in cmd: logger.error("Error in get_param_command_line for key {key}")
 	return " ".join(cmd)
 
 def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
