@@ -193,7 +193,7 @@ def get_param_command_line(param, settings, job_dir):
 					if is_raw_input == "false": file = os.path.basename(file)
 					cmd.append(replace_in_command(repeated_command, "%value%", file))
 	# if cmd contains None, log the content of cmd
-	if None in cmd: logger.error("Error in get_param_command_line for key {key}")
+	if None in cmd: logger.error(f"Error in get_param_command_line for key {key}")
 	return " ".join(cmd)
 
 def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
