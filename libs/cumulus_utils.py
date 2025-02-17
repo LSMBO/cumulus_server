@@ -95,7 +95,7 @@ def remote_script(job_dir, host, file):
 	# execute the script remotely (it will automatically create the pid file)
 	# ssh.exec_command("source " + file + " &")
 	# ssh.exec_command(f"source {file} & echo $! > {job_dir}/.cumulus.pid")
-	ssh.exec_command(f"setsid --fork {file}")
+	ssh.exec_command(f"setsid --fork bash {file}")
 	# close the connection and return the pid
 	ssh.close()
 
