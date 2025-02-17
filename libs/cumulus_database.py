@@ -261,13 +261,15 @@ def search_jobs(form):
 	# put the results in a dict
 	jobs = []
 	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir in results:
+		# convert the settings from string to json
+		settings = json.loads(settings)
 		# filter by file here, so we can use a specific function for each app
 		if form["file"] == "" or apps.is_in_required_files(job_dir, app_name, settings, form["file"]):
 			if id == current_job_id:
 				# stdout and stderr for old jobs used to be kept in the database
 				if stdout == "": stdout = utils.get_stdout_content(id)
 				if stderr == "": stderr = utils.get_stderr_content(id)
-				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
+				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": settings, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 			else:
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
