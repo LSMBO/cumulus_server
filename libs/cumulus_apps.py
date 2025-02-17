@@ -243,6 +243,9 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 def generate_script(job_id, job_dir, app_name, settings, host):
 	# the working directory is the job directory
 	content = f"cd '{job_dir}'\n"
+	# store the session id (not the pid anymore, sid are better for cancelling jobs)
+	content += "SID=$(ps -p $$ --no-headers -o sid)\n"
+	content += "echo $SID > .cumulus.pid\n"
 	# create a directory where the output files should be generated
 	output_dir = f"./{OUTPUT_DIR}"
 	content += f"mkdir '{output_dir}'\n"
