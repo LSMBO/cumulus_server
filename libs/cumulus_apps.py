@@ -78,39 +78,41 @@ def get_file_path(job_dir, file_path, is_raw_input):
 def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 	files = []
 	# get the list of keys from the xml that match an input file
-	for param in ET.fromstring(APPS[app_name]).findall(".//filelist"):
-		key = param.get("name")
-		is_raw_input = param.get("is_raw_input")
-		# search in the settings if the key exists
-		if key in settings:
-			# get the files as an array
-			#current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
-			current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
-			for file in current_files:
-				file = get_file_path(job_dir, file, is_raw_input)
-				if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": 
-					# do not add the file if it has already been converted
-					if not os.path.isfile(file.replace(os.path.splitext(file)[1], f".mzML")): files.append(file)
+	if app_name in APPS:
+		for param in ET.fromstring(APPS[app_name]).findall(".//filelist"):
+			key = param.get("name")
+			is_raw_input = param.get("is_raw_input")
+			# search in the settings if the key exists
+			if key in settings:
+				# get the files as an array
+				#current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
+				for file in current_files:
+					file = get_file_path(job_dir, file, is_raw_input)
+					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": 
+						# do not add the file if it has already been converted
+						if not os.path.isfile(file.replace(os.path.splitext(file)[1], f".mzML")): files.append(file)
 	return files
 
 def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converted_files = False):
 	files = []
 	# get the list of keys from the xml that match an input file
-	for param in ET.fromstring(APPS[app_name]).findall(".//filelist"):
-		key = param.get("name")
-		is_raw_input = param.get("is_raw_input")
-		# search in the settings if the key exists
-		if key in settings:
-			# get the files as an array
-			# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
-			current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
-			for file in current_files:
-				file = get_file_path(job_dir, file, is_raw_input)
-				# if the file is marked as to be converted, add the converted file instead
-				if include_mzml_converted_files and param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-				# add the file to the list
-				files.append(file)
-	joined_files = "\n- ".join(files)
+	if app_name in APPS:
+		for param in ET.fromstring(APPS[app_name]).findall(".//filelist"):
+			key = param.get("name")
+			is_raw_input = param.get("is_raw_input")
+			# search in the settings if the key exists
+			if key in settings:
+				# get the files as an array
+				# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
+				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
+				for file in current_files:
+					file = get_file_path(job_dir, file, is_raw_input)
+					# if the file is marked as to be converted, add the converted file instead
+					if include_mzml_converted_files and param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
+					# add the file to the list
+					files.append(file)
+	# joined_files = "\n- ".join(files)
 	# logger.debug(f"get_all_files_in_settings({job_dir}):\n- {joined_files}")
 	return files
 
