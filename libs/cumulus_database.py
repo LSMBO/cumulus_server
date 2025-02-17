@@ -35,9 +35,11 @@ import logging
 import os
 import sqlite3
 import time
+from datetime import datetime
 
 import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_utils as utils
+import cumulus_server.libs.cumulus_apps as apps
 
 logger = logging.getLogger(__name__)
 
@@ -249,8 +251,8 @@ def search_jobs(form):
 	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
 	# prepare the part of the request for the date
 	date_field = form["date"]
-	date_from = 0 if form["from"] == "" else time.mktime(datetime.datetime.strptime(form["from"], "%Y-%m-%d").timetuple())
-	date_to = int(time.time()) if form["to"] == "" else time.mktime(datetime.datetime.strptime(form["to"], "%Y-%m-%d").timetuple())
+	date_from = 0 if form["from"] == "" else time.mktime(datetime.strptime(form["from"], "%Y-%m-%d").timetuple())
+	date_to = int(time.time()) if form["to"] == "" else time.mktime(datetime.strptime(form["to"], "%Y-%m-%d").timetuple())
 	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
 	# connect to the database
 	cnx, cursor = connect()
@@ -261,11 +263,11 @@ def search_jobs(form):
 	jobs = []
 	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
 		# filter by file here, so we can use a specific function for each app
-		if form["file"] == "" or search_file(app_name, settings, form["file"]):
-			if id == form["current_job_id"]:
+		if form["file"] == "" or apps.search_file(app_name, settings, form["file"]):
+			if id == current_job_id:
 				# stdout and stderr for old jobs used to be kept in the database
-				if stdout == "": stdout = utils.get_stdout_content(job_id)
-				if stderr == "": stderr = utils.get_stderr_content(job_id)
+				if stdout == "": stdout = utils.get_stdout_content(id)
+				if stderr == "": stderr = utils.get_stderr_content(id)
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 			else:
 				# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
