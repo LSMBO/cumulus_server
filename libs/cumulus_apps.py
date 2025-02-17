@@ -278,7 +278,7 @@ def is_file_required(job_dir, app_name, settings, file):
 	# return False in any other case
 	return False
 
-def search_file(app_name, settings, file_tag):
+def is_in_required_files(job_dir, app_name, settings, file_tag):
 	# search in the settings for each input file
 	for input_file in get_all_files_in_settings(job_dir, app_name, settings):
 		# return True if the searched file tag is included in one of the files in the settings

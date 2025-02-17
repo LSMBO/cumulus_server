@@ -256,21 +256,19 @@ def search_jobs(form):
 	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
 	# connect to the database
 	cnx, cursor = connect()
-	logger.debug(f"SELECT id, owner, app_name, status, creation_date FROM jobs WHERE owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND description LIKE '{desc}' {request_status} {request_date} ORDER BY id DESC LIMIT '{number}'")
-	#results = cursor.execute(f"SELECT id, owner, app_name, status, creation_date, settings FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, form["number"]))
-	results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, form["number"]))
+	# logger.debug(f"SELECT id, owner, app_name, status, creation_date FROM jobs WHERE owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND description LIKE '{desc}' {request_status} {request_date} ORDER BY id DESC LIMIT '{number}'")
+	results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, form["number"]))
 	# put the results in a dict
 	jobs = []
-	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
+	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir in results:
 		# filter by file here, so we can use a specific function for each app
-		if form["file"] == "" or apps.search_file(app_name, settings, form["file"]):
+		if form["file"] == "" or apps.is_in_required_files(job_dir, app_name, settings, form["file"]):
 			if id == current_job_id:
 				# stdout and stderr for old jobs used to be kept in the database
 				if stdout == "": stdout = utils.get_stdout_content(id)
 				if stderr == "": stderr = utils.get_stderr_content(id)
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 			else:
-				# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
 	return jobs
