@@ -1,0 +1,3 @@
+NAME	IP ADDRESS	USER	PORT	RSA FILE	NB CPU	RAM
+VM_NAME	127.0.0.1	me	22	/home/ubuntu/.ssh/cumulus.pem	32	64
+
