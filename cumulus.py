@@ -1,4 +1,4 @@
-# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
+# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2025)
 # 
 # [a.burel@unistra.fr]
 # 
@@ -74,14 +74,7 @@ def start():
 	job_id, job_dir = db.create_job(request.form, utils.JOB_DIR)
 	utils.create_job_directory(job_dir, request.form)
 	logger.info(f"Create job {job_id}")
-	#return str(job_id)
 	return jsonify(job_id, job_dir)
-
-# get details for a job
-@app.route("/details/<int:job_id>")
-def details(job_id):
-	# return the job's owner, its app, the settings, status, host, description, stdout, stderr, and all three dates
-	return jsonify(db.get_job_details(job_id))
 
 @app.route("/joblist/<int:job_id>/<int:number>/")
 def job_list(job_id, number):
@@ -91,10 +84,6 @@ def job_list(job_id, number):
 def search_jobs():
 	logger.info("Search jobs")
 	return jsonify(db.search_jobs(request.form))
-
-@app.route("/status/<int:job_id>")
-def status(job_id):
-	return jsonify(db.get_job_status(job_id))
 
 @app.route("/cancel/<string:owner>/<int:job_id>")
 def cancel(owner, job_id):
@@ -122,18 +111,10 @@ def delete(owner, job_id):
 		else: return f"You cannot delete a running job"
 	else: return f"You cannot delete this job"
 
-@app.route("/getfilelist/<string:owner>/<int:job_id>")
-def get_file_list(owner, job_id):
-	# return the list of files for the job
-	if db.is_owner(job_id, owner): return utils.get_file_list(job_id)
-	# if the user is not the owner, return an empty list
-	else: return []
-
 @app.route("/getresults/<string:owner>/<int:job_id>/<path:file_name>")
 def get_results(owner, job_id, file_name):
 	file = f"{db.get_job_dir(job_id)}/{unquote(file_name)}"
 	# check that the user can download the results
-	# if db.is_owner(job_id, owner) and db.get_status(job_id) == "DONE":
 	if db.is_owner(job_id, owner):
 		# check that the file exists
 		if os.path.isfile(file):
@@ -143,7 +124,7 @@ def get_results(owner, job_id, file_name):
 			except Exception as e:
 				utils.add_to_stderr(job_id, f"Error on [get_results], {e.strerror}: {file}")
 				return str(e)
-	# in every other case, return an empty string?
+	# in every other case, return an empty string
 	return ""
 
 @app.route("/info")

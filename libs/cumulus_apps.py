@@ -1,4 +1,4 @@
-# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
+# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2025)
 # 
 # [a.burel@unistra.fr]
 # 
@@ -45,7 +45,6 @@ OUTPUT_DIR = config.get("output.folder")
 APPS = {}
 
 def get_app_list():
-	app_list = []
 	for f in os.listdir("apps"):
 		# add the path to the file
 		f = f"apps/{f}"
@@ -73,7 +72,6 @@ def is_finished(app_name, stdout):
 def get_file_path(job_dir, file_path, is_raw_input):
 	if is_raw_input == "true": return utils.DATA_DIR + "/" + os.path.basename(file_path)
 	else: return f"{job_dir}/{os.path.basename(file_path)}"
-	# else: return os.path.basename(file_path)
 
 def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 	files = []
@@ -85,7 +83,6 @@ def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 			# search in the settings if the key exists
 			if key in settings:
 				# get the files as an array
-				#current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
 				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 				for file in current_files:
 					file = get_file_path(job_dir, file, is_raw_input)
@@ -104,7 +101,6 @@ def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converte
 			# search in the settings if the key exists
 			if key in settings:
 				# get the files as an array
-				# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
 				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 				for file in current_files:
 					file = get_file_path(job_dir, file, is_raw_input)
@@ -112,8 +108,6 @@ def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converte
 					if include_mzml_converted_files and param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
 					# add the file to the list
 					files.append(file)
-	# joined_files = "\n- ".join(files)
-	# logger.debug(f"get_all_files_in_settings({job_dir}):\n- {joined_files}")
 	return files
 
 def are_all_files_transfered(job_dir, app_name, settings):
@@ -134,17 +128,6 @@ def replace_in_command(command, tag, value):
 	if tag in command: return command.replace(tag, value)
 	else: return command
 
-def check_conditional(xml, param_name, settings):
-	# search for a <conditional> in the parents
-	# if there is one
-		# get the only param from the children of the conditional
-		# get its name from xml and value from settings
-		# search for the first parent that is a <when>
-		# compare when.value and settings.name
-		# return True if they math, otherwise False
-	# else return True
-	return True
-
 def get_param_command_line(param, settings, job_dir):
 	# param is the xml tag from the app definition
 	# settings is an dict containing the settings selected by the user
@@ -162,7 +145,6 @@ def get_param_command_line(param, settings, job_dir):
 	elif param.tag == "checkbox":
 		# add the command line if the key is in the settings (if it is, it means that it's checked)
 		# no variable is expected there
-		# if param.get("name") in settings: cmd.append(command)
 		if param.get("name") in settings:
 			# the user checked the box, add the corresponding command
 			if settings[key] and command != None: cmd.append(command)
@@ -209,7 +191,6 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 		root = ET.fromstring(APPS[app_name])
 		cmd.append(root.attrib["command"])
 		for section in root:
-			# print(f"\t{section.tag} {section.get('name')}")
 			for child in section:
 				# section can contain param or conditional
 				if child.tag.lower() == "conditional":
@@ -217,21 +198,15 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 					condition = child[0]
 					command = get_param_command_line(condition, settings, job_dir)
 					if command != "": cmd.append(command)
-					#print(f"\t\t{condition.tag} {condition.get('name')}")
 					for when in child.findall("when"):
-						#print(f"\t\twhen value='{when.get('value')}'")
 						# check that this when is the selected one
 						if when.get('value') == settings[condition.get('name')]:
 							for param in when:
-								#print(f"\t\t\t{param.tag} {param.get('name')}")
 								command = get_param_command_line(param, settings, job_dir)
 								if command != "": cmd.append(command)
 				else:
-					#print(f"\t\t{child.tag} {child.get('name')}")
 					command = get_param_command_line(child, settings, job_dir)
 					if command != "": cmd.append(command)
-
-	
 	# create the full command line as text
 	command_line = " ".join(cmd)
 	# replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
@@ -268,7 +243,6 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	cmd += f" 1>> {stdout}"
 	cmd += f" 2>> {stderr}"
 	# use a single & to put the command in background and directly store the pid
-	# content += cmd + " & echo $! > .cumulus.pid\n"
 	content += cmd + "\n"
 	# write the script in the job directory and return the file
 	cmd_file = job_dir + "/.cumulus.cmd"

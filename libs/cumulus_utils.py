@@ -1,4 +1,4 @@
-# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
+# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2025)
 # 
 # [a.burel@unistra.fr]
 # 
@@ -93,8 +93,8 @@ def remote_script(job_dir, host, file):
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
 	# execute the script remotely (it will automatically create the pid file)
-	# ssh.exec_command("source " + file + " &")
-	# ssh.exec_command(f"source {file} & echo $! > {job_dir}/.cumulus.pid")
+	# use setsid --fork to make sure the process is detached from the terminal
+	# it will also make sure that all processes are killed if user cancels the job
 	ssh.exec_command(f"setsid --fork bash {file}")
 	# close the connection and return the pid
 	ssh.close()
@@ -130,17 +130,14 @@ def is_alive(host_name, pid):
 		is_alive = False
 		f = open(pid_file, "r")
 		for p in f.read().strip("\n").split("\n"):
-			# logger.debug(f"{p.lstrip()} == {pid} ? {p.lstrip() == pid}")
 			if p.lstrip() == pid:
 				is_alive = True
 				break
 		f.close()
 		return is_alive
 	else:
-		# send a warning and connect with ssh to check if the pid is alive
+		# the pid was not found, send a warning and return false
 		logger.warning(f"The PID file '{pid_file}' is either not found or not updated for too long, connecting to the host to check if the PID is alive")
-		# host = get_host(host_name)
-		# return remote_check(host, pid)
 		return False
 
 def remote_cancel(host, pid):
@@ -150,8 +147,8 @@ def remote_cancel(host, pid):
 		ssh = paramiko.SSHClient()
 		ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 		ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
-		# execute the script remotely
-		# ssh.exec_command(f"kill -9 {pid}")
+		# kill the process remotely and all its children
+		# TODO does it kill the session too?
 		ssh.exec_command(f"kill $(ps -s {pid} -o pid=)")
 		# close the connection
 		ssh.close()
@@ -161,30 +158,14 @@ def write_file(file_path, content):
 	f.write(content + "\n")
 	f.close()
 
-# def get_heartbeats_file(job_dir):
-	# return f"{job_dir}/.cumulus.nhb"
-
-# def get_missing_heartbeats(job_dir):
-	# f = open(get_heartbeats_file(job_dir), "r")
-	# nb = f.read().strip("\n")
-	# f.close()
-	# return int(nb)
-
-# def increase_missing_heartbeats(job_dir):
-	# nb = get_missing_heartbeats(job_dir)
-	# write_file(get_heartbeats_file(job_dir), str(nb + 1))
-
-# def reset_missing_heartbeats(job_dir):
-	# write_file(get_heartbeats_file(job_dir), "0")
-
 def create_job_directory(job_dir_name, form):
 	# the job directory will contain some automatically created files:
-	# - .cumulus.cmd: the script that will 
-	# - .cumulus.pid: the pid of the script
+	# - .cumulus.cmd: the script that will be executed on the host
+	# - .cumulus.pid: the pid of the ssh session
 	# - .cumulus.rsync: a blank file that is sent once all the files have been transferred
 	# - .cumulus.settings: the user settings, it can be useful to know what the job is about without connecting to the interface or to sqlite
-	# - .<app_name>.stdout: the standard output of the script
-	# - .<app_name>.stderr: the standard error of the script
+	# - .cumulus.stdout: a link to the standard output of the script
+	# - .cumulus.stderr: a link to the standard error of the script
 	job_dir = f"{JOB_DIR}/{job_dir_name}"
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
@@ -192,8 +173,6 @@ def create_job_directory(job_dir_name, form):
 	# create a temp folder that the apps may use eventually
 	temp_dir = f"{job_dir}/temp"
 	if not os.path.isfile(temp_dir): os.mkdir(temp_dir)
-	# prepare the heartbeats file
-	# reset_missing_heartbeats(job_dir)
 
 def get_size(file):
 	if os.path.isfile(file):
@@ -296,13 +275,11 @@ def add_to_stderr(job_id, text):
 def get_log_file_content(job_id, is_stdout = True):
 	content = ""
 	# read log file
-	# log_file = is_stdout ? get_final_stdout_path(job_id) : get_final_stderr_path(job_id)
 	log_file = get_final_stdout_path(job_id) if is_stdout else get_final_stderr_path(job_id)
 	if os.path.isfile(log_file):
 		f = open(log_file, "r")
 		content = f.read()
 		f.close()
-	# else: logger.debug(f"Log file for job '${job_id}' is missing")
 	# return its content
 	return content
 
@@ -314,7 +291,6 @@ def get_file_age_in_days(file):
 	# time() is the current time
 	# divide by the number of seconds in a day to have the number of days
 	if file is None: return 0
-	#return (time.time() - os.path.getmtime(file)) / 86400
 	t = (time.time() - os.path.getmtime(file)) / 86400
 	logger.debug(f"File '{os.path.basename(file)}': {t}")
 	return t
@@ -323,5 +299,3 @@ def get_disk_usage():
 	total, used, free = shutil.disk_usage(config.get("storage.path"))
 	logger.debug(f"Total: {total} ; Used: {used} ; Free: {free}")
 	return total, used, free
-
-def get_version(): return config.get("version")

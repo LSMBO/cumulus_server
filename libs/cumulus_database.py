@@ -1,4 +1,4 @@
-# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
+# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2025)
 # 
 # [a.burel@unistra.fr]
 # 
@@ -72,7 +72,6 @@ def connect():
 def set_value(job_id, field, value):
 	# connect to the database
 	cnx, cursor = connect()
-	# TODO test that it does not fail if the job_id does not exist
 	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
 	cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
 	cnx.commit()
@@ -84,7 +83,6 @@ def get_value(job_id, field):
 	cnx, cursor = connect()
 	# TODO test that it does not fail if the job_id does not exist
 	cursor.execute(f"SELECT {field} FROM jobs WHERE id = ?", (job_id,))
-	# value = cursor.fetchone()[0] if cursor.arraysize > 0 else ""
 	value = ""
 	if cursor.arraysize > 0:
 		response = cursor.fetchone()
@@ -97,10 +95,6 @@ def set_status(job_id, status): set_value(job_id, "status", status)
 def get_status(job_id): return get_value(job_id, "status")
 def set_host(job_id, host): set_value(job_id, "host", host)
 def get_host(job_id): return get_value(job_id, "host")
-# def set_stdout(job_id, text): set_value(job_id, "stdout", text)
-# def get_stdout(job_id): return get_value(job_id, "stdout")
-# def set_stderr(job_id, text): set_value(job_id, "stderr", text)
-# def get_stderr(job_id): return get_value(job_id, "stderr")
 def set_start_date(job_id): set_value(job_id, "start_date", int(time.time()))
 def set_end_date(job_id): set_value(job_id, "end_date", int(time.time()))
 def get_settings(job_id): return json.loads(get_value(job_id, "settings"))
@@ -110,12 +104,6 @@ def set_strategy(job_id, strategy): set_value(job_id, "strategy", strategy)
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
-# def add_to_stderr(job_id, text):
-	# # stderr = get_stderr(job_id)
-	# # if stderr == "": stderr = f"Cumulus: {text}"
-	# # else: stderr += f"\nCumulus: {text}"
-	# with open(utils.get_final_stderr_path(job_id), "a") as f:
-		# f.write(f"\nCumulus: {text}")
 
 ### specific functions ###
 def create_job(form, main_job_dir):
@@ -151,34 +139,6 @@ def check_job_existency(job_id):
 	cnx.close()
 	return response[0] > 0
 
-def get_job_details(job_id):
-	# connect to the database
-	cnx, cursor = connect()
-	# search the job that corresponds to the id
-	cursor.execute("SELECT owner, app_name, strategy, description, settings, status, host, creation_date, start_date, end_date, stdout, stderr from jobs WHERE id = ?", (job_id,))
-	# put the results in a dict
-	job = {}
-	response = cursor.fetchone()
-	if response:
-		job["settings"] = json.loads(response[4])
-		job["strategy"] = response[2]
-		job["description"] = response[3]
-		job["username"] = response[0]
-		job["app_name"] = response[1]
-		job["status"] = response[5]
-		job["host"] = response[6]
-		job["creation_date"] = response[7]
-		job["start_date"] = response[8]
-		job["end_date"] = response[9]
-		# stdout and stderr for old jobs used to be kept in the database
-		# job["stdout"] = response[10] == "" ? utils.get_stdout_content(job_id) : response[10]
-		# job["stderr"] = response[11] == "" ? utils.get_stderr_content(job_id) : response[11]
-		job["stdout"] = utils.get_stdout_content(job_id) if response[10] == "" else response[10]
-		job["stderr"] = utils.get_stderr_content(job_id) if response[11] == "" else response[11]
-	# disconnect and return the job
-	cnx.close()
-	return job
-
 def get_job_to_string(job_id):
 	# connect to the database
 	cnx, cursor = connect()
@@ -191,27 +151,6 @@ def get_job_to_string(job_id):
 	# disconnect and return the string
 	cnx.close()
 	return job
-
-def get_job_status(job_id):
-	# connect to the database
-	cnx, cursor = connect()
-	# search the job that corresponds to the id
-	cursor.execute("SELECT status, stdout, stderr from jobs WHERE id = ?", (job_id,))
-	# put the results in a dict
-	response = []
-	if cursor.arraysize > 0:
-		status, stdout, stderr = cursor.fetchone()
-		response.append(status)
-		# stdout and stderr for old jobs used to be kept in the database
-		# response.append(stdout == "" ? utils.get_stdout_content(job_id) : stdout)
-		# response.append(stderr == "" ? utils.get_stderr_content(job_id) : stderr)
-		if stdout == "": response.append(utils.get_stdout_content(job_id))
-		else: response.append(stdout)
-		if stderr == "": response.append(utils.get_stderr_content(job_id))
-		else: response.append(stderr)
-	# disconnect and return the status with stdout and stderr
-	cnx.close()
-	return response
 
 def get_last_jobs(job_id, number = 100):
 	# connect to the database
@@ -227,8 +166,6 @@ def get_last_jobs(job_id, number = 100):
 			if stderr == "": stderr = utils.get_stderr_content(job_id)
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
 		else:
-			# TODO add more information? host, end_date?
-			# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "creation_date": creation_date})
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
 	return jobs

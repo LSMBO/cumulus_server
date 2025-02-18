@@ -1,4 +1,4 @@
-# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
+# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2025)
 # 
 # [a.burel@unistra.fr]
 # 
@@ -50,19 +50,16 @@ def is_process_running(job_id):
 	# if the pid is still alive, it's RUNNING
 	is_alive = utils.is_alive(host_name, str(pid))
 	# logger.debug(f"Job {job_id} is alive? {is_alive}")
-	# return is_alive
 	if is_alive: 
 		return True
 	else:
+		# check directly on the host if the pid is still alive (it may not be in the pid file yet)
 		logger.debug(f"Job {job_id} was not found in the pid file, sending a request to {host_name}")
 		host = utils.get_host(host_name)
 		return utils.remote_check(host, pid)
 
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
-		# # copy the logs in the log directory
-		# utils.store_stdout(job_id)
-		# utils.store_stderr(job_id)
 		# get stdout
 		stdout = utils.get_stdout_content(job_id)
 		# get job_dir
@@ -70,10 +67,6 @@ def check_running_jobs():
 		# check that the process still exist
 		if not is_process_running(job_id):
 			# the pid may not be in the pid file yet, as it is reloaded every 60 seconds
-			# if utils.get_missing_heartbeats(job_dir) * REFRESH_RATE <= 60:
-				# logger.debug(f"Job {job_id} PID was not found this time, but do not give up!")
-				# utils.increase_missing_heartbeats(job_dir)
-			# else:
 			# if not, the process has ended, record the end date
 			db.set_end_date(job_id)
 			# ask the proper app module if the job is finished or failed
@@ -86,8 +79,6 @@ def check_running_jobs():
 				db.set_status(job_id, status)
 				db.set_end_date(job_id)
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
-		# else:
-			# utils.reset_missing_heartbeats(job_dir)
 
 def find_best_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
@@ -103,7 +94,6 @@ def find_best_host(job_id):
 	if strategy.startswith !=" best_ram" and strategy != "best_cpu" and not strategy.startswith("host:"):
 		# the default strategy is to take the first available host, return the first host who is not running anything
 		for host in hosts:
-			#if host.to_dict()["running"] == 0: selected_host = host
 			runnings, _ = db.get_alive_jobs_per_host(host.name)
 			if runnings == 0: selected_host = host
 	else:
@@ -139,7 +129,6 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	db.set_start_date(job_id)
 	# log the command
 	logger.info(f"Starting {db.get_job_to_string(job_id)}")
-	# return pid
 
 def start_pending_jobs():
 	# get all the PENDING jobs, oldest ones first
@@ -162,7 +151,7 @@ def start_pending_jobs():
 def run():
 	# wait a little before starting the daemon
 	time.sleep(10)
-	# possible statuses: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED
+	# possible statuses: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED
 	while True:
 		# check the running jobs to see if they are finished
 		check_running_jobs()
