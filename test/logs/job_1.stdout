@@ -1,0 +1,815 @@
+DIA-NN 1.9.2 (Data-Independent Acquisition by Neural Networks)
+Compiled on Oct 20 2024 02:59:53
+Current date and time: Wed Jan 22 07:29:06 2025
+Logical CPU cores: 64
+Thread number set to 63
+Output will be filtered at 0.01 FDR
+Precursor/protein x samples expression level matrices will be saved along with the main report
+Cysteine carbamidomethylation enabled as a fixed modification
+Maximum number of variable modifications set to 3
+Modification UniMod:35 with mass delta 15.9949 at M will be considered as variable
+Modification UniMod:1 with mass delta 42.0106 at *n will be considered as variable
+Scan window radius set to 10
+A spectral library will be created from the DIA runs and used to reanalyse them; .quant files will only be saved to disk during the first step
+When generating a spectral library, in silico predicted spectra will be retained if deemed more reliable than experimental ones
+Implicit protein grouping: protein names; this determines which peptides are considered 'proteotypic' and thus affects protein FDR calculation
+Normalisation disabled
+Mass accuracy will be fixed to 1e-05 (MS2) and 1e-05 (MS1)
+WARNING: protein inference is enabled but no FASTA provided - is this intended?
+WARNING: peptidoform scoring enabled because variable modifications have been declared; to disable, use --no-peptidoforms
+The following variable modifications will be scored: UniMod:35 UniMod:1 
+Unless the spectral library specified was created by this version of DIA-NN, it's strongly recommended to specify a FASTA database and use the 'Reannotate' function to allow DIA-NN to identify peptides which can originate from the N/C terminus of the protein: otherwise site localisation might not work properly for modifications of the protein N-terminus or for modifications which do not allow enzymatic cleavage after the modified residue
+
+18 files will be processed
+[0:00] Loading spectral library librarySalive.predicted.speclib
+[2:46] Library annotated with sequence database(s): C:\Data\FD\Salive Janvier 2025 DIA\Human2024_Covid_CpSP_FD_20240529.fasta
+[2:46] Gene names missing for some isoforms
+[2:46] Library contains 20334 proteins, and 20120 genes
+[2:48] Spectral library loaded: 20383 protein isoforms, 29318 protein groups and 6206486 precursors in 1932938 elution groups.
+[2:53] Initialising library
+
+First pass: generating a spectral library from DIA data
+
+[3:12] File #1/18
+[3:12] Loading run /storage/share/FD/Patient1/0_TU020252AUH_Slot1-01_1_8810.d
+[6:48] 4226542 library precursors are potentially detectable
+[6:49] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[10:01] RT window set to 3.29798
+[10:01] Ion mobility window set to 0.0351
+[10:01] Recommended MS1 mass accuracy setting: 9.89001 ppm
+[13:38] Removing low confidence identifications
+[14:50] Precursors at 1% peptidoform FDR: 7607
+[14:50] Removing interfering precursors
+[14:54] Training neural networks on 43098 PSMs
+[14:56] Number of IDs at 0.01 FDR: 14116
+[14:56] Precursors at 1% peptidoform FDR: 10758
+[14:57] Calculating protein q-values
+[14:57] Number of proteins identified at 1% FDR: 3013 (precursor-level), 2627 (protein-level) (inference performed using proteotypic peptides only)
+[14:57] Quantification
+[14:58] Precursors with monitored PTMs at 1% FDR: 871 out of 1096 considered
+[14:58] Unmodified precursors with monitored PTM sites at 1% FDR: 44
+[14:58] Precursors with PTMs localised (when required) with > 90% confidence: 871 out of 871
+[15:02] Quantification information saved to /storage/share/FD/Patient1/0_TU020252AUH_Slot1-01_1_8810.d.quant
+
+[15:02] File #2/18
+[15:02] Loading run /storage/share/FD/Patient1/0_TU020264AUH_Slot1-02_1_8822.d
+[19:05] 4226542 library precursors are potentially detectable
+[19:06] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[22:15] RT window set to 3.1698
+[22:15] Ion mobility window set to 0.0353487
+[22:15] Recommended MS1 mass accuracy setting: 9.66635 ppm
+[25:49] Removing low confidence identifications
+[26:59] Precursors at 1% peptidoform FDR: 7318
+[26:59] Removing interfering precursors
+[27:05] Training neural networks on 42873 PSMs
+[27:06] Number of IDs at 0.01 FDR: 13020
+[27:09] Precursors at 1% peptidoform FDR: 10817
+[27:10] Calculating protein q-values
+[27:12] Number of proteins identified at 1% FDR: 2857 (precursor-level), 2608 (protein-level) (inference performed using proteotypic peptides only)
+[27:12] Quantification
+[27:13] Precursors with monitored PTMs at 1% FDR: 637 out of 824 considered
+[27:13] Unmodified precursors with monitored PTM sites at 1% FDR: 43
+[27:13] Precursors with PTMs localised (when required) with > 90% confidence: 637 out of 637
+[27:14] Quantification information saved to /storage/share/FD/Patient1/0_TU020264AUH_Slot1-02_1_8822.d.quant
+
+[27:14] File #3/18
+[27:14] Loading run /storage/share/FD/Patient1/0_TU020278AUH_Slot1-03_1_8836.d
+[31:22] 4226542 library precursors are potentially detectable
+[31:23] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[34:44] RT window set to 3.09015
+[34:44] Ion mobility window set to 0.0351673
+[34:44] Recommended MS1 mass accuracy setting: 8.51755 ppm
+[38:27] Removing low confidence identifications
+[39:46] Precursors at 1% peptidoform FDR: 9497
+[39:46] Removing interfering precursors
+[39:51] Training neural networks on 52879 PSMs
+[39:53] Number of IDs at 0.01 FDR: 16579
+[39:54] Precursors at 1% peptidoform FDR: 13292
+[39:54] Calculating protein q-values
+[39:55] Number of proteins identified at 1% FDR: 3296 (precursor-level), 2959 (protein-level) (inference performed using proteotypic peptides only)
+[39:55] Quantification
+[39:55] Precursors with monitored PTMs at 1% FDR: 692 out of 1195 considered
+[39:55] Unmodified precursors with monitored PTM sites at 1% FDR: 63
+[39:55] Precursors with PTMs localised (when required) with > 90% confidence: 692 out of 692
+[39:56] Quantification information saved to /storage/share/FD/Patient1/0_TU020278AUH_Slot1-03_1_8836.d.quant
+
+[39:57] File #4/18
+[39:57] Loading run /storage/share/FD/Patient1/10_TU020254AUH_Slot1-13_1_8812.d
+[43:19] 4226542 library precursors are potentially detectable
+[43:19] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[46:34] RT window set to 3.13143
+[46:34] Ion mobility window set to 0.0353441
+[46:34] Recommended MS1 mass accuracy setting: 9.38437 ppm
+[50:17] Removing low confidence identifications
+[51:31] Precursors at 1% peptidoform FDR: 8595
+[51:31] Removing interfering precursors
+[51:36] Training neural networks on 46753 PSMs
+[51:38] Number of IDs at 0.01 FDR: 14876
+[51:39] Precursors at 1% peptidoform FDR: 12217
+[51:41] Calculating protein q-values
+[51:43] Number of proteins identified at 1% FDR: 3064 (precursor-level), 2825 (protein-level) (inference performed using proteotypic peptides only)
+[51:44] Quantification
+[51:45] Precursors with monitored PTMs at 1% FDR: 870 out of 1045 considered
+[51:45] Unmodified precursors with monitored PTM sites at 1% FDR: 64
+[51:45] Precursors with PTMs localised (when required) with > 90% confidence: 870 out of 870
+[51:46] Quantification information saved to /storage/share/FD/Patient1/10_TU020254AUH_Slot1-13_1_8812.d.quant
+
+[51:46] File #5/18
+[51:46] Loading run /storage/share/FD/Patient1/10_TU020266AUH_Slot1-14_1_8824.d
+[55:24] 4226542 library precursors are potentially detectable
+[55:24] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[58:45] RT window set to 3.08395
+[58:45] Ion mobility window set to 0.0350211
+[58:45] Recommended MS1 mass accuracy setting: 9.55619 ppm
+[62:40] Removing low confidence identifications
+[63:58] Precursors at 1% peptidoform FDR: 9110
+[63:59] Removing interfering precursors
+[64:03] Training neural networks on 53570 PSMs
+[64:05] Number of IDs at 0.01 FDR: 15918
+[64:07] Precursors at 1% peptidoform FDR: 13085
+[64:09] Calculating protein q-values
+[64:10] Number of proteins identified at 1% FDR: 3139 (precursor-level), 2842 (protein-level) (inference performed using proteotypic peptides only)
+[64:11] Quantification
+[64:12] Precursors with monitored PTMs at 1% FDR: 832 out of 1170 considered
+[64:12] Unmodified precursors with monitored PTM sites at 1% FDR: 59
+[64:12] Precursors with PTMs localised (when required) with > 90% confidence: 832 out of 832
+[64:14] Quantification information saved to /storage/share/FD/Patient1/10_TU020266AUH_Slot1-14_1_8824.d.quant
+
+[64:14] File #6/18
+[64:14] Loading run /storage/share/FD/Patient1/10_TU020280AUH_Slot1-15_1_8838.d
+[65:09] 4226542 library precursors are potentially detectable
+[65:10] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[67:09] RT window set to 2.19166
+[67:09] Ion mobility window set to 0.0499726
+[67:09] Recommended MS1 mass accuracy setting: 14.1865 ppm
+[69:17] Cannot perform mass calibration, too few confidently identified precursors
+[69:17] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[70:06] Removing low confidence identifications
+[70:29] Removing interfering precursors
+[70:33] Too few confident identifications, neural networks will not be used
+[70:34] Number of IDs at 0.01 FDR: 1
+[70:37] Number of IDs at 0.01 FDR: 0
+[70:39] Calculating protein q-values
+[70:40] Number of proteins identified at 1% FDR: 0 (precursor-level), 0 (protein-level) (inference performed using proteotypic peptides only)
+[70:40] Quantification
+[70:40] Quantification information saved to /storage/share/FD/Patient1/10_TU020280AUH_Slot1-15_1_8838.d.quant
+
+[70:40] File #7/18
+[70:40] Loading run /storage/share/FD/Patient1/100_TU020256AUH_Slot1-25_1_8814.d
+[75:00] 4226542 library precursors are potentially detectable
+[75:01] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[78:18] RT window set to 3.53242
+[78:18] Ion mobility window set to 0.0368032
+[78:18] Recommended MS1 mass accuracy setting: 8.82667 ppm
+[82:31] Removing low confidence identifications
+[83:55] Precursors at 1% peptidoform FDR: 8881
+[83:55] Removing interfering precursors
+[83:59] Training neural networks on 50090 PSMs
+[84:01] Number of IDs at 0.01 FDR: 15238
+[84:04] Precursors at 1% peptidoform FDR: 12202
+[84:05] Calculating protein q-values
+[84:06] Number of proteins identified at 1% FDR: 3122 (precursor-level), 2758 (protein-level) (inference performed using proteotypic peptides only)
+[84:08] Quantification
+[84:10] Precursors with monitored PTMs at 1% FDR: 743 out of 1124 considered
+[84:11] Unmodified precursors with monitored PTM sites at 1% FDR: 41
+[84:11] Precursors with PTMs localised (when required) with > 90% confidence: 743 out of 743
+[84:13] Quantification information saved to /storage/share/FD/Patient1/100_TU020256AUH_Slot1-25_1_8814.d.quant
+
+[84:13] File #8/18
+[84:13] Loading run /storage/share/FD/Patient1/100_TU020282AUH_Slot1-27_1_8840.d
+[89:29] 4226542 library precursors are potentially detectable
+[89:29] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[92:56] RT window set to 3.60886
+[92:56] Ion mobility window set to 0.0360857
+[92:57] Recommended MS1 mass accuracy setting: 8.78701 ppm
+[97:24] Removing low confidence identifications
+[99:01] Precursors at 1% peptidoform FDR: 10286
+[99:01] Removing interfering precursors
+[99:05] Training neural networks on 56871 PSMs
+[99:07] Number of IDs at 0.01 FDR: 17910
+[99:10] Precursors at 1% peptidoform FDR: 14337
+[99:11] Calculating protein q-values
+[99:13] Number of proteins identified at 1% FDR: 3388 (precursor-level), 3104 (protein-level) (inference performed using proteotypic peptides only)
+[99:14] Quantification
+[99:15] Precursors with monitored PTMs at 1% FDR: 875 out of 1129 considered
+[99:15] Unmodified precursors with monitored PTM sites at 1% FDR: 79
+[99:15] Precursors with PTMs localised (when required) with > 90% confidence: 874 out of 875
+[99:17] Quantification information saved to /storage/share/FD/Patient1/100_TU020282AUH_Slot1-27_1_8840.d.quant
+
+[99:17] File #9/18
+[99:17] Loading run /storage/share/FD/Patient1/100_TU020284AUH_Slot1-26_1_8842.d
+[103:54] 4226542 library precursors are potentially detectable
+[103:54] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[107:20] RT window set to 3.16591
+[107:20] Ion mobility window set to 0.0368178
+[107:20] Recommended MS1 mass accuracy setting: 10.0141 ppm
+[111:19] Removing low confidence identifications
+[112:45] Precursors at 1% peptidoform FDR: 10490
+[112:46] Removing interfering precursors
+[112:49] Training neural networks on 58743 PSMs
+[112:51] Number of IDs at 0.01 FDR: 18116
+[112:52] Precursors at 1% peptidoform FDR: 14665
+[112:53] Calculating protein q-values
+[112:54] Number of proteins identified at 1% FDR: 3477 (precursor-level), 3146 (protein-level) (inference performed using proteotypic peptides only)
+[112:54] Quantification
+[112:55] Precursors with monitored PTMs at 1% FDR: 922 out of 1227 considered
+[112:56] Unmodified precursors with monitored PTM sites at 1% FDR: 69
+[112:56] Precursors with PTMs localised (when required) with > 90% confidence: 921 out of 922
+[113:05] Quantification information saved to /storage/share/FD/Patient1/100_TU020284AUH_Slot1-26_1_8842.d.quant
+
+[113:05] File #10/18
+[113:05] Loading run /storage/share/FD/Patient1/1000_TU020258AUH_Slot1-37_1_8816.d
+[118:59] 4226542 library precursors are potentially detectable
+[118:59] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[122:18] RT window set to 3.10726
+[122:18] Ion mobility window set to 0.0351304
+[122:19] Recommended MS1 mass accuracy setting: 10.0483 ppm
+[126:02] Removing low confidence identifications
+[127:17] Precursors at 1% peptidoform FDR: 8417
+[127:17] Removing interfering precursors
+[127:21] Training neural networks on 50664 PSMs
+[127:23] Number of IDs at 0.01 FDR: 14815
+[127:24] Precursors at 1% peptidoform FDR: 12270
+[127:25] Calculating protein q-values
+[127:25] Number of proteins identified at 1% FDR: 3050 (precursor-level), 2723 (protein-level) (inference performed using proteotypic peptides only)
+[127:25] Quantification
+[127:26] Precursors with monitored PTMs at 1% FDR: 739 out of 966 considered
+[127:26] Unmodified precursors with monitored PTM sites at 1% FDR: 51
+[127:26] Precursors with PTMs localised (when required) with > 90% confidence: 738 out of 739
+[127:29] Quantification information saved to /storage/share/FD/Patient1/1000_TU020258AUH_Slot1-37_1_8816.d.quant
+
+[127:29] File #11/18
+[127:29] Loading run /storage/share/FD/Patient1/1000_TU020270AUH_Slot1-38_1_8828.d
+[133:31] 4226542 library precursors are potentially detectable
+[133:31] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[136:48] RT window set to 3.53213
+[136:48] Ion mobility window set to 0.037071
+[136:48] Recommended MS1 mass accuracy setting: 9.46489 ppm
+[141:05] Removing low confidence identifications
+[142:30] Precursors at 1% peptidoform FDR: 8427
+[142:30] Removing interfering precursors
+[142:35] Training neural networks on 49842 PSMs
+[142:37] Number of IDs at 0.01 FDR: 15133
+[142:38] Precursors at 1% peptidoform FDR: 12403
+[142:39] Calculating protein q-values
+[142:39] Number of proteins identified at 1% FDR: 3052 (precursor-level), 2766 (protein-level) (inference performed using proteotypic peptides only)
+[142:39] Quantification
+[142:40] Precursors with monitored PTMs at 1% FDR: 633 out of 943 considered
+[142:40] Unmodified precursors with monitored PTM sites at 1% FDR: 53
+[142:40] Precursors with PTMs localised (when required) with > 90% confidence: 633 out of 633
+[142:41] Quantification information saved to /storage/share/FD/Patient1/1000_TU020270AUH_Slot1-38_1_8828.d.quant
+
+[142:41] File #12/18
+[142:41] Loading run /storage/share/FD/Patient1/1000_TU020286AUH_Slot1-39_1_8844.d
+[147:37] 4226542 library precursors are potentially detectable
+[147:38] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[150:58] RT window set to 3.09066
+[150:58] Ion mobility window set to 0.0359224
+[150:58] Recommended MS1 mass accuracy setting: 9.88579 ppm
+[154:43] Removing low confidence identifications
+[156:04] Precursors at 1% peptidoform FDR: 9025
+[156:04] Removing interfering precursors
+[156:08] Training neural networks on 52658 PSMs
+[156:10] Number of IDs at 0.01 FDR: 16866
+[156:10] Precursors at 1% peptidoform FDR: 13690
+[156:11] Calculating protein q-values
+[156:11] Number of proteins identified at 1% FDR: 3335 (precursor-level), 3032 (protein-level) (inference performed using proteotypic peptides only)
+[156:11] Quantification
+[156:12] Precursors with monitored PTMs at 1% FDR: 910 out of 1146 considered
+[156:12] Unmodified precursors with monitored PTM sites at 1% FDR: 70
+[156:12] Precursors with PTMs localised (when required) with > 90% confidence: 910 out of 910
+[156:14] Quantification information saved to /storage/share/FD/Patient1/1000_TU020286AUH_Slot1-39_1_8844.d.quant
+
+[156:14] File #13/18
+[156:14] Loading run /storage/share/FD/Patient1/10000_TU020260AUH_Slot1-49_1_8818.d
+[157:59] 4226542 library precursors are potentially detectable
+[157:59] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[160:09] RT window set to 2.98054
+[160:09] Ion mobility window set to 0.0346434
+[160:09] Recommended MS1 mass accuracy setting: 9.79547 ppm
+[162:40] Removing low confidence identifications
+[163:24] Precursors at 1% peptidoform FDR: 918
+[163:24] Removing interfering precursors
+[163:27] Training neural networks on 6884 PSMs
+[163:28] Number of IDs at 0.01 FDR: 1950
+[163:29] Precursors at 1% peptidoform FDR: 1266
+[163:30] Calculating protein q-values
+[163:30] Number of proteins identified at 1% FDR: 942 (precursor-level), 836 (protein-level) (inference performed using proteotypic peptides only)
+[163:30] Quantification
+[163:30] Precursors with monitored PTMs at 1% FDR: 167 out of 176 considered
+[163:30] Unmodified precursors with monitored PTM sites at 1% FDR: 3
+[163:30] Precursors with PTMs localised (when required) with > 90% confidence: 167 out of 167
+[163:31] Quantification information saved to /storage/share/FD/Patient1/10000_TU020260AUH_Slot1-49_1_8818.d.quant
+
+[163:31] File #14/18
+[163:31] Loading run /storage/share/FD/Patient1/10000_TU020272AUH_Slot1-50_1_8830.d
+[167:27] 4226542 library precursors are potentially detectable
+[167:27] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[170:45] RT window set to 2.92182
+[170:45] Ion mobility window set to 0.0356237
+[170:45] Recommended MS1 mass accuracy setting: 9.01574 ppm
+[174:24] Removing low confidence identifications
+[175:36] Precursors at 1% peptidoform FDR: 9096
+[175:36] Removing interfering precursors
+[175:40] Training neural networks on 49970 PSMs
+[175:42] Number of IDs at 0.01 FDR: 15495
+[175:43] Precursors at 1% peptidoform FDR: 13051
+[175:43] Calculating protein q-values
+[175:44] Number of proteins identified at 1% FDR: 3170 (precursor-level), 2813 (protein-level) (inference performed using proteotypic peptides only)
+[175:44] Quantification
+[175:44] Precursors with monitored PTMs at 1% FDR: 681 out of 1027 considered
+[175:44] Unmodified precursors with monitored PTM sites at 1% FDR: 58
+[175:44] Precursors with PTMs localised (when required) with > 90% confidence: 680 out of 681
+[175:46] Quantification information saved to /storage/share/FD/Patient1/10000_TU020272AUH_Slot1-50_1_8830.d.quant
+
+[175:46] File #15/18
+[175:46] Loading run /storage/share/FD/Patient1/10000_TU020292AUH_Slot1-51_1_8850.d
+[180:01] 4226542 library precursors are potentially detectable
+[180:02] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[183:29] RT window set to 3.0835
+[183:29] Ion mobility window set to 0.0360469
+[183:29] Recommended MS1 mass accuracy setting: 10.0455 ppm
+[187:25] Removing low confidence identifications
+[188:49] Precursors at 1% peptidoform FDR: 10031
+[188:50] Removing interfering precursors
+[188:54] Training neural networks on 56521 PSMs
+[188:56] Number of IDs at 0.01 FDR: 17850
+[188:57] Precursors at 1% peptidoform FDR: 14610
+[188:57] Calculating protein q-values
+[188:58] Number of proteins identified at 1% FDR: 3437 (precursor-level), 3076 (protein-level) (inference performed using proteotypic peptides only)
+[188:58] Quantification
+[188:58] Precursors with monitored PTMs at 1% FDR: 902 out of 1229 considered
+[188:58] Unmodified precursors with monitored PTM sites at 1% FDR: 69
+[188:58] Precursors with PTMs localised (when required) with > 90% confidence: 902 out of 902
+[188:59] Quantification information saved to /storage/share/FD/Patient1/10000_TU020292AUH_Slot1-51_1_8850.d.quant
+
+[189:00] File #16/18
+[189:00] Loading run /storage/share/FD/Patient1/100000_TU020262AUH_Slot1-61_1_8820.d
+[192:33] 4226542 library precursors are potentially detectable
+[192:34] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[195:48] RT window set to 3.22828
+[195:48] Ion mobility window set to 0.0358022
+[195:48] Recommended MS1 mass accuracy setting: 8.78955 ppm
+[199:35] Removing low confidence identifications
+[200:50] Precursors at 1% peptidoform FDR: 8153
+[200:50] Removing interfering precursors
+[200:54] Training neural networks on 45217 PSMs
+[200:56] Number of IDs at 0.01 FDR: 14394
+[200:57] Precursors at 1% peptidoform FDR: 11417
+[200:58] Calculating protein q-values
+[200:58] Number of proteins identified at 1% FDR: 3039 (precursor-level), 2745 (protein-level) (inference performed using proteotypic peptides only)
+[200:58] Quantification
+[200:58] Precursors with monitored PTMs at 1% FDR: 523 out of 868 considered
+[200:58] Unmodified precursors with monitored PTM sites at 1% FDR: 55
+[200:58] Precursors with PTMs localised (when required) with > 90% confidence: 523 out of 523
+[200:59] Quantification information saved to /storage/share/FD/Patient1/100000_TU020262AUH_Slot1-61_1_8820.d.quant
+
+[200:59] File #17/18
+[200:59] Loading run /storage/share/FD/Patient1/100000_TU020274AUH_Slot1-62_1_8832.d
+[205:02] 4226542 library precursors are potentially detectable
+[205:02] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[208:23] RT window set to 3.32995
+[208:23] Ion mobility window set to 0.0355133
+[208:23] Recommended MS1 mass accuracy setting: 9.70763 ppm
+[212:37] Removing low confidence identifications
+[214:03] Precursors at 1% peptidoform FDR: 9227
+[214:03] Removing interfering precursors
+[214:07] Training neural networks on 55994 PSMs
+[214:09] Number of IDs at 0.01 FDR: 16064
+[214:10] Precursors at 1% peptidoform FDR: 13228
+[214:10] Calculating protein q-values
+[214:11] Number of proteins identified at 1% FDR: 3239 (precursor-level), 2992 (protein-level) (inference performed using proteotypic peptides only)
+[214:11] Quantification
+[214:11] Precursors with monitored PTMs at 1% FDR: 732 out of 1067 considered
+[214:11] Unmodified precursors with monitored PTM sites at 1% FDR: 53
+[214:11] Precursors with PTMs localised (when required) with > 90% confidence: 732 out of 732
+[214:12] Quantification information saved to /storage/share/FD/Patient1/100000_TU020274AUH_Slot1-62_1_8832.d.quant
+
+[214:12] File #18/18
+[214:12] Loading run /storage/share/FD/Patient1/100000_TU020290AUH_Slot1-63_1_8848.d
+[218:41] 4226542 library precursors are potentially detectable
+[218:42] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[222:09] RT window set to 3.49298
+[222:09] Ion mobility window set to 0.0357879
+[222:09] Recommended MS1 mass accuracy setting: 9.01529 ppm
+[226:42] Removing low confidence identifications
+[228:19] Precursors at 1% peptidoform FDR: 10342
+[228:19] Removing interfering precursors
+[228:23] Training neural networks on 57516 PSMs
+[228:25] Number of IDs at 0.01 FDR: 18275
+[228:26] Precursors at 1% peptidoform FDR: 14953
+[228:27] Calculating protein q-values
+[228:27] Number of proteins identified at 1% FDR: 3542 (precursor-level), 3153 (protein-level) (inference performed using proteotypic peptides only)
+[228:27] Quantification
+[228:27] Precursors with monitored PTMs at 1% FDR: 998 out of 1300 considered
+[228:27] Unmodified precursors with monitored PTM sites at 1% FDR: 58
+[228:28] Precursors with PTMs localised (when required) with > 90% confidence: 997 out of 998
+[228:29] Quantification information saved to /storage/share/FD/Patient1/100000_TU020290AUH_Slot1-63_1_8848.d.quant
+
+[228:29] Cross-run analysis
+[228:29] Reading quantification information: 18 files
+[228:33] Quantifying peptides
+[228:39] Assembling protein groups
+[228:40] Quantifying proteins
+[228:40] Calculating q-values for protein and gene groups
+[228:44] Calculating global q-values for protein and gene groups
+[228:44] Protein groups with global q-value <= 0.01: 4236
+[228:46] Compressed report saved to outputp1/reportPatient1-first-pass.parquet. Use R 'arrow' or Python 'PyArrow' package to process
+[228:46] Writing report
+[228:54] Report saved to outputp1/reportPatient1-first-pass.tsv.
+[228:54] Saving precursor levels matrix
+[228:54] Precursor levels matrix (1% precursor and protein group FDR) saved to outputp1/reportPatient1-first-pass.pr_matrix.tsv.
+[228:55] Manifest saved to outputp1/reportPatient1-first-pass.manifest.txt
+[228:55] Stats report saved to outputp1/reportPatient1-first-pass.stats.tsv
+[228:55] Generating spectral library:
+[228:55] 22036 target and 231 decoy precursors saved
+[228:55] Spectral library saved to outputp1/reportPatient1-lib.parquet
+
+[228:56] Loading spectral library outputp1/reportPatient1-lib.parquet
+[228:56] Spectral library loaded: 4693 protein isoforms, 4867 protein groups and 22267 precursors in 21337 elution groups.
+[228:56] Initialising library
+[228:56] Saving the library to outputp1/reportPatient1-lib.parquet.skyline.speclib
+
+
+Second pass: using the newly created spectral library to reanalyse the data
+
+[228:57] File #1/18
+[228:57] Loading run /storage/share/FD/Patient1/0_TU020252AUH_Slot1-01_1_8810.d
+[229:37] 22036 library precursors are potentially detectable
+[229:37] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[229:41] RT window set to 1.36973
+[229:41] Ion mobility window set to 0.01
+[229:41] Recommended MS1 mass accuracy setting: 10.5085 ppm
+[229:42] Removing low confidence identifications
+[229:42] Precursors at 1% peptidoform FDR: 10653
+[229:43] Removing interfering precursors
+[229:43] Training neural networks on 30555 PSMs
+[229:43] Number of IDs at 0.01 FDR: 18620
+[229:44] Precursors at 1% peptidoform FDR: 15084
+[229:44] No protein annotation, skipping protein q-value calculation
+[229:44] Quantification
+[229:44] Precursors with monitored PTMs at 1% FDR: 954 out of 1382 considered
+[229:44] Unmodified precursors with monitored PTM sites at 1% FDR: 66
+[229:44] Precursors with PTMs localised (when required) with > 90% confidence: 954 out of 954
+
+[229:44] File #2/18
+[229:44] Loading run /storage/share/FD/Patient1/0_TU020264AUH_Slot1-02_1_8822.d
+[230:25] 22036 library precursors are potentially detectable
+[230:25] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[230:29] RT window set to 1.40253
+[230:29] Ion mobility window set to 0.01
+[230:29] Recommended MS1 mass accuracy setting: 10.4546 ppm
+[230:30] Removing low confidence identifications
+[230:31] Precursors at 1% peptidoform FDR: 10482
+[230:31] Removing interfering precursors
+[230:31] Training neural networks on 29941 PSMs
+[230:32] Number of IDs at 0.01 FDR: 17947
+[230:32] Precursors at 1% peptidoform FDR: 14686
+[230:32] No protein annotation, skipping protein q-value calculation
+[230:32] Quantification
+[230:32] Precursors with monitored PTMs at 1% FDR: 923 out of 1291 considered
+[230:32] Unmodified precursors with monitored PTM sites at 1% FDR: 65
+[230:32] Precursors with PTMs localised (when required) with > 90% confidence: 923 out of 923
+
+[230:32] File #3/18
+[230:32] Loading run /storage/share/FD/Patient1/0_TU020278AUH_Slot1-03_1_8836.d
+[231:01] 22036 library precursors are potentially detectable
+[231:01] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[231:05] RT window set to 1.4255
+[231:05] Ion mobility window set to 0.01
+[231:05] Recommended MS1 mass accuracy setting: 10.7828 ppm
+[231:06] Removing low confidence identifications
+[231:07] Precursors at 1% peptidoform FDR: 12734
+[231:07] Removing interfering precursors
+[231:07] Training neural networks on 30688 PSMs
+[231:07] Number of IDs at 0.01 FDR: 19638
+[231:08] Precursors at 1% peptidoform FDR: 15733
+[231:08] No protein annotation, skipping protein q-value calculation
+[231:08] Quantification
+[231:08] Precursors with monitored PTMs at 1% FDR: 966 out of 1384 considered
+[231:08] Unmodified precursors with monitored PTM sites at 1% FDR: 72
+[231:08] Precursors with PTMs localised (when required) with > 90% confidence: 966 out of 966
+
+[231:09] File #4/18
+[231:09] Loading run /storage/share/FD/Patient1/10_TU020254AUH_Slot1-13_1_8812.d
+[231:46] 22036 library precursors are potentially detectable
+[231:46] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[231:49] RT window set to 1.47493
+[231:49] Ion mobility window set to 0.01
+[231:49] Recommended MS1 mass accuracy setting: 10.4662 ppm
+[231:51] Removing low confidence identifications
+[231:51] Precursors at 1% peptidoform FDR: 11664
+[231:51] Removing interfering precursors
+[231:51] Training neural networks on 30792 PSMs
+[231:52] Number of IDs at 0.01 FDR: 19176
+[231:52] Precursors at 1% peptidoform FDR: 15292
+[231:52] No protein annotation, skipping protein q-value calculation
+[231:52] Quantification
+[231:52] Precursors with monitored PTMs at 1% FDR: 955 out of 1340 considered
+[231:52] Unmodified precursors with monitored PTM sites at 1% FDR: 72
+[231:52] Precursors with PTMs localised (when required) with > 90% confidence: 954 out of 955
+
+[231:53] File #5/18
+[231:53] Loading run /storage/share/FD/Patient1/10_TU020266AUH_Slot1-14_1_8824.d
+[232:37] 22036 library precursors are potentially detectable
+[232:37] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[232:41] RT window set to 1.48159
+[232:41] Ion mobility window set to 0.01
+[232:41] Recommended MS1 mass accuracy setting: 10.5674 ppm
+[232:43] Removing low confidence identifications
+[232:43] Precursors at 1% peptidoform FDR: 12367
+[232:43] Removing interfering precursors
+[232:43] Training neural networks on 30830 PSMs
+[232:44] Number of IDs at 0.01 FDR: 19734
+[232:44] Precursors at 1% peptidoform FDR: 15738
+[232:44] No protein annotation, skipping protein q-value calculation
+[232:44] Quantification
+[232:44] Precursors with monitored PTMs at 1% FDR: 987 out of 1377 considered
+[232:44] Unmodified precursors with monitored PTM sites at 1% FDR: 68
+[232:44] Precursors with PTMs localised (when required) with > 90% confidence: 987 out of 987
+
+[232:45] File #6/18
+[232:45] Loading run /storage/share/FD/Patient1/10_TU020280AUH_Slot1-15_1_8838.d
+[232:54] 22036 library precursors are potentially detectable
+[232:54] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[232:55] RT window set to 11.2092
+[232:55] Ion mobility window set to 0.0351756
+[232:55] Recommended MS1 mass accuracy setting: 12.7073 ppm
+[232:59] Removing low confidence identifications
+[233:00] Precursors at 1% peptidoform FDR: 0
+[233:00] Removing interfering precursors
+[233:00] Training neural networks on 7372 PSMs
+[233:00] Number of IDs at 0.01 FDR: 168
+[233:00] Precursors at 1% peptidoform FDR: 0
+[233:00] No protein annotation, skipping protein q-value calculation
+[233:00] Quantification
+[233:00] Precursors with monitored PTMs at 1% FDR: 0 out of 23 considered
+[233:00] Unmodified precursors with monitored PTM sites at 1% FDR: 0
+[233:00] Precursors with PTMs localised (when required) with > 90% confidence: 0 out of 0
+
+[233:00] File #7/18
+[233:00] Loading run /storage/share/FD/Patient1/100_TU020256AUH_Slot1-25_1_8814.d
+[233:41] 22036 library precursors are potentially detectable
+[233:41] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[233:45] RT window set to 1.51224
+[233:45] Ion mobility window set to 0.01
+[233:45] Recommended MS1 mass accuracy setting: 10.7412 ppm
+[233:46] Removing low confidence identifications
+[233:47] Precursors at 1% peptidoform FDR: 12089
+[233:47] Removing interfering precursors
+[233:47] Training neural networks on 31071 PSMs
+[233:47] Number of IDs at 0.01 FDR: 19401
+[233:48] Precursors at 1% peptidoform FDR: 15497
+[233:48] No protein annotation, skipping protein q-value calculation
+[233:48] Quantification
+[233:48] Precursors with monitored PTMs at 1% FDR: 977 out of 1388 considered
+[233:48] Unmodified precursors with monitored PTM sites at 1% FDR: 73
+[233:48] Precursors with PTMs localised (when required) with > 90% confidence: 977 out of 977
+
+[233:48] File #8/18
+[233:48] Loading run /storage/share/FD/Patient1/100_TU020282AUH_Slot1-27_1_8840.d
+[234:31] 22036 library precursors are potentially detectable
+[234:31] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[234:35] RT window set to 1.51259
+[234:35] Ion mobility window set to 0.01
+[234:35] Recommended MS1 mass accuracy setting: 10.4208 ppm
+[234:36] Removing low confidence identifications
+[234:37] Precursors at 1% peptidoform FDR: 13819
+[234:37] Removing interfering precursors
+[234:37] Training neural networks on 31313 PSMs
+[234:38] Number of IDs at 0.01 FDR: 20452
+[234:38] Precursors at 1% peptidoform FDR: 16224
+[234:38] No protein annotation, skipping protein q-value calculation
+[234:38] Quantification
+[234:38] Precursors with monitored PTMs at 1% FDR: 985 out of 1425 considered
+[234:38] Unmodified precursors with monitored PTM sites at 1% FDR: 79
+[234:38] Precursors with PTMs localised (when required) with > 90% confidence: 985 out of 985
+
+[234:39] File #9/18
+[234:39] Loading run /storage/share/FD/Patient1/100_TU020284AUH_Slot1-26_1_8842.d
+[234:51] 22036 library precursors are potentially detectable
+[234:51] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[234:55] RT window set to 1.46736
+[234:55] Ion mobility window set to 0.01
+[234:55] Recommended MS1 mass accuracy setting: 10.0129 ppm
+[234:56] Removing low confidence identifications
+[234:57] Precursors at 1% peptidoform FDR: 13399
+[234:57] Removing interfering precursors
+[234:57] Training neural networks on 31256 PSMs
+[234:58] Number of IDs at 0.01 FDR: 20552
+[234:58] Precursors at 1% peptidoform FDR: 16043
+[234:58] No protein annotation, skipping protein q-value calculation
+[234:59] Quantification
+[234:59] Precursors with monitored PTMs at 1% FDR: 976 out of 1417 considered
+[234:59] Unmodified precursors with monitored PTM sites at 1% FDR: 76
+[234:59] Precursors with PTMs localised (when required) with > 90% confidence: 976 out of 976
+
+[234:59] File #10/18
+[234:59] Loading run /storage/share/FD/Patient1/1000_TU020258AUH_Slot1-37_1_8816.d
+[235:38] 22036 library precursors are potentially detectable
+[235:38] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[235:42] RT window set to 1.50729
+[235:42] Ion mobility window set to 0.01
+[235:42] Recommended MS1 mass accuracy setting: 10.9431 ppm
+[235:43] Removing low confidence identifications
+[235:44] Precursors at 1% peptidoform FDR: 11792
+[235:44] Removing interfering precursors
+[235:45] Training neural networks on 30933 PSMs
+[235:45] Number of IDs at 0.01 FDR: 19236
+[235:46] Precursors at 1% peptidoform FDR: 15693
+[235:46] No protein annotation, skipping protein q-value calculation
+[235:46] Quantification
+[235:46] Precursors with monitored PTMs at 1% FDR: 971 out of 1387 considered
+[235:46] Unmodified precursors with monitored PTM sites at 1% FDR: 73
+[235:46] Precursors with PTMs localised (when required) with > 90% confidence: 971 out of 971
+
+[235:46] File #11/18
+[235:46] Loading run /storage/share/FD/Patient1/1000_TU020270AUH_Slot1-38_1_8828.d
+[236:31] 22036 library precursors are potentially detectable
+[236:31] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[236:35] RT window set to 1.4493
+[236:35] Ion mobility window set to 0.0100821
+[236:35] Recommended MS1 mass accuracy setting: 10.2577 ppm
+[236:37] Removing low confidence identifications
+[236:37] Precursors at 1% peptidoform FDR: 12245
+[236:37] Removing interfering precursors
+[236:37] Training neural networks on 30788 PSMs
+[236:38] Number of IDs at 0.01 FDR: 19710
+[236:38] Precursors at 1% peptidoform FDR: 15719
+[236:38] No protein annotation, skipping protein q-value calculation
+[236:38] Quantification
+[236:38] Precursors with monitored PTMs at 1% FDR: 962 out of 1367 considered
+[236:38] Unmodified precursors with monitored PTM sites at 1% FDR: 73
+[236:38] Precursors with PTMs localised (when required) with > 90% confidence: 962 out of 962
+
+[236:39] File #12/18
+[236:39] Loading run /storage/share/FD/Patient1/1000_TU020286AUH_Slot1-39_1_8844.d
+[237:23] 22036 library precursors are potentially detectable
+[237:23] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[237:27] RT window set to 1.47392
+[237:27] Ion mobility window set to 0.01
+[237:27] Recommended MS1 mass accuracy setting: 10.2789 ppm
+[237:28] Removing low confidence identifications
+[237:29] Precursors at 1% peptidoform FDR: 13333
+[237:29] Removing interfering precursors
+[237:29] Training neural networks on 31063 PSMs
+[237:30] Number of IDs at 0.01 FDR: 20099
+[237:30] Precursors at 1% peptidoform FDR: 15968
+[237:30] No protein annotation, skipping protein q-value calculation
+[237:30] Quantification
+[237:30] Precursors with monitored PTMs at 1% FDR: 985 out of 1397 considered
+[237:30] Unmodified precursors with monitored PTM sites at 1% FDR: 75
+[237:30] Precursors with PTMs localised (when required) with > 90% confidence: 985 out of 985
+
+[237:31] File #13/18
+[237:31] Loading run /storage/share/FD/Patient1/10000_TU020260AUH_Slot1-49_1_8818.d
+[237:49] 22036 library precursors are potentially detectable
+[237:49] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[237:52] RT window set to 0.485403
+[237:52] Ion mobility window set to 0.01
+[237:52] Recommended MS1 mass accuracy setting: 10.614 ppm
+[237:53] Removing low confidence identifications
+[237:53] Precursors at 1% peptidoform FDR: 1523
+[237:53] Removing interfering precursors
+[237:53] Training neural networks on 6447 PSMs
+[237:53] Number of IDs at 0.01 FDR: 3207
+[237:54] Precursors at 1% peptidoform FDR: 2444
+[237:54] No protein annotation, skipping protein q-value calculation
+[237:54] Quantification
+[237:54] Precursors with monitored PTMs at 1% FDR: 199 out of 287 considered
+[237:54] Unmodified precursors with monitored PTM sites at 1% FDR: 4
+[237:54] Precursors with PTMs localised (when required) with > 90% confidence: 199 out of 199
+
+[237:54] File #14/18
+[237:54] Loading run /storage/share/FD/Patient1/10000_TU020272AUH_Slot1-50_1_8830.d
+[238:33] 22036 library precursors are potentially detectable
+[238:33] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[238:37] RT window set to 1.44393
+[238:37] Ion mobility window set to 0.01
+[238:37] Recommended MS1 mass accuracy setting: 10.0771 ppm
+[238:38] Removing low confidence identifications
+[238:39] Precursors at 1% peptidoform FDR: 12298
+[238:39] Removing interfering precursors
+[238:39] Training neural networks on 30930 PSMs
+[238:40] Number of IDs at 0.01 FDR: 19633
+[238:40] Precursors at 1% peptidoform FDR: 15622
+[238:40] No protein annotation, skipping protein q-value calculation
+[238:40] Quantification
+[238:40] Precursors with monitored PTMs at 1% FDR: 964 out of 1365 considered
+[238:40] Unmodified precursors with monitored PTM sites at 1% FDR: 76
+[238:40] Precursors with PTMs localised (when required) with > 90% confidence: 964 out of 964
+
+[238:41] File #15/18
+[238:41] Loading run /storage/share/FD/Patient1/10000_TU020292AUH_Slot1-51_1_8850.d
+[239:27] 22036 library precursors are potentially detectable
+[239:27] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[239:31] RT window set to 1.51388
+[239:31] Ion mobility window set to 0.01
+[239:31] Recommended MS1 mass accuracy setting: 10.4053 ppm
+[239:32] Removing low confidence identifications
+[239:33] Precursors at 1% peptidoform FDR: 13863
+[239:33] Removing interfering precursors
+[239:33] Training neural networks on 31336 PSMs
+[239:33] Number of IDs at 0.01 FDR: 20349
+[239:34] Precursors at 1% peptidoform FDR: 16203
+[239:34] No protein annotation, skipping protein q-value calculation
+[239:34] Quantification
+[239:34] Precursors with monitored PTMs at 1% FDR: 982 out of 1407 considered
+[239:34] Unmodified precursors with monitored PTM sites at 1% FDR: 79
+[239:34] Precursors with PTMs localised (when required) with > 90% confidence: 982 out of 982
+
+[239:34] File #16/18
+[239:34] Loading run /storage/share/FD/Patient1/100000_TU020262AUH_Slot1-61_1_8820.d
+[240:13] 22036 library precursors are potentially detectable
+[240:13] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[240:17] RT window set to 1.44381
+[240:17] Ion mobility window set to 0.01
+[240:17] Recommended MS1 mass accuracy setting: 9.74287 ppm
+[240:18] Removing low confidence identifications
+[240:19] Precursors at 1% peptidoform FDR: 11183
+[240:19] Removing interfering precursors
+[240:19] Training neural networks on 30626 PSMs
+[240:20] Number of IDs at 0.01 FDR: 18770
+[240:20] Precursors at 1% peptidoform FDR: 15211
+[240:20] No protein annotation, skipping protein q-value calculation
+[240:20] Quantification
+[240:20] Precursors with monitored PTMs at 1% FDR: 911 out of 1312 considered
+[240:20] Unmodified precursors with monitored PTM sites at 1% FDR: 71
+[240:20] Precursors with PTMs localised (when required) with > 90% confidence: 911 out of 911
+
+[240:21] File #17/18
+[240:21] Loading run /storage/share/FD/Patient1/100000_TU020274AUH_Slot1-62_1_8832.d
+[240:54] 22036 library precursors are potentially detectable
+[240:54] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[240:58] RT window set to 1.47531
+[240:58] Ion mobility window set to 0.01
+[240:58] Recommended MS1 mass accuracy setting: 10.3779 ppm
+[240:59] Removing low confidence identifications
+[241:00] Precursors at 1% peptidoform FDR: 12423
+[241:00] Removing interfering precursors
+[241:00] Training neural networks on 30958 PSMs
+[241:01] Number of IDs at 0.01 FDR: 19833
+[241:01] Precursors at 1% peptidoform FDR: 15759
+[241:01] No protein annotation, skipping protein q-value calculation
+[241:01] Quantification
+[241:01] Precursors with monitored PTMs at 1% FDR: 976 out of 1389 considered
+[241:01] Unmodified precursors with monitored PTM sites at 1% FDR: 77
+[241:01] Precursors with PTMs localised (when required) with > 90% confidence: 976 out of 976
+
+[241:02] File #18/18
+[241:02] Loading run /storage/share/FD/Patient1/100000_TU020290AUH_Slot1-63_1_8848.d
+[241:45] 22036 library precursors are potentially detectable
+[241:45] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[241:49] RT window set to 1.51018
+[241:49] Ion mobility window set to 0.01
+[241:49] Recommended MS1 mass accuracy setting: 10.1475 ppm
+[241:50] Removing low confidence identifications
+[241:51] Precursors at 1% peptidoform FDR: 13880
+[241:51] Removing interfering precursors
+[241:51] Training neural networks on 31400 PSMs
+[241:52] Number of IDs at 0.01 FDR: 20565
+[241:52] Precursors at 1% peptidoform FDR: 16176
+[241:52] No protein annotation, skipping protein q-value calculation
+[241:52] Quantification
+[241:52] Precursors with monitored PTMs at 1% FDR: 990 out of 1436 considered
+[241:52] Unmodified precursors with monitored PTM sites at 1% FDR: 76
+[241:52] Precursors with PTMs localised (when required) with > 90% confidence: 990 out of 990
+
+[241:53] Cross-run analysis
+[241:53] Reading quantification information: 18 files
+[241:53] Quantifying peptides
+[242:18] Quantification parameters: 0.369162, 0.00203131, 0.00593301, 0.172793, 0.170722, 0.170999, 0.0750374, 0.0767684, 0.0874238, 0.0547526, 0.0747514, 0.0624763, 0.29247, 0.119517, 0.150872, 0.0819045
+[242:19] Quantifying proteins
+[242:19] Calculating q-values for protein and gene groups
+[242:19] Calculating global q-values for protein and gene groups
+[242:19] Protein groups with global q-value <= 0.01: 4131
+[242:20] Compressed report saved to outputp1/reportPatient1.parquet. Use R 'arrow' or Python 'PyArrow' package to process
+[242:21] Writing report
+[242:30] Report saved to outputp1/reportPatient1.tsv.
+[242:30] Saving precursor levels matrix
+[242:31] Precursor levels matrix (1% precursor and protein group FDR) saved to outputp1/reportPatient1.pr_matrix.tsv.
+[242:31] Saving protein group levels matrix
+[242:31] Protein group levels matrix (1% precursor FDR and protein group FDR) saved to outputp1/reportPatient1.pg_matrix.tsv.
+[242:31] Saving gene group levels matrix
+[242:32] Gene groups levels matrix (1% precursor FDR and protein group FDR) saved to outputp1/reportPatient1.gg_matrix.tsv.
+[242:32] Saving unique genes levels matrix
+[242:32] Unique genes levels matrix (1% precursor FDR and protein group FDR) saved to outputp1/reportPatient1.unique_genes_matrix.tsv.
+[242:32] Manifest saved to outputp1/reportPatient1.manifest.txt
+[242:33] Stats report saved to outputp1/reportPatient1.stats.tsv
+
+The following warnings or errors (in alphabetic order) were detected at least the indicated number of times:
+WARNING: peptidoform scoring enabled because variable modifications have been declared; to disable, use --no-peptidoforms : 1
+WARNING: protein inference is enabled but no FASTA provided - is this intended? : 1
+Finished
+
+
+How to cite:
+using DIA-NN: Demichev et al, Nature Methods, 2020, https://www.nature.com/articles/s41592-019-0638-x
+analysing Scanning SWATH: Messner et al, Nature Biotechnology, 2021, https://www.nature.com/articles/s41587-021-00860-4
+analysing PTMs: Steger et al, Nature Communications, 2021, https://www.nature.com/articles/s41467-021-25454-1
+analysing dia-PASEF: Demichev et al, Nature Communications, 2022, https://www.nature.com/articles/s41467-022-31492-0
+analysing Slice-PASEF: Szyrwiel et al, biorxiv, 2022, https://doi.org/10.1101/2022.10.31.514544
+plexDIA / multiplexed DIA: Derks et al, Nature Biotechnology, 2023, https://www.nature.com/articles/s41587-022-01389-w
+CysQuant: Huang et al, Redox Biology, 2023, https://doi.org/10.1016/j.redox.2023.102908
+using QuantUMS: Kistner at al, biorxiv, 2023, https://doi.org/10.1101/2023.06.20.545604
+[242:33] Log saved to outputp1/reportPatient1.log.txt

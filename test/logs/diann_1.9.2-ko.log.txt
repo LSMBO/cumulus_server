@@ -1,0 +1,195 @@
+DIA-NN 1.9.2 (Data-Independent Acquisition by Neural Networks)
+Compiled on Oct 17 2024 21:58:43
+Current date and time: Fri Nov 22 11:10:22 2024
+CPU: GenuineIntel Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz
+SIMD instructions: AVX AVX2 FMA SSE4.1 SSE4.2 
+Logical CPU cores: 4
+diann.exe --f D:\Projets\DiaNN\test\TP19970FD_Slot1-01_1_20914.d  --f D:\Projets\DiaNN\test\TP19972FD_Slot1-37_1_20916.d  --f D:\Projets\DiaNN\test\TP19974FD_Slot1-73_1_20918.d  --lib D:\Projets\DiaNN\test\test.predicted.speclib --threads 4 --verbose 1 --out D:\Projets\DiaNN\test\Run3\report.tsv --qvalue 0.01 --matrices --temp D:\Projets\DiaNN\test\temp --unimod4 --var-mods 1 --var-mod UniMod:35,15.994915,M --var-mod UniMod:1,42.010565,*n --var-mod UniMod:21,79.966331,STY --var-mod UniMod:121,114.042927,K --no-cut-after-mod UniMod:121 --window 10 --mass-acc 10.0 --mass-acc-ms1 10.0 --peptidoforms --reanalyse --relaxed-prot-inf --rt-profiling 
+
+Thread number set to 4
+Output will be filtered at 0.01 FDR
+Precursor/protein x samples expression level matrices will be saved along with the main report
+Cysteine carbamidomethylation enabled as a fixed modification
+Maximum number of variable modifications set to 1
+Modification UniMod:35 with mass delta 15.9949 at M will be considered as variable
+Modification UniMod:1 with mass delta 42.0106 at *n will be considered as variable
+Modification UniMod:21 with mass delta 79.9663 at STY will be considered as variable
+Modification UniMod:121 with mass delta 114.043 at K will be considered as variable
+Scan window radius set to 10
+Peptidoform scoring enabled
+A spectral library will be created from the DIA runs and used to reanalyse them; .quant files will only be saved to disk during the first step
+Heuristic protein grouping will be used, to reduce the number of protein groups obtained; this mode is recommended for benchmarking protein ID numbers, GO/pathway and system-scale analyses
+The spectral library (if generated) will retain the original spectra but will include empirically-aligned RTs
+Mass accuracy will be fixed to 1e-05 (MS2) and 1e-05 (MS1)
+WARNING: protein inference is enabled but no FASTA provided - is this intended?
+The following variable modifications will be scored: UniMod:35 UniMod:1 UniMod:21 UniMod:121 
+Unless the spectral library specified was created by this version of DIA-NN, it's strongly recommended to specify a FASTA database and use the 'Reannotate' function to allow DIA-NN to identify peptides which can originate from the N/C terminus of the protein: otherwise site localisation might not work properly for modifications of the protein N-terminus or for modifications which do not allow enzymatic cleavage after the modified residue
+DIA-NN will discard peptides obtained using in silico cuts after the following modifications: UniMod:121, 
+
+3 files will be processed
+[0:00] Loading spectral library D:\Projets\DiaNN\test\test.predicted.speclib
+[0:01] Library annotated with sequence database(s): D:\Projets\DiaNN\test\test.fasta
+[0:01] Gene names missing for some isoforms
+[0:01] Library contains 253 proteins, and 253 genes
+[0:01] Spectral library loaded: 253 protein isoforms, 319 protein groups and 659146 precursors in 215594 elution groups.
+[0:04] Initialising library
+
+First pass: generating a spectral library from DIA data
+
+[0:07] File #1/3
+[0:07] Loading run D:\Projets\DiaNN\test\TP19970FD_Slot1-01_1_20914.d
+[2:41] 414401 library precursors are potentially detectable
+[2:41] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[25:22] RT window set to 17.3002
+[25:22] Ion mobility window set to 0.0680753
+[25:22] Recommended MS1 mass accuracy setting: 40.3631 ppm
+[95:14] Removing low confidence identifications
+[107:35] Precursors at 1% peptidoform FDR: 0
+[107:36] Removing interfering precursors
+[107:36] Training neural networks on 3173 PSMs
+[107:38] Number of IDs at 0.01 FDR: 215
+[107:38] Precursors at 1% peptidoform FDR: 0
+[107:38] Calculating protein q-values
+[107:38] Number of genes identified at 1% FDR: 53 (precursor-level), 0 (protein-level) (inference performed using proteotypic peptides only)
+[107:38] Quantification
+[107:38] Precursors with monitored PTMs at 1% FDR: 0 out of 204 considered
+[107:38] Unmodified precursors with monitored PTM sites at 1% FDR: 0
+[107:38] Precursors with PTMs localised (when required) with > 90% confidence: 0 out of 0
+[107:39] Quantification information saved to D:\Projets\DiaNN\test\temp/D__Projets_DiaNN_test_TP19970FD_Slot1-01_1_20914_d.quant
+
+[107:39] File #2/3
+[107:39] Loading run D:\Projets\DiaNN\test\TP19972FD_Slot1-37_1_20916.d
+[109:17] 414401 library precursors are potentially detectable
+[109:17] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[125:22] RT window set to 36.5399
+[125:22] Ion mobility window set to 0.0544779
+[125:22] Cannot perform mass calibration, too few confidently identified precursors
+[125:22] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[160:07] Cannot perform mass calibration, too few confidently identified precursors
+[160:07] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[176:32] Removing low confidence identifications
+[185:34] Removing interfering precursors
+[185:35] Too few confident identifications, neural networks will not be used
+[185:35] Number of IDs at 0.01 FDR: 6
+[185:35] Calculating protein q-values
+[185:35] Number of genes identified at 1% FDR: 0 (precursor-level), 0 (protein-level) (inference performed using proteotypic peptides only)
+[185:35] Quantification
+[185:35] Quantification information saved to D:\Projets\DiaNN\test\temp/D__Projets_DiaNN_test_TP19972FD_Slot1-37_1_20916_d.quant
+
+[185:35] File #3/3
+[185:35] Loading run D:\Projets\DiaNN\test\TP19974FD_Slot1-73_1_20918.d
+[187:57] 414401 library precursors are potentially detectable
+[187:57] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[210:32] RT window set to 18.286
+[210:32] Ion mobility window set to 0.0871217
+[210:32] Recommended MS1 mass accuracy setting: 26.8469 ppm
+[276:09] Removing low confidence identifications
+[289:03] Precursors at 1% peptidoform FDR: 0
+[289:03] Removing interfering precursors
+[289:04] Training neural networks on 1869 PSMs
+[289:05] Number of IDs at 0.01 FDR: 121
+[289:05] Precursors at 1% peptidoform FDR: 0
+[289:06] Calculating protein q-values
+[289:06] Number of genes identified at 1% FDR: 52 (precursor-level), 0 (protein-level) (inference performed using proteotypic peptides only)
+[289:06] Quantification
+[289:06] Precursors with monitored PTMs at 1% FDR: 0 out of 117 considered
+[289:06] Unmodified precursors with monitored PTM sites at 1% FDR: 0
+[289:06] Precursors with PTMs localised (when required) with > 90% confidence: 0 out of 0
+[289:06] Quantification information saved to D:\Projets\DiaNN\test\temp/D__Projets_DiaNN_test_TP19974FD_Slot1-73_1_20918_d.quant
+
+[289:06] Cross-run analysis
+[289:06] Reading quantification information: 3 files
+[289:07] Quantifying peptides
+[289:07] Assembling protein groups
+[289:07] Quantifying proteins
+[289:07] Calculating q-values for protein and gene groups
+[289:07] Calculating global q-values for protein and gene groups
+[289:07] Protein groups with global q-value <= 0.01: 0
+[289:07] Compressed report saved to D:\Projets\DiaNN\test\Run3\report-first-pass.parquet. Use R 'arrow' or Python 'PyArrow' package to process
+[289:07] Writing report
+[289:07] Report saved to D:\Projets\DiaNN\test\Run3\report-first-pass.tsv.
+[289:07] Saving precursor levels matrix
+[289:07] Precursor levels matrix (1% precursor and protein group FDR) saved to D:\Projets\DiaNN\test\Run3\report-first-pass.pr_matrix.tsv.
+[289:07] Manifest saved to D:\Projets\DiaNN\test\Run3\report-first-pass.manifest.txt
+[289:07] Stats report saved to D:\Projets\DiaNN\test\Run3\report-first-pass.stats.tsv
+[289:07] Generating spectral library:
+[289:07] 13 precursors saved
+[289:07] Spectral library saved to D:\Projets\DiaNN\test\Run3\report-lib.parquet
+
+[289:07] Loading spectral library D:\Projets\DiaNN\test\Run3\report-lib.parquet
+Library contains q-values but there are no decoys included; if the library was generated with an old version of DIA-NN, this might lead to less reliable run-specific protein FDR when using it; ideally, the library needs to be generated using DIA-NN 1.9 or later
+[289:07] Spectral library loaded: 13 protein isoforms, 13 protein groups and 13 precursors in 13 elution groups.
+[289:07] Initialising library
+[289:08] Saving the library to D:\Projets\DiaNN\test\Run3\report-lib.parquet.skyline.speclib
+
+
+Second pass: using the newly created spectral library to reanalyse the data
+
+[289:08] File #1/3
+[289:08] Loading run D:\Projets\DiaNN\test\TP19970FD_Slot1-01_1_20914.d
+[291:52] 13 library precursors are potentially detectable
+[291:52] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[291:52] RT window set to 5.28412
+[291:52] Cannot perform mass calibration, too few confidently identified precursors
+[291:52] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[291:52] Cannot perform mass calibration, too few confidently identified precursors
+[291:52] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[291:53] Removing low confidence identifications
+[291:53] Removing interfering precursors
+[291:53] Too few confident identifications, neural networks will not be used
+[291:53] Number of IDs at 0.01 FDR: 0
+[291:53] No protein annotation, skipping protein q-value calculation
+[291:53] Quantification
+
+[291:53] File #2/3
+[291:53] Loading run D:\Projets\DiaNN\test\TP19972FD_Slot1-37_1_20916.d
+[293:30] 13 library precursors are potentially detectable
+[293:30] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[293:30] RT window set to 9.98513
+[293:30] Cannot perform mass calibration, too few confidently identified precursors
+[293:30] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[293:30] Cannot perform mass calibration, too few confidently identified precursors
+[293:30] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[293:31] Removing low confidence identifications
+[293:31] Removing interfering precursors
+[293:31] Too few confident identifications, neural networks will not be used
+[293:31] Number of IDs at 0.01 FDR: 0
+[293:31] No protein annotation, skipping protein q-value calculation
+[293:31] Quantification
+
+[293:31] File #3/3
+[293:31] Loading run D:\Projets\DiaNN\test\TP19974FD_Slot1-73_1_20918.d
+[295:39] 13 library precursors are potentially detectable
+[295:39] Calibrating with mass accuracies 20 (MS1), 20 (MS2)
+[295:40] RT window set to 5.2674
+[295:40] Cannot perform mass calibration, too few confidently identified precursors
+[295:40] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[295:40] Cannot perform mass calibration, too few confidently identified precursors
+[295:40] Cannot perform MS1 mass calibration, too few confidently identified precursors
+[295:40] Removing low confidence identifications
+[295:40] Removing interfering precursors
+[295:40] Too few confident identifications, neural networks will not be used
+[295:40] Number of IDs at 0.01 FDR: 0
+[295:40] No protein annotation, skipping protein q-value calculation
+[295:40] Quantification
+
+[295:41] Cross-run analysis
+[295:41] Reading quantification information: 3 files
+[295:41] Quantifying peptides
+WARNING: not enough peptides for normalisation
+WARNING: not enough peptides for normalisation
+[295:41] Quantifying proteins
+[295:41] Calculating q-values for protein and gene groups
+[295:41] Calculating global q-values for protein and gene groups
+[295:41] Protein groups with global q-value <= 0.01: 0
+[295:41] Compressed report saved to D:\Projets\DiaNN\test\Run3\report.parquet. Use R 'arrow' or Python 'PyArrow' package to process
+[295:41] Writing report
+[295:41] Report saved to D:\Projets\DiaNN\test\Run3\report.tsv.
+[295:41] Saving precursor levels matrix
+[295:41] Precursor levels matrix (1% precursor and protein group FDR) saved to D:\Projets\DiaNN\test\Run3\report.pr_matrix.tsv.
+[295:41] Saving protein group levels matrix
+[295:41] Saving gene group levels matrix
+[295:41] Saving unique genes levels matrix
+[295:41] Manifest saved to D:\Projets\DiaNN\test\Run3\report.manifest.txt
+[295:41] Stats report saved to D:\Projets\DiaNN\test\Run3\report.stats.tsv
+
