@@ -41,10 +41,6 @@ import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_database as db
 
 logger = logging.getLogger(__name__)
-
-DATA_DIR = config.get("storage.path") + config.get("storage.data.subpath")
-JOB_DIR = config.get("storage.path") + config.get("storage.jobs.subpath")
-PIDS_DIR = config.get("storage.path") + config.get("storage.pids.subpath")
 HOSTS = []
 
 class Host:
@@ -77,7 +73,7 @@ def get_all_hosts(reload_list = False):
 		# remove first item of the list, it's the header of the file
 		HOSTS.pop(0)
 		# make sure the pids directory exists
-		if not os.path.isdir(PIDS_DIR): os.mkdir(PIDS_DIR)
+		if not os.path.isdir(config.PIDS_DIR): os.mkdir(config.PIDS_DIR)
 	# return the list
 	return HOSTS
 
@@ -85,7 +81,7 @@ def get_host(host_name):
 	matches = list(filter(lambda host: host.name == host_name, get_all_hosts()))
 	return None if len(matches) == 0 else matches[0]
 
-def remote_script(job_dir, host, file):
+def remote_script(host, file):
 	# connect to the host
 	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
 	ssh = paramiko.SSHClient()
@@ -123,7 +119,7 @@ def remote_check(host, pid):
 
 def is_alive(host_name, pid):
 	# each VM should be storing their current pids in a shared file
-	pid_file = f"{PIDS_DIR}/{host_name}"
+	pid_file = f"{config.PIDS_DIR}/{host_name}"
 	# check that this file exists and has been changed in the last 2 minutes
 	if os.path.isfile(pid_file) and time.time() - os.path.getmtime(pid_file) < 120:
 		# check that the pid is in the file
@@ -166,7 +162,7 @@ def create_job_directory(job_dir_name, form):
 	# - .cumulus.settings: the user settings, it can be useful to know what the job is about without connecting to the interface or to sqlite
 	# - .cumulus.stdout: a link to the standard output of the script
 	# - .cumulus.stderr: a link to the standard error of the script
-	job_dir = f"{JOB_DIR}/{job_dir_name}"
+	job_dir = f"{config.JOB_DIR}/{job_dir_name}"
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
 	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
@@ -188,28 +184,8 @@ def get_size(file):
 
 def get_raw_file_list():
 	filelist = []
-	for file in os.listdir(DATA_DIR):
-		filelist.append((file, get_size(DATA_DIR + "/" + file)))
-	return filelist
-
-def get_file_list(job_id):
-	# this function will only return files, empty folders will be disregarded
-	filelist = []
-	job_dir = db.get_job_dir(job_id)
-	if os.path.isdir(job_dir):
-		# list all files including sub-directories
-		root_path = job_dir + "/"
-		for root, dirs, files in os.walk(root_path):
-			# make sure that the file pathes are relative to the root of the job folder
-			rel_path = root.replace(root_path, "")
-			for f in files:
-				# avoid the .cumulus.* files
-				if not f.startswith(".cumulus."):
-					# return an array of tuples (name|size)
-					file = f if rel_path == "" else rel_path + "/" + f
-					# logger.debug(f"get_file_list->add({file})")
-					filelist.append((file, get_size(root_path + "/" + file)))
-	# the user will select the files they want to retrieve
+	for file in os.listdir(config.DATA_DIR):
+		filelist.append((file, get_size(config.DATA_DIR + "/" + file)))
 	return filelist
 
 def delete_raw_file(file):
@@ -262,29 +238,9 @@ def cancel_job(job_id):
 	db.set_status(job_id, "CANCELLED")
 	db.set_end_date(job_id)
 
-def get_final_stdout_path(job_id):
-	return f"{config.get_log_dir()}/job_{job_id}.stdout"
-
-def get_final_stderr_path(job_id):
-	return f"{config.get_log_dir()}/job_{job_id}.stderr"
-
 def add_to_stderr(job_id, text):
-	with open(get_final_stderr_path(job_id), "a") as f:
+	with open(config.get_final_stderr_path(job_id), "a") as f:
 		f.write(f"\nCumulus: {text}")
-
-def get_log_file_content(job_id, is_stdout = True):
-	content = ""
-	# read log file
-	log_file = get_final_stdout_path(job_id) if is_stdout else get_final_stderr_path(job_id)
-	if os.path.isfile(log_file):
-		f = open(log_file, "r")
-		content = f.read()
-		f.close()
-	# return its content
-	return content
-
-def get_stdout_content(job_id): return get_log_file_content(job_id, True)
-def get_stderr_content(job_id): return get_log_file_content(job_id, False)
 
 def get_file_age_in_days(file):
 	# mtime is the date in seconds since epoch since the last modification

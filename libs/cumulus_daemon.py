@@ -61,7 +61,7 @@ def is_process_running(job_id):
 def check_running_jobs():
 	for job_id in db.get_jobs_per_status("RUNNING"):
 		# get stdout
-		stdout = utils.get_stdout_content(job_id)
+		stdout = apps.get_stdout_content(job_id)
 		# get job_dir
 		job_dir = db.get_job_dir(job_id)
 		# check that the process still exist
@@ -119,10 +119,12 @@ def find_best_host(job_id):
 
 def start_job(job_id, job_dir, app_name, settings, host):
 	# generate the script to run
-	cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host)
+	# cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host.cpu)
+	cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
+	utils.write_file(cmd_file, content)
 	# execute the command
 	logger.info(f"Sending SSH request to start job {job_id} on host '{host.name}'")
-	utils.remote_script(job_dir, host, cmd_file)
+	utils.remote_script(host, cmd_file)
 	# update the job
 	db.set_host(job_id, host.name)
 	db.set_status(job_id, "RUNNING")
@@ -149,6 +151,8 @@ def start_pending_jobs():
 			logger.debug(f"Job {job_id} is NOT ready to start YET")
 
 def run():
+	# load the config file
+	config.init()
 	# wait a little before starting the daemon
 	time.sleep(10)
 	# possible statuses: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED
@@ -167,9 +171,9 @@ def clean():
 	# clean the old files once a day
 	while True:
 		# list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
-		for job in os.listdir(utils.JOB_DIR):
+		for job in os.listdir(config.JOB_DIR):
 			job_id = int(job.split("_")[1])
-			job_dir = utils.JOB_DIR + "/" + job
+			job_dir = config.JOB_DIR + "/" + job
 			#logger.warning(f"Checking job {job_id} stored in '{job}'")
 			if utils.get_file_age_in_days(job_dir) > MAX_AGE:
 				# if job does not exist in the database, delete its folder
@@ -184,8 +188,8 @@ def clean():
 						utils.delete_job_folder(job_dir)
 						logger.warning(f"Job {job_id} has been archived and its content has been deleted")
 		# list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
-		for file in os.listdir(utils.DATA_DIR):
-			file = utils.DATA_DIR + "/" + file
+		for file in os.listdir(config.DATA_DIR):
+			file = config.DATA_DIR + "/" + file
 			if utils.get_file_age_in_days(file) > MAX_AGE:
 				# verify if this file is used or will be used
 				is_used = False

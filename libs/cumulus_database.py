@@ -38,7 +38,6 @@ import time
 from datetime import datetime
 
 import cumulus_server.libs.cumulus_config as config
-import cumulus_server.libs.cumulus_utils as utils
 import cumulus_server.libs.cumulus_apps as apps
 
 logger = logging.getLogger(__name__)
@@ -68,15 +67,27 @@ def connect():
 	cnx.commit()
 	return cnx, cursor
 
-### getter and setter functions ###
-def set_value(job_id, field, value):
+def create_job(form):
 	# connect to the database
 	cnx, cursor = connect()
-	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
-	cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
+	# status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error, CANCELLED if user chose to cancel it, ARCHIVED if the job has been cleaned due to old age
+	# host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
+	owner = form["username"]
+	app_name = form["app_name"]
+	creation_date = int(time.time())
+	# settings are already passed as a stringified json
+	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", ""))
+	# return the id of the job
+	job_id = cursor.lastrowid
+	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
+	job_dir_name = f"Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
+	job_dir = f"{config.JOB_DIR}/{job_dir_name}"
+	cursor.execute(f"UPDATE jobs SET job_dir = ? WHERE id = ?", (job_dir, job_id))
 	cnx.commit()
 	# disconnect
 	cnx.close()
+	# return the job_id and the name of its directory
+	return job_id, job_dir_name
 
 def get_value(job_id, field):
 	# connect to the database
@@ -91,6 +102,15 @@ def get_value(job_id, field):
 	cnx.close()
 	return value
 
+def set_value(job_id, field, value):
+	# connect to the database
+	cnx, cursor = connect()
+	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
+	cursor.execute(f"UPDATE jobs SET {field} = ? WHERE id = ?", (value, job_id))
+	cnx.commit()
+	# disconnect
+	cnx.close()
+
 def set_status(job_id, status): set_value(job_id, "status", status)
 def get_status(job_id): return get_value(job_id, "status")
 def set_host(job_id, host): set_value(job_id, "host", host)
@@ -103,30 +123,6 @@ def get_strategy(job_id): return get_value(job_id, "strategy")
 def set_strategy(job_id, strategy): set_value(job_id, "strategy", strategy)
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
-
-
-### specific functions ###
-def create_job(form, main_job_dir):
-	# connect to the database
-	cnx, cursor = connect()
-	# status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error, CANCELLED if user chose to cancel it, ARCHIVED if the job has been cleaned due to old age
-	# host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
-	owner = form["username"]
-	app_name = form["app_name"]
-	creation_date = int(time.time())
-	# settings are already passed as a stringified json
-	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", ""))
-	# return the id of the job
-	job_id = cursor.lastrowid
-	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
-	job_dir_name = f"Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
-	job_dir = f"{main_job_dir}/{job_dir_name}"
-	cursor.execute(f"UPDATE jobs SET job_dir = ? WHERE id = ?", (job_dir, job_id))
-	cnx.commit()
-	# disconnect
-	cnx.close()
-	# return the job_id and the name of its directory
-	return job_id, job_dir_name
 
 def check_job_existency(job_id):
 	# connect to the database
@@ -162,9 +158,9 @@ def get_last_jobs(job_id, number = 100):
 	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
 		if id == job_id:
 			# stdout and stderr for old jobs used to be kept in the database
-			if stdout == "": stdout = utils.get_stdout_content(job_id)
-			if stderr == "": stderr = utils.get_stderr_content(job_id)
-			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
+			if stdout == "": stdout = apps.get_stdout_content(job_id)
+			if stderr == "": stderr = apps.get_stderr_content(job_id)
+			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(id)})
 		else:
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
@@ -194,7 +190,7 @@ def search_jobs(form):
 	# connect to the database
 	cnx, cursor = connect()
 	# logger.debug(f"SELECT id, owner, app_name, status, creation_date FROM jobs WHERE owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND description LIKE '{desc}' {request_status} {request_date} ORDER BY id DESC LIMIT '{number}'")
-	results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, form["number"]))
+	results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, number))
 	# put the results in a dict
 	jobs = []
 	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir in results:
@@ -204,9 +200,9 @@ def search_jobs(form):
 		if form["file"] == "" or apps.is_in_required_files(job_dir, app_name, settings, form["file"]):
 			if id == current_job_id:
 				# stdout and stderr for old jobs used to be kept in the database
-				if stdout == "": stdout = utils.get_stdout_content(id)
-				if stderr == "": stderr = utils.get_stderr_content(id)
-				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": settings, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": utils.get_file_list(id)})
+				if stdout == "": stdout = apps.get_stdout_content(id)
+				if stderr == "": stderr = apps.get_stderr_content(id)
+				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": settings, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(id)})
 			else:
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
@@ -247,7 +243,7 @@ def delete_job(job_id):
 	# disconnect
 	cnx.close()
 	# also remove the log files
-	stdout = utils.get_final_stdout_path(job_id)
+	stdout = config.get_final_stdout_path(job_id)
 	if os.path.isfile(stdout): os.remove(stdout)
-	stderr = utils.get_final_stderr_path(job_id)
+	stderr = config.get_final_stderr_path(job_id)
 	if os.path.isfile(stderr): os.remove(stderr)

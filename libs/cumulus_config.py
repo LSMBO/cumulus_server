@@ -33,11 +33,20 @@
 import os
 import re
 
+CONFIG_FILE_PATH = "cumulus.conf"
+DEFAULT_CONFIG_FILE_PATH = "cumulus.conf.default"
 CONFIG = {}
+DATA_DIR = ""
+JOB_DIR = ""
+PIDS_DIR = ""
+LOG_DIR = ""
 
-def load():
+def load(config_file_path):
+	# if the file does not exist, use the default one
+	if not os.path.isfile(config_file_path):
+		config_file_path = DEFAULT_CONFIG_FILE_PATH
 	# get the list of hosts from the file
-	f = open("cumulus.conf", "r")
+	f = open(config_file_path, "r")
 	for line in f.read().strip("\n").split("\n"):
 		# do not consider comments (anything after // or #)
 		line = re.sub(r"\s*\t*#.*", "", line.replace("//", "#"))
@@ -49,8 +58,22 @@ def load():
 	f.close()
 
 def get(key): 
-	if len(CONFIG) == 0: load()
+	if len(CONFIG) == 0: load(CONFIG_FILE_PATH)
 	return CONFIG[key]
+
+def init(create_dirs = True):
+	# initialize the paths
+	global DATA_DIR, JOB_DIR, PIDS_DIR, LOG_DIR
+	DATA_DIR = get("storage.path") + get("storage.data.subpath")
+	JOB_DIR = get("storage.path") + get("storage.jobs.subpath")
+	PIDS_DIR = get("storage.path") + get("storage.pids.subpath")
+	LOG_DIR = get("storage.path") + get("storage.logs.subpath")
+	# create the directories if needed
+	if create_dirs:
+		if not os.path.isdir(DATA_DIR): os.mkdir(DATA_DIR)
+		if not os.path.isdir(JOB_DIR): os.mkdir(JOB_DIR)
+		if not os.path.isdir(PIDS_DIR): os.mkdir(PIDS_DIR)
+		if not os.path.isdir(LOG_DIR): os.mkdir(LOG_DIR)
 
 def export():
 	return {
@@ -61,7 +84,8 @@ def export():
 		"client.min.version": CONFIG["client.min.version"]
 	}
 
-def get_log_dir():
-	log_dir = get("storage.path") + get("storage.logs.subpath")
-	if not os.path.isdir(log_dir): os.mkdir(log_dir)
-	return log_dir
+def get_final_stdout_path(job_id):
+	return f"{LOG_DIR}/job_{job_id}.stdout"
+
+def get_final_stderr_path(job_id):
+	return f"{LOG_DIR}/job_{job_id}.stderr"

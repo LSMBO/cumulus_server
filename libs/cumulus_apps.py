@@ -36,7 +36,6 @@ import re
 import xml.etree.ElementTree as ET
 
 import cumulus_server.libs.cumulus_config as config
-import cumulus_server.libs.cumulus_database as db
 import cumulus_server.libs.cumulus_utils as utils
 
 logger = logging.getLogger(__name__)
@@ -44,8 +43,8 @@ FINAL_FILE = config.get("final.file")
 OUTPUT_DIR = config.get("output.folder")
 APPS = {}
 
-def get_app_list():
-	for f in os.listdir("apps"):
+def get_app_list(dir_name = "apps"):
+	for f in os.listdir(dir_name):
 		# add the path to the file
 		f = f"apps/{f}"
 		if f.endswith(".xml"):
@@ -70,7 +69,7 @@ def is_finished(app_name, stdout):
 	else: return True
 
 def get_file_path(job_dir, file_path, is_raw_input):
-	if is_raw_input == "true": return utils.DATA_DIR + "/" + os.path.basename(file_path)
+	if is_raw_input == "true": return config.DATA_DIR + "/" + os.path.basename(file_path)
 	else: return f"{job_dir}/{os.path.basename(file_path)}"
 
 def get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
@@ -103,6 +102,7 @@ def get_all_files_in_settings(job_dir, app_name, settings, include_mzml_converte
 				# get the files as an array
 				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 				for file in current_files:
+					if file == "": continue
 					file = get_file_path(job_dir, file, is_raw_input)
 					# if the file is marked as to be converted, add the converted file instead
 					if include_mzml_converted_files and param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
@@ -215,7 +215,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 	# return the full command line
 	return command_line
 
-def generate_script(job_id, job_dir, app_name, settings, host):
+def generate_script_content(job_id, job_dir, app_name, settings, host_cpu):
 	# the working directory is the job directory
 	content = f"cd '{job_dir}'\n"
 	# store the session id (not the pid anymore, sid are better for cancelling jobs)
@@ -225,8 +225,8 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	output_dir = f"./{OUTPUT_DIR}"
 	content += f"mkdir '{output_dir}'\n"
 	# get the log files paths
-	stdout = utils.get_final_stdout_path(job_id)
-	stderr = utils.get_final_stderr_path(job_id)
+	stdout = config.get_final_stdout_path(job_id)
+	stderr = config.get_final_stderr_path(job_id)
 	# convert the input files eventually
 	converter = config.get("converter.raw.to.mzml")
 	cmd = ""
@@ -238,16 +238,14 @@ def generate_script(job_id, job_dir, app_name, settings, host):
 	for file in get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 		cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr}\n"
 	# generate the command line based on the xml file and the given settings
-	cmd += get_command_line(app_name, job_dir, settings, host.cpu, output_dir)
+	cmd += get_command_line(app_name, job_dir, settings, host_cpu, output_dir)
 	# redirect the output to the log directory
 	cmd += f" 1>> {stdout}"
 	cmd += f" 2>> {stderr}"
-	# use a single & to put the command in background and directly store the pid
+	# finalize the content
 	content += cmd + "\n"
-	# write the script in the job directory and return the file
-	cmd_file = job_dir + "/.cumulus.cmd"
-	utils.write_file(cmd_file, content)
-	return cmd_file
+	# return file path and the content
+	return job_dir + "/.cumulus.cmd", content
 
 def is_file_required(job_dir, app_name, settings, file):
 	# search in the settings for each input file
@@ -264,3 +262,36 @@ def is_in_required_files(job_dir, app_name, settings, file_tag):
 		if file_tag in os.path.basename(input_file): return True
 	# return False in any other case
 	return False
+
+def get_log_file_content(job_id, is_stdout = True):
+	content = ""
+	# read log file
+	log_file = config.get_final_stdout_path(job_id) if is_stdout else config.get_final_stderr_path(job_id)
+	if os.path.isfile(log_file):
+		f = open(log_file, "r")
+		content = f.read()
+		f.close()
+	# return its content
+	return content
+
+def get_stdout_content(job_id): return get_log_file_content(job_id, True)
+def get_stderr_content(job_id): return get_log_file_content(job_id, False)
+
+def get_file_list(job_dir):
+	# this function will only return files, empty folders will be disregarded
+	filelist = []
+	if os.path.isdir(job_dir):
+		# list all files including sub-directories
+		root_path = job_dir + "/"
+		for root, _, files in os.walk(root_path):
+			# make sure that the file pathes are relative to the root of the job folder
+			rel_path = root.replace(root_path, "")
+			for f in files:
+				# avoid the .cumulus.* files
+				if not f.startswith(".cumulus."):
+					# return an array of tuples (name|size)
+					file = f if rel_path == "" else rel_path + "/" + f
+					# logger.debug(f"get_file_list->add({file})")
+					filelist.append((file, utils.get_size(root_path + "/" + file)))
+	# the user will select the files they want to retrieve
+	return filelist
