@@ -152,15 +152,15 @@ def get_last_jobs(job_id, number = 100):
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
-	results = cursor.execute("SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr from jobs ORDER BY id DESC LIMIT ?", (number,))
+	results = cursor.execute("SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir from jobs ORDER BY id DESC LIMIT ?", (number,))
 	# put the results in a dict
 	jobs = []
-	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr in results:
+	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir in results:
 		if id == job_id:
 			# stdout and stderr for old jobs used to be kept in the database
 			if stdout == "": stdout = apps.get_stdout_content(job_id)
 			if stderr == "": stderr = apps.get_stderr_content(job_id)
-			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(id)})
+			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(job_dir)})
 		else:
 			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
@@ -202,7 +202,7 @@ def search_jobs(form):
 				# stdout and stderr for old jobs used to be kept in the database
 				if stdout == "": stdout = apps.get_stdout_content(id)
 				if stderr == "": stderr = apps.get_stderr_content(id)
-				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": settings, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(id)})
+				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": settings, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(job_dir)})
 			else:
 				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
 	cnx.close()
