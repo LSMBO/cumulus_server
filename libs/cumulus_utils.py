@@ -30,12 +30,13 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
+import json
 import logging
 import os
 import paramiko
+import re
 import shutil
 import time
-import json
 
 import cumulus_server.libs.cumulus_config as config
 import cumulus_server.libs.cumulus_database as db
@@ -242,16 +243,56 @@ def add_to_stderr(job_id, text):
 	with open(config.get_final_stderr_path(job_id), "a") as f:
 		f.write(f"\nCumulus: {text}")
 
-def get_file_age_in_days(file):
+# def get_file_age_in_days(file):
+	# # mtime is the date in seconds since epoch since the last modification
+	# # time() is the current time
+	# # divide by the number of seconds in a day to have the number of days
+	# if file is None: return 0
+	# t = (time.time() - os.path.getmtime(file)) / 86400
+	# logger.debug(f"File '{os.path.basename(file)}': {t}")
+	# return t
+def get_file_age_in_seconds(file):
+	# return 0 if the file is not found or not given
+	if file is None: return 0
+	if not os.path.isfile(file) and not os.path.isdir(file): return 0
 	# mtime is the date in seconds since epoch since the last modification
 	# time() is the current time
 	# divide by the number of seconds in a day to have the number of days
-	if file is None: return 0
-	t = (time.time() - os.path.getmtime(file)) / 86400
-	logger.debug(f"File '{os.path.basename(file)}': {t}")
+	t = time.time() - os.path.getmtime(file)
+	logger.debug(f"File '{os.path.basename(file)}': {t / 86400} days")
 	return t
 
 def get_disk_usage():
 	total, used, free = shutil.disk_usage(config.get("storage.path"))
 	logger.debug(f"Total: {total} ; Used: {used} ; Free: {free}")
 	return total, used, free
+
+# def get_deletable_jobs():
+	# # get the max age in seconds
+	# max_age_seconds = int(config.get("data.max.age.in.days")) * 86400
+	# # get the job ids and directories
+	# jobs = db.get_ended_jobs_older_than(max_age_seconds)
+
+def get_zombie_jobs():
+	# look at the folders in the main job dir that are not used for jobs
+	zombie_job_folders = []
+	for job in os.listdir(config.JOB_DIR):
+		if os.path.isdir(config.JOB_DIR + "/" + job):
+			# jobs look like "Job_{job_id}_{owner}_{app_name}_{str(creation_date)}"
+			if re.search("Job_\\d+_", job) == None:
+				zombie_job_folders.append(config.JOB_DIR + "/" + job)
+			else:
+				# the folder looks like a job folder, let's check if its id is in the database
+				job_id = int(job.split("_")[1])
+				if not db.check_job_existency(job_id): zombie_job_folders.append(config.JOB_DIR + "/" + job)
+	return zombie_job_folders
+
+def get_unused_shared_files_older_than(max_age_seconds):
+	# list the shared files and folders
+	files = []
+	for file in os.listdir(config.DATA_DIR):
+		file = config.DATA_DIR + "/" + file
+		# only consider the files or folders older than the given time
+		if get_file_age_in_seconds(file) > max_age_seconds:
+			if not db.is_file_in_use(file): files.append(file)
+	return files

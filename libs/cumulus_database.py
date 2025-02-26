@@ -247,3 +247,45 @@ def delete_job(job_id):
 	if os.path.isfile(stdout): os.remove(stdout)
 	stderr = config.get_final_stderr_path(job_id)
 	if os.path.isfile(stderr): os.remove(stderr)
+
+# function used for test only, to set a fake creation date (default value is to remove one day)
+def set_fake_creation_date(job_id, seconds_to_add = -86400):
+	# connect to the database
+	cnx, cursor = connect()
+	# get the current creation date for the job
+	creation_date = int(get_value(job_id, "creation_date"))
+	# change the date
+	creation_date = creation_date + seconds_to_add
+	# set the new creation date
+	cursor.execute(f"UPDATE jobs SET creation_date = ? WHERE id = ?", (creation_date, job_id))
+	cnx.commit()
+	# disconnect
+	cnx.close()
+
+def get_ended_jobs_older_than(max_age_seconds):
+	# connect to the database
+	cnx, cursor = connect()
+	# search the jobs that fit the conditions
+	results = cursor.execute("SELECT id, status, job_dir FROM jobs WHERE unixepoch() - creation_date > ? AND status NOT LIKE 'ARCHIVE_%' AND status != 'PENDING' AND status != 'RUNNING'", (max_age_seconds,))
+	# store the ids
+	jobs = []
+	# for job_id, job_dir in results: jobs.append({"job_id": job_id, "job_dir": job_dir})
+	for job_id, status, job_dir in results: jobs.append((job_id, status, job_dir))
+	cnx.close()
+	# return a list of job ids and job directories
+	return jobs
+
+def is_file_in_use(file):
+	# connect to the database
+	cnx, cursor = connect()
+	# search the jobs that are RUNNING or PENDING
+	results = cursor.execute("SELECT app_name, settings, job_dir from jobs WHERE status = 'RUNNING' or status = 'PENDING'")
+	# parse the results
+	is_used = False
+	for app_name, settings, job_dir in results:
+		if apps.is_file_required(job_dir, app_name, json.loads(settings), file):
+			is_used = True
+			break
+	# disconnect
+	cnx.close()
+	return is_used
