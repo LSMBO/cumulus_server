@@ -157,3 +157,11 @@ def test_get_alive_jobs_per_host():
 def test_delete_job():
     db.delete_job(4)
     assert not db.check_job_existency(4)
+
+def test_get_ended_jobs_older_than():
+    db.set_fake_creation_date(1)
+    assert len(db.get_ended_jobs_older_than(80000)) == 1
+
+def test_is_file_in_use():
+    assert db.is_file_in_use("./test/data/AT2378PAP.mzML") == True
+    assert db.is_file_in_use("./test/data/AT2378PAP.raw") == False

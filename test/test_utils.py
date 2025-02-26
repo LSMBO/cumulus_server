@@ -95,3 +95,35 @@ def test_delete_raw_file():
 
 def test_get_pid_file():
     assert utils.get_pid_file(1).endswith(".cumulus.pid")
+
+def test_get_pid():
+    job_dir = os.path.dirname(utils.get_pid_file(1))
+    temp_dir = "./test/jobs/job1_complete"
+    os.rename(temp_dir, job_dir)
+    assert utils.get_pid(1) == 12318
+    os.rename(job_dir, temp_dir)
+
+def test_add_to_stderr():
+    log_file = "./test/logs/job_1.stderr"
+    utils.add_to_stderr(1, "TEST")
+    assert(os.path.getsize(log_file) == 15)
+    utils.add_to_stderr(1, "TEST")
+    assert(os.path.getsize(log_file) == 30)
+    os.remove(log_file)
+    with open(log_file, "a"):
+        os.utime(log_file, None)
+
+def test_get_file_age_in_seconds():
+    # this file is older than a day
+    assert utils.get_file_age_in_seconds("./test/hosts.tsv") > 86400
+    # this file is brand new (created in the previous test, so the value should be 0 or 1)
+    assert utils.get_file_age_in_seconds("./test/logs/job_1.stderr") < 3
+    # this file does not exist
+    assert utils.get_file_age_in_seconds("./test/does_not_exist") == 0
+    assert utils.get_file_age_in_seconds(None) == 0
+
+def test_get_zombie_jobs():
+    assert len(utils.get_zombie_jobs()) == 4
+
+def test_get_unused_shared_files_older_than():
+    assert len(utils.get_unused_shared_files_older_than(86400)) == 5
