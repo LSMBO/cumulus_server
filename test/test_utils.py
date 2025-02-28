@@ -127,3 +127,5 @@ def test_get_zombie_jobs():
 
 def test_get_unused_shared_files_older_than():
     assert len(utils.get_unused_shared_files_older_than(86400)) == 5
+    # remove the test database
+    os.remove("test/cumulus.db")
