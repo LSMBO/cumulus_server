@@ -61,7 +61,7 @@ log_date = "%Y/%m/%d %H:%M:%S"
 if IS_DEBUG: logging.basicConfig(level = logging.DEBUG, format = log_format, datefmt = log_date)
 else:
 	logging.basicConfig(
-		handlers = [RotatingFileHandler(filename = f"{LOGS_DIR}/cumulus-rsync.log", maxBytes = 10000000, backupCount = 10)],
+		handlers = [RotatingFileHandler(filename = f"{LOGS_DIR}/cumulus.log", maxBytes = 10000000, backupCount = 10)],
 		level = logging.INFO,
 		format = log_format,
 		datefmt = log_date
