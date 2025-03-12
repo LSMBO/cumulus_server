@@ -35,8 +35,8 @@ import os
 import re
 import xml.etree.ElementTree as ET
 
-import cumulus_server.libs.cumulus_config as config
-import cumulus_server.libs.cumulus_utils as utils
+import libs.cumulus_config as config
+import libs.cumulus_utils as utils
 
 logger = logging.getLogger(__name__)
 FINAL_FILE = config.get("final.file")

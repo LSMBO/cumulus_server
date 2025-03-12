@@ -1,3 +1,6 @@
+local.host = 0.0.0.0
+local.port = 8800
+
 storage.path = /storage
 storage.data.subpath = /data
 storage.jobs.subpath = /jobs

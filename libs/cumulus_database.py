@@ -37,8 +37,8 @@ import sqlite3
 import time
 from datetime import datetime
 
-import cumulus_server.libs.cumulus_config as config
-import cumulus_server.libs.cumulus_apps as apps
+import libs.cumulus_config as config
+import libs.cumulus_apps as apps
 
 logger = logging.getLogger(__name__)
 

@@ -30,8 +30,8 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-import cumulus_server.libs.cumulus_config as config
-import cumulus_server.libs.cumulus_database as db
+import libs.cumulus_config as config
+import libs.cumulus_database as db
 import json
 import os
 import re
