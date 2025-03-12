@@ -42,6 +42,8 @@ PIDS_DIR = ""
 LOG_DIR = ""
 
 def load(config_file_path):
+	# clear the current config
+	CONFIG.clear()
 	# if the file does not exist, use the default one
 	if not os.path.isfile(config_file_path):
 		config_file_path = DEFAULT_CONFIG_FILE_PATH
