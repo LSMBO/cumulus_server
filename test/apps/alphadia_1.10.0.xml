@@ -1,0 +1,242 @@
+<tool id="alphadia_1.10.0" name="AlphaDIA" version="1.10.0" description="" command="/storage/share/alphadia-1.10.0/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="TODO" category="__work_in_progress__">
+
+    <section name="input" title="Input files" expanded="true">
+        <conditional name="raw">
+            <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
+                <option value="bruker-d" selected="true">Bruker .d folders</option>
+                <option value="thermo-raw">Thermo .raw files</option>
+            </select>
+            <when value="bruker-d">
+                <filelist name="raw_paths" label="Select Bruker .d analyses" format="d" is_raw_input="true" multiple="true" is_folder="true" value="" help=".d folders will be expected" />
+            </when>
+            <when value="thermo-raw">
+                <filelist name="raw_paths" label="Select Thermo RAW files" format="raw" is_raw_input="true" multiple="true" is_folder="false" value="" help="Warning: Thermo RAW files cannot be read for now, the files will be automatically converted to mzML files" />
+            </when>
+        </conditional>
+    </section>
+
+    <section name="general" title="General" expanded="true">
+        <string name="workflow_name" label="Workflow" value="PeptideCentric.v1" visibility="hidden" help="" />
+        <string name="thread_count" config_path="general" label="Number of Threads" value="%nb_threads%" visibility="hidden" help="" />
+        <checkbox name="reuse_quant" config_path="general" label="Reuse Ion Quantities" value="false" visibility="advanced" help="" />
+        <checkbox name="reuse_calibration" config_path="general" label="Reuse Calibration" value="false" visibility="advanced" help="" />
+        <checkbox name="use_gpu" config_path="general" label="Use GPU" value="false" help="" visibility="hidden" />
+        <select name="log_level" config_path="general" label="Log Level" visibility="advanced" help="">
+            <option value="DEBUG">DEBUG</option>
+            <option value="INFO" selected="true">INFO</option>
+            <option value="PROGRESS">PROGRESS</option>
+            <option value="WARNING">WARNING</option>
+            <option value="ERROR">ERROR</option>
+        </select>
+    </section>
+
+    <section name="library_prediction" title="Library prediction" expanded="true">
+        <conditional name="library">
+            <select name="format" label="Select library format" help="Specify the type of library you want to use">
+                <option value="fasta" selected="true">Library-free</option>
+                <option value="speclib">Spectral library</option>
+            </select>
+            <when value="fasta">
+                <checkbox name="enabled" config_path="library_prediction" label="Enable Prediction" value="true" visibility="hidden" help="" />
+                <filelist name="fasta_paths" config_path="library_prediction" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="true" is_folder="false" value="" help="Specify the FASTA file you want to use" />
+                <select name="enzyme" config_path="library_prediction" label="Enzyme" help="">
+                    <option value="arg-c">Arg-C</option>
+                    <option value="asp-n">Asp-N</option>
+                    <option value="bnps-skatole">BNPS-skatole</option>
+                    <option value="caspase-1">Caspase 1</option>
+                    <option value="caspase-2">Caspase 2</option>
+                    <option value="caspase-3">Caspase 3</option>
+                    <option value="caspase-4">Caspase 4</option>
+                    <option value="caspase-5">Caspase 5</option>
+                    <option value="caspase-6">Caspase 6</option>
+                    <option value="caspase-7">Caspase 7</option>
+                    <option value="caspase-8">Caspase 8</option>
+                    <option value="caspase-9">Caspase 9</option>
+                    <option value="caspase-10">Caspase 10</option>
+                    <option value="chymotrypsin-high-spec">Chymotrypsin high specificity</option>
+                    <option value="chymotrypsin-low-spec">Chymotrypsin low specificity</option>
+                    <option value="chymotrypsin">Chymotrypsin</option>
+                    <option value="clostripain">Clostripain</option>
+                    <option value="cnbr">CNBr</option>
+                    <option value="enterokinase">Enterokinase</option>
+                    <option value="factor-xa">Factor Xa</option>
+                    <option value="formic-acid">Formic acid</option>
+                    <option value="glutamyl-endopeptidase">Glutamyl endopeptidase</option>
+                    <option value="glu-c">Glu-C</option>
+                    <option value="granzyme-b">Granzyme B</option>
+                    <option value="hydroxylamine">Hydroxylamine</option>
+                    <option value="iodosobenzoic-acid">Iodosobenzoic acid</option>
+                    <option value="lys-c">Lys-C</option>
+                    <option value="lys-n">Lys-N</option>
+                    <option value="ntcb">ntcB</option>
+                    <option value="pepsin-ph1.3">Pepsin pH 1.3</option>
+                    <option value="pepsin-ph2.0">Pepsin pH 2.0</option>
+                    <option value="proline-endopeptidase">Proline endopeptidase</option>
+                    <option value="proteinase-k">Proteinase K</option>
+                    <option value="staphylococcal-peptidase-i">Staphylococcal peptidase I</option>
+                    <option value="thermolysin">Thermolysin</option>
+                    <option value="thrombin">Thrombin</option>
+                    <option value="tryspin-full">trypsin_full</option>
+                    <option value="trypsin-exception">trypsin_exception</option>
+                    <option value="trypsin-not-p">trypsin_not_p</option>
+                    <option value="trypsin" selected="true">Trypsin</option>
+                    <option value="trypsin-p">Trypsin/P</option>
+                    <option value="non-specific">Non-specific</option>
+                    <option value="no-cleave">No-cleave</option>
+                </select>
+                <string name="fixed_modifications" config_path="library_prediction" label="Fixed modifications" value="Carbamidomethyl@C" help="" />
+                <string name="variable_modifications" config_path="library_prediction" label="Variable modifications" value="Oxidation@M;Acetyl@Protein_N-term" help="" />
+                <number name="max_var_mod_num" config_path="library_prediction" label="Maximum variable modifications" value="2" min="0" max="5" help="" />
+                <number name="missed_cleavages" config_path="library_prediction" label="Missed cleavages" value="1" min="0" max="5" help="" />
+                <range name="precursor_len" config_path="library_prediction" label="Precursor length" value="7" value2="35" min="5" max="100" help="" />
+                <range name="precursor_charge" config_path="library_prediction" label="Precursor charge" value="2" value2="4" min="1" max="10" help="" />
+                <range name="precursor_mz" config_path="library_prediction" label="Precursor m/z" value="400" value2="1200" step="0.01" min="0" max="3000" help="" />
+                <range name="fragment_mz" config_path="library_prediction" label="Fragment m/z" value="200" value2="2000" step="0.01" min="0" max="3000" help="" />
+                <string name="fragment_types" config_path="library_prediction" label="Fragment types" value="b;y" visibility="advanced" help="" />
+                <number name="max_fragment_charge" config_path="library_prediction" label="Maximum fragment charge" value="2" min="1" max="5" visibility="advanced" help="" />
+                <number name="nce" config_path="library_prediction" label="Normalized collision energy" value="25" step="0.01" min="0" max="1000" visibility="advanced" help="" />
+                <select name="instrument" config_path="library_prediction" label="Instrument" visibility="advanced" help="">
+                    <option value="timstof" selected="true">TimsTOF</option>
+                    <option value="astral">Astral</option>
+                    <option value="eclipse">Eclipse</option>
+                    <option value="lumos">Lumos</option>
+                    <option value="velos">Velos</option>
+                    <option value="elite">Elite</option>
+                    <option value="qe">Q-Exactive</option>
+                    <option value="qe+">Q-Exactive+</option>
+                    <option value="qehf">Q-Exactive HF</option>
+                    <option value="qehfx">Q-Exactive HF-X</option>
+                    <option value="exploris">Exploris</option>
+                    <option value="exploris840">Exploris 480</option>
+                    <option value="sciex-tof">Sciex TOF</option>
+                    <option value="orbitrap-tribrid">Orbitrap Tribrid</option>
+                    <option value="thermo-tribrid">Thermo Tribrid</option>
+                </select>
+                <filelist name="peptdeep_model_path" config_path="library_prediction" label="PeptDeep Model Path" multiple="false" is_folder="true" is_raw_input="false" format="" value="" visibility="advanced" help="" />
+                <select name="peptdeep_model_type" config_path="library_prediction" label="PeptDeep Model Type" visibility="advanced" help="">
+                    <option value="generic" selected="true">Generic</option>
+                    <option value="phospho">phospho</option>
+                    <option value="digly">digly</option>
+                </select>
+            </when>
+            <when value="speclib">
+                <checkbox name="enabled" config_path="library_prediction" label="Enable Prediction" value="false" visibility="hidden" help="" />
+                <filelist name="library" label="Spectra library file" format="speclib" is_raw_input="false" multiple="false" is_folder="false" value="" help="Specify the spectral library" />
+            </when>
+        </conditional>
+    </section>
+
+    <section name="search" title="Search" expanded="true">
+        <number name="target_ms1_tolerance" config_path="search" label="MS1 Tolerance" value="5" step="0.01" min="1" max="100" help="" />
+        <number name="target_ms2_tolerance" config_path="search" label="MS2 Tolerance" value="10" step="0.01" min="1" max="100" help="" />
+        <number name="target_mobility_tolerance" config_path="search" label="Mobility Tolerance" value="0" step="0.01" min="0" max="100" help="" />
+        <number name="target_rt_tolerancert-tol" config_path="search" label="RT Tolerance" value="0" step="0.01" min="0" max="100" help="" />
+        <string name="channel_filter" config_path="search" label="Channel Filter" value="" visibility="advanced" help="" />
+        <checkbox name="exclude_shared_ions" config_path="search" label="Exclude Shared Ions" value="true" visibility="advanced" help="" />
+        <checkbox name="compete_for_fragments" config_path="search" label="Compete for Fragments" value="true" visibility="advanced" help="" />
+        <number name="target_num_candidates" config_path="search" label="Number of Candidates" value="2" visibility="advanced" help="" />
+        <number name="quant_window" config_path="search" label="Quant window" value="3" visibility="advanced" help="" />
+        <checkbox name="quant_all" config_path="search" label="Use all MS2 observations" value="true" visibility="advanced" help="" />
+    </section>
+
+    <section name="fdr" title="False Discovery Rate Correction" expanded="true">
+        <number name="fdr" config_path="fdr" label="FDR" value="0.01" min="0.0" max="1.0" step="0.01" help="" />
+        <select name="group_level" config_path="fdr" label="Inference Level" help="">
+            <option value="genes">Genes</option>
+            <option value="proteins" selected="true">Proteins</option>
+        </select>
+        <select name="inference_strategy" config_path="fdr" label="Inference Strategy" help="">
+            <option value="library">Library</option>
+            <option value="maximum_parsimony">Maximum parsimony</option>
+            <option value="heuristic" selected="true">Heuristic</option>
+        </select>
+        <checkbox name="channel_wise_fdr" config_path="fdr" label="Channel wise FDR" value="false" visibility="advanced" help="" />
+        <checkbox name="keep_decoys" config_path="fdr" label="Keep Decoys" value="false" visibility="advanced" help="" />
+        <checkbox name="enable_two_step_classifier" config_path="fdr" label="Two Step Classifier" value="false" visibility="advanced" help="" />
+        <number name="two_step_classifier_max_iterations" config_path="fdr" label="Two Step Classifier Max Iterations" value="5" visibility="advanced" help="" />
+        <checkbox name="enable_nn_hyperparameter_tuning" config_path="fdr" label="Hyperparameter Tuning" value="false" visibility="advanced" help="" />
+    </section>
+
+    <section name="search_initial" title="Initial Search Settings" expanded="false">
+        <number name="initial_ms1_tolerance" config_path="search_initial" label="MS1 Tolerance" value="30" step="0.01" min="1" max="100" visibility="advanced" help="" />
+        <number name="initial_ms2_tolerance" config_path="search_initial" label="MS2 Tolerance" value="30" step="0.01" min="1" max="100" visibility="advanced" help="" />
+        <number name="initial_mobility_tolerance" config_path="search_initial" label="Mobility Tolerance" value="0" step="0.01" min="0" max="100" visibility="advanced" help="" />
+        <number name="initial_rt_tolerance" config_path="search_initial" label="RT Tolerance" value="0" step="0.01" min="0" max="100" visibility="advanced" help="" />
+    </section>
+
+    <section name="multiplexing" title="Multiplexing" expanded="false">
+        <conditional name="multiplex">
+            <checkbox name="enabled" config_path="multiplexing" label="Enable Multiplexing" value="false" visibility="advanced" help="" />
+            <when value="yes">
+                <string name="target_channels" config_path="multiplexing" label="Target Channels" value="4,8" visibility="advanced" help="" />
+                <number name="decoy_channel" config_path="multiplexing" label="Decoy Channel " value="12" visibility="advanced" help="" />
+                <number name="reference_channel" config_path="multiplexing" label="Reference Channel" value="0" visibility="advanced" help="" />
+                <checkbox name="competetive_scoring" config_path="multiplexing" label="Competitive Scoring" value="false" visibility="advanced" help="" />
+            </when>
+        </conditional>
+    </section>
+
+    <section name="search_output" title="Search output" expanded="false">
+        <select name="file_format" config_path="search_output" label="File format" help="">
+            <option value="tsv" selected="true">TSV</option>
+            <option value="parquet">Parquet</option>
+        </select>
+        <checkbox name="peptide_level_lfq" config_path="search_output" label="Peptide level LFQ" value="false" help="" />
+        <checkbox name="precursor_level_lfq" config_path="search_output" label="Precursor level LFQ" value="false" help="" />
+        <number name="min_k_fragments" config_path="search_output" label="Minimum number of fragments" value="12" visibility="advanced" help="" />
+        <number name="min_correlation" config_path="search_output" label="Minimum correlation" value="0.9" step="0.01" visibility="advanced" help="" />
+        <number name="num_samples_quadratic" config_path="search_output" label="Number of samples for quadratic fit" value="50" visibility="advanced" help="" />
+        <number name="min_nonnan" config_path="search_output" label="Minimum number of non-nan values" value="3" visibility="advanced" help="" />
+        <checkbox name="normalize_lfq" config_path="search_output" label="Normalize LFQ" value="true" visibility="advanced" help="" />
+    </section>
+
+    <section name="transfer_library" title="Transfer Library" expanded="false" hidden="true">
+        <conditional name="transfer_lib">
+            <checkbox name="enabled" config_path="transfer_library" label="Enabled" value="false" help="" />
+            <when value="yes">
+                <string name="fragment_types" config_path="transfer_library" label="Fragment types" value="b;y" visibility="advanced" help="" />
+                <number name="max_charge" config_path="transfer_library" label="Maximum charge" value="2" visibility="advanced" help="" />
+                <number name="top_k_samples" config_path="transfer_library" label="Top k samples" value="3" visibility="advanced" help="" />
+                <checkbox name="norm_delta_max" config_path="transfer_library" label="Norm delta max" value="true" visibility="advanced" help="" />
+                <number name="precursor_correlation_cutoff" config_path="transfer_library" label="Precursor correlation cutoff" value="0.5" step="0.01" visibility="advanced" help="" />
+                <number name="fragment_correlation_ratio" config_path="transfer_library" label="Fragment correlation ratio" value="0.75" step="0.01" visibility="advanced" help="" />
+            </when>
+        </conditional>
+    </section>
+
+    <section name="transfer_learning" title="Transfer Learning" expanded="false" hidden="true">
+        <conditional name="transfer_learn">
+            <checkbox name="enabled" config_path="transfer_learning" label="Enabled" value="false" help="" />
+            <when value="yes">
+                <number name="batch_size" config_path="transfer_learning" label="Batch size" value="2000" visibility="advanced" help="" />
+                <number name="max_lr" config_path="transfer_learning" label="Maximum learning rate" value="0.0001" step="0.0001" visibility="advanced" help="" />
+                <number name="train_fraction" config_path="transfer_learning" label="Train fraction" value="0.7" step="0.01" visibility="advanced" help="" />
+                <number name="validation_fraction" config_path="transfer_learning" label="Validation fraction" value="0.2" step="0.01" visibility="advanced" help="" />
+                <number name="test_fraction" config_path="transfer_learning" label="Test fraction" value="0.1" step="0.01" visibility="advanced" help="" />
+                <number name="test_interval" config_path="transfer_learning" label="Test interval" value="1" visibility="advanced" help="" />
+                <number name="lr_patience" config_path="transfer_learning" label="Learning rate patience" value="3" visibility="advanced" help="" />
+                <number name="epochs" config_path="transfer_learning" label="Number of epochs" value="51" visibility="advanced" help="" />
+                <number name="warmup_epochs" config_path="transfer_learning" label="Warmup epochs" value="5" visibility="advanced" help="" />
+                <number name="nce" config_path="transfer_learning" label="Normalized collision energy" value="25" step="0.01" visibility="advanced" help="" />
+                <select name="instrument" config_path="transfer_learning" label="Instrument" visibility="advanced" help="">
+                    <option value="timstof" selected="true">TimsTOF</option>
+                    <option value="astral">Astral</option>
+                    <option value="eclipse">Eclipse</option>
+                    <option value="lumos">Lumos</option>
+                    <option value="velos">Velos</option>
+                    <option value="elite">Elite</option>
+                    <option value="qe">Q-Exactive</option>
+                    <option value="qe+">Q-Exactive+</option>
+                    <option value="qehf">Q-Exactive HF</option>
+                    <option value="qehfx">Q-Exactive HF-X</option>
+                    <option value="exploris">Exploris</option>
+                    <option value="exploris840">Exploris 480</option>
+                    <option value="sciex-tof">Sciex TOF</option>
+                    <option value="orbitrap-tribrid">Orbitrap Tribrid</option>
+                    <option value="thermo-tribrid">Thermo Tribrid</option>
+                </select>
+            </when>
+        </conditional>
+    </section>
+
+</tool>

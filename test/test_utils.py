@@ -74,7 +74,7 @@ def test_create_job_directory():
 
 def test_get_size():
     assert utils.get_size("./test/hosts.tsv") == 265
-    assert utils.get_size("./test/apps") == 43692
+    assert utils.get_size("./test/apps") == 46957
 
 def test_get_raw_file_list():
     assert len(utils.get_raw_file_list()) == 10
