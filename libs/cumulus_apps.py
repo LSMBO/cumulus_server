@@ -147,7 +147,7 @@ def get_param_command_line(param, settings, job_dir):
 			if command != None: cmd.append(command)
 			# get the option with the selected value, add the command if there is one (no variable expected)
 			option = param.find(f"option[@value='{value}']")
-			if option.get("command") != None: cmd.append(option.get("command"))
+			if option != None and option.get("command") != None: cmd.append(option.get("command"))
 	elif param.tag == "checkbox":
 		# add the command line if the key is in the settings (if it is, it means that it's checked)
 		# no variable is expected there
@@ -198,7 +198,9 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 		if param.tag == "select":
 			if key in settings:
 				option = param.find(f"option[@value='{value}']")
-				if option.get("command") != None: value = option.get("command")
+				if option != None:
+					if option.get("command") != None: value = option.get("command")
+				else: logger.debug(f"Option with value {value} not found in select {key}")
 		elif param.tag == "checkbox":
 			if param.get("name") in settings: value = True if settings[key] else False
 		elif param.tag == "string":
