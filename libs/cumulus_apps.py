@@ -137,6 +137,9 @@ def get_param_command_line(param, settings, job_dir):
 	cmd = []
 	key = param.get("name")
 	command = param.get("command")
+	# attribute 'command' is not mandatory, it can be missing, return "" if it is
+	if command == None: return ""
+	# check the type of the param and get the command line accordingly
 	if param.tag == "select":
 		if key in settings:
 			value = settings[key]
