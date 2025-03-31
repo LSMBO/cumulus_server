@@ -141,9 +141,9 @@
                 <select name="integration" config_path="quant.lfq_settings" label="Integration" help="Use sum or peak of MS1 traces in peak.">
                     <option value="Sum" selected="true">Sum</option>
                     <option value="Apex">Apex</option>
-                    <number name="spectral_angle" config_path="quant.tmt_settings" label="Spectral angle" value="0.7" step="0.1" min="0" help="Normalized spectral angle (vs. theoretical isotopic envelope) cutoff for calling an MS1 peak." />
-                    <number name="ppm_tolerance" config_path="quant.tmt_settings" label="ppm tolerance" value="5.0" step="0.1" min="0" help="Tolerance for DICE window around calculated precursor mass." />
                 </select>
+								<number name="spectral_angle" config_path="quant.tmt_settings" label="Spectral angle" value="0.7" step="0.1" min="0" help="Normalized spectral angle (vs. theoretical isotopic envelope) cutoff for calling an MS1 peak." />
+								<number name="ppm_tolerance" config_path="quant.tmt_settings" label="ppm tolerance" value="5.0" step="0.1" min="0" help="Tolerance for DICE window around calculated precursor mass." />
             </when>
         </conditional>
     </section>
