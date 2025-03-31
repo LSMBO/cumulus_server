@@ -121,7 +121,7 @@
             </when>
             <when value="speclib">
                 <checkbox name="enabled" config_path="library_prediction" label="Enable Prediction" value="false" visibility="hidden" help="" />
-                <filelist name="library" label="Spectra library file" format="speclib" is_raw_input="false" multiple="false" is_folder="false" value="" help="Specify the spectral library" />
+                <filelist name="library" label="Spectra library file" format="hdf;tsv" is_raw_input="false" multiple="false" is_folder="false" value="" help="Specify the spectral library" />
             </when>
         </conditional>
     </section>
