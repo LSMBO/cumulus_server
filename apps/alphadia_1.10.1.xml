@@ -1,4 +1,4 @@
-<tool id="alphadia_1.10.1" name="AlphaDIA" version="1.10.1" description="" command="/storage/share/alphadia-1.10.1/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="TODO" category="__work_in_progress__">
+<tool id="alphadia_1.10.1" name="AlphaDIA" version="1.10.1" description="" command="/storage/share/alphadia-1.10.1/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="=== Search Finished ===" category="__work_in_progress__">
 
     <section name="input" title="Input files" expanded="true">
         <conditional name="raw">
@@ -38,7 +38,7 @@
             </select>
             <when value="fasta">
                 <checkbox name="enabled" config_path="library_prediction" label="Enable Prediction" value="true" visibility="hidden" help="" />
-                <filelist name="fasta_paths" config_path="library_prediction" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="true" is_folder="false" value="" help="Specify the FASTA file you want to use" />
+                <filelist name="fasta_paths" config_path="" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="true" is_folder="false" value="" help="Specify the FASTA file you want to use" />
                 <select name="enzyme" config_path="library_prediction" label="Enzyme" help="">
                     <option value="arg-c">Arg-C</option>
                     <option value="asp-n">Asp-N</option>
@@ -130,7 +130,7 @@
         <number name="target_ms1_tolerance" config_path="search" label="MS1 Tolerance" value="5" step="0.01" min="1" max="100" help="" />
         <number name="target_ms2_tolerance" config_path="search" label="MS2 Tolerance" value="10" step="0.01" min="1" max="100" help="" />
         <number name="target_mobility_tolerance" config_path="search" label="Mobility Tolerance" value="0" step="0.01" min="0" max="100" help="" />
-        <number name="target_rt_tolerancert-tol" config_path="search" label="RT Tolerance" value="0" step="0.01" min="0" max="100" help="" />
+        <number name="target_rt_tolerance" config_path="search" label="RT Tolerance" value="0" step="0.01" min="0" max="100" help="" />
         <string name="channel_filter" config_path="search" label="Channel Filter" value="" visibility="advanced" help="" />
         <checkbox name="exclude_shared_ions" config_path="search" label="Exclude Shared Ions" value="true" visibility="advanced" help="" />
         <checkbox name="compete_for_fragments" config_path="search" label="Compete for Fragments" value="true" visibility="advanced" help="" />
@@ -194,7 +194,23 @@
         <conditional name="transfer_lib">
             <checkbox name="enabled" config_path="transfer_library" label="Enabled" value="false" help="" />
             <when value="yes">
-                <string name="fragment_types" config_path="transfer_library" label="Fragment types" value="b;y" help="" />
+                <!-- <string name="fragment_types" config_path="transfer_library" label="Fragment types" value="b;y" help="" /> -->
+                <checklist name="fragment_types" config_path="transfer_library" label="Fragment types" help="">
+                    <option value="b" selected="true">b</option>
+                    <option value="y" selected="true">y</option>
+                    <option value="b_modloss">b_modloss</option>
+                    <option value="y_modloss">y_modloss</option>
+                    <option value="a">a</option>
+                    <option value="c">c</option>
+                    <option value="x">x</option>
+                    <option value="z">z</option>
+                    <option value="b_H2O">b_H2O</option>
+                    <option value="y_H2O">y_H2O</option>
+                    <option value="b_NH3">b_NH3</option>
+                    <option value="y_NH3">y_NH3</option>
+                    <option value="c_lossH">c_lossH</option>
+                    <option value="z_addH">z_addH</option>
+                </checklist>
                 <number name="max_charge" config_path="transfer_library" label="Maximum charge" value="2" help="" />
                 <number name="top_k_samples" config_path="transfer_library" label="Top k samples" value="3" help="" />
                 <checkbox name="norm_delta_max" config_path="transfer_library" label="Norm delta max" value="true" help="" />

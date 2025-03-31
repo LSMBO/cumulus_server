@@ -1,0 +1,78 @@
+fasta_paths:
+- Human_pSP_CMO_20190213.fasta
+fdr:
+  channel_wise_fdr: false
+  enable_nn_hyperparameter_tuning: false
+  enable_two_step_classifier: false
+  fdr: 0.01
+  group_level: proteins
+  inference_strategy: heuristic
+  keep_decoys: false
+  two_step_classifier_max_iterations: 5
+general:
+  log_level: INFO
+  reuse_calibration: false
+  reuse_quant: false
+  thread_count: 15
+  use_gpu: false
+library_prediction:
+  enabled: true
+  enzyme: trypsin
+  fixed_modifications: Carbamidomethyl@C
+  fragment_mz:
+  - 200.0
+  - 2000.0
+  fragment_types:
+  - b
+  - y
+  instrument: timstof
+  max_fragment_charge: 2
+  max_var_mod_num: 2
+  missed_cleavages: 1
+  nce: 25.0
+  peptdeep_model_path: ''
+  peptdeep_model_type: generic
+  precursor_charge:
+  - 2
+  - 4
+  precursor_len:
+  - 7
+  - 35
+  precursor_mz:
+  - 400.0
+  - 1200.0
+  variable_modifications: Oxidation@M;Acetyl@Protein_N-term
+raw_paths:
+- ./test/data/TP22465SAJ_Slot2-1_1_24164.d
+- ./test/data/TP22479SAJ_Slot2-2_1_24178.d
+- ./test/data/TP22481SAJ_Slot2-3_1_24180.d
+- ./test/data/TP22483SAJ_Slot2-4_1_24182.d
+- ./test/data/TP22485SAJ_Slot2-5_1_24184.d
+- ./test/data/TP22487SAJ_Slot2-6_1_24186.d
+- ./test/data/TP22489SAJ_Slot2-7_1_24188.d
+search:
+  channel_filter: ''
+  compete_for_fragments: true
+  exclude_shared_ions: true
+  quant_all: true
+  quant_window: 3
+  target_mobility_tolerance: 0.0
+  target_ms1_tolerance: 5.0
+  target_ms2_tolerance: 10.0
+  target_num_candidates: 2
+  target_rt_tolerance: 0.0
+search_initial:
+  initial_mobility_tolerance: 0.0
+  initial_ms1_tolerance: 30.0
+  initial_ms2_tolerance: 30.0
+  initial_rt_tolerance: 0.0
+search_output:
+  file_format: tsv
+  min_correlation: 0.9
+  min_k_fragments: 12
+  min_nonnan: 3
+  normalize_lfq: true
+  num_samples_quadratic: 50
+  peptide_level_lfq: false
+  precursor_level_lfq: false
+workflow_name: PeptideCentric.v1

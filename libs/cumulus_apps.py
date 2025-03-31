@@ -128,6 +128,10 @@ def are_all_files_transfered(job_dir, app_name, settings):
 		return False
 
 def replace_in_command(command, tag, value):
+	# command is the command line to modify
+	# tag is the tag to replace by the value
+	if command == None: return ""
+	# replace the tag by the value in the command line
 	if tag in command: return command.replace(tag, value)
 	else: return command
 
@@ -138,7 +142,7 @@ def get_param_command_line(param, settings, job_dir):
 	key = param.get("name")
 	command = param.get("command")
 	# attribute 'command' is not mandatory, it can be missing, return "" if it is
-	if command == None: return ""
+	# if command == None: return ""
 	# check the type of the param and get the command line accordingly
 	if param.tag == "select":
 		if key in settings:
@@ -148,6 +152,16 @@ def get_param_command_line(param, settings, job_dir):
 			# get the option with the selected value, add the command if there is one (no variable expected)
 			option = param.find(f"option[@value='{value}']")
 			if option != None and option.get("command") != None: cmd.append(option.get("command"))
+	elif param.tag == "checklist":
+		if key in settings:
+			value = settings[key]
+			# if there is a command associated to the main select (in this case, no variable is expected)
+			if command != None: cmd.append(command)
+			# get all the options with the selected value, add the command if there is one (no variable expected)
+			for option in param.findall(f"option[@value='{value}']"):
+				if option != None and option.get("command") != None: cmd.append(option.get("command"))
+			# option = param.find(f"option[@value='{value}']")
+			# if option != None and option.get("command") != None: cmd.append(option.get("command"))
 	elif param.tag == "checkbox":
 		# add the command line if the key is in the settings (if it is, it means that it's checked)
 		# no variable is expected there
@@ -190,39 +204,65 @@ def get_param_command_line(param, settings, job_dir):
 	if None in cmd: logger.error(f"Error in get_param_command_line for key {key}")
 	return " ".join(cmd)
 
+def get_param_number(param, value):
+	# value is a string representing a number, either int or float
+	step = param.get("step")
+	# if step is not defined, it's a int
+	if step == None: return int(value)
+	# if step is defined and contains a dot, it's a float
+	elif "." in step: return float(value)
+	# if step is defined and does not contain a dot, it's an int
+	else: return int(value)
+
 def get_param_config_value(config_settings, format, job_dir, param, settings):
 	if format in ALLOWED_CONFIG_FORMATS:
 		key = param.get("name")
 		path = param.get("config_path") # may contain several levels separated by a dot, can also be missing
 		value = "" # placeholder
 		if param.tag == "select":
-			if key in settings:
-				option = param.find(f"option[@value='{value}']")
-				if option != None:
-					if option.get("command") != None: value = option.get("command")
-				else: logger.debug(f"Option with value {value} not found in select {key}")
+			if key in settings: value = settings[key]
+				# option = param.find(f"option[@value='{settings[key]}']")
+				# if option != None: value = settings[key]
+				# 	# if option.get("command") != None: value = option.get("command")
+				# else: logger.debug(f"Option with value {value} not found in select {key}")
+		elif param.tag == "checklist":
+			if key in settings: value = settings[key] # should be an array
 		elif param.tag == "checkbox":
 			if param.get("name") in settings: value = True if settings[key] else False
+			else: value = False
 		elif param.tag == "string":
 			if key in settings: value = settings[key]
 		elif param.tag == "number":
-			if key in settings: value = settings[key]
+			# if key in settings: value = float(settings[key])
+			if key in settings: value = get_param_number(param, settings[key])
 		elif param.tag == "range":
 			key_min = param.get("name") + "-min"
 			key_max = param.get("name") + "-max"
 			if key_min in settings and key_max in settings:
-				value = [settings[key_min], settings[key_max]]
+				# value = [float(settings[key_min]), float(settings[key_max])]
+				value = [get_param_number(param, settings[key_min]), get_param_number(param, settings[key_max])]
 		elif param.tag == "filelist":
 			if key in settings:
 				is_raw_input = param.get("is_raw_input")
-				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
-				value = []
-				for file in current_files: 
-					file = get_file_path(job_dir, file, is_raw_input)
+				if param.get("multiple") == "true":
+					value = []
+					for file in settings[key]:
+						file = get_file_path(job_dir, file, is_raw_input)
+						if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
+						if is_raw_input == "false": file = os.path.basename(file)
+						value.append(file)
+				else:
+					file = get_file_path(job_dir, settings[key], is_raw_input)
 					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
 					if is_raw_input == "false": file = os.path.basename(file)
-					value.append(file)
-		# TODO test this, it was generated by copilot
+					value = file
+				# current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
+				# value = []
+				# for file in current_files: 
+				# 	file = get_file_path(job_dir, file, is_raw_input)
+				# 	if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
+				# 	if is_raw_input == "false": file = os.path.basename(file)
+				# 	value.append(file)
 		# if path is None or "", put the value in the root of the config_settings dict
 		if path == None or path == "":
 			config_settings[key] = value
@@ -236,19 +276,41 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 				current = current[p]
 			# add the value to the dict
 			current[key] = value
+		# print(config_settings)
 
-def write_json_config(config_file, config_settings):
-	# config_settings is a dict, put its content into config_file in json format
-	with open(config_file, "w") as f:
-		f.write(json.dumps(config_settings))
+def replace_variables(text, nb_cpu, output_dir):
+	# replace the variables in the text
+	text = text.replace("'%nb_threads%'", "%nb_threads%")
+	text = text.replace("\"%nb_threads%\"", "%nb_threads%")
+	text = text.replace("%nb_threads%", f"{int(nb_cpu) - 1}")
+	text = text.replace("%output_dir%", output_dir)
+	#return the text
+	return text
 
-def write_yaml_config(config_file, config_settings):
-	# config_settings is a dict, put its content into config_file in yaml format
+# def write_json_config(config_file, config_settings):
+# 	# config_settings is a dict, put its content into config_file in json format
+# 	with open(config_file, "w") as f:
+# 		f.write(json.dumps(config_settings))
+
+# def write_yaml_config(config_file, config_settings):
+# 	# config_settings is a dict, put its content into config_file in yaml format
+# 	with open(config_file, "w") as f:
+# 		f.write(yaml.dump(config_settings))
+
+def write_config_file(config_file, config_settings, format, nb_cpu, output_dir):
+	# convert the settings into text
+	text = ""
+	if format == "json": text = json.dumps(config_settings)
+	elif format == "yaml": text = yaml.dump(config_settings)
+	# replace variables in the text
+	text = replace_variables(text, nb_cpu, output_dir)
+	# write the content of the settings in the file
 	with open(config_file, "w") as f:
-		f.write(yaml.dump(config_settings))
+		f.write(text)
 
 def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 	cmd = []
+	config_format = None
 	if app_name in APPS:
 		# loop through all params in the xml file, if the param name is in the settings then get its command attribute
 		root = ET.fromstring(APPS[app_name])
@@ -259,6 +321,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 		# loop through all params in the xml file, if the param name is in the settings then get its command attribute
 		cmd.append(root.attrib["command"])
 		for section in root:
+			# print(f"App '{app_name}' - Section: {section.get("name")}")
 			for child in section:
 				# section can contain param or conditional
 				if child.tag.lower() == "conditional":
@@ -278,21 +341,24 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 					command = get_param_command_line(child, settings, job_dir)
 					if command != "": cmd.append(command)
 					# fill config_settings with the param value in the proper path
-					get_param_config_value(config_settings, config_format, job_dir, param, settings)
+					get_param_config_value(config_settings, config_format, job_dir, child, settings)
 	# create the full command line as text
 	command_line = " ".join(cmd)
 	# config_format should be None unless it's in ['json', 'yaml']
+	# print(f"{app_name}: {config_format}")
 	if config_format != None and config_format in ALLOWED_CONFIG_FORMATS:
 		# get the file path of the config file
 		config_file = f"{job_dir}/.cumulus.settings.{config_format}"
 		# write the content of the settings in the file
-		if config_format == "json": write_json_config(config_file, config_settings)
-		elif config_format == "yaml": write_yaml_config(config_file, config_settings)
+		# if config_format == "json": write_json_config(config_file, config_settings)
+		# elif config_format == "yaml": write_yaml_config(config_file, config_settings)
+		write_config_file(config_file, config_settings, config_format, nb_cpu, output_dir)
 		# replace the variable in the command line
 		command_line = command_line.replace("%config-file%", config_file)
 	# replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
-	command_line = command_line.replace("%nb_threads%", f"{int(nb_cpu) - 1}")
-	command_line = command_line.replace("%output_dir%", output_dir)
+	# command_line = command_line.replace("%nb_threads%", f"{int(nb_cpu) - 1}")
+	# command_line = command_line.replace("%output_dir%", output_dir)
+	command_line = replace_variables(command_line, nb_cpu, output_dir)
 	# return the full command line
 	return command_line
 

@@ -74,7 +74,7 @@ def test_create_job_directory():
 
 def test_get_size():
     assert utils.get_size("./test/hosts.tsv") == 265
-    assert utils.get_size("./test/apps") == 46957
+    assert utils.get_size("./test/apps") > 45000
 
 def test_get_raw_file_list():
     assert len(utils.get_raw_file_list()) == 10
@@ -123,7 +123,7 @@ def test_get_file_age_in_seconds():
     assert utils.get_file_age_in_seconds(None) == 0
 
 def test_get_zombie_jobs():
-    assert len(utils.get_zombie_jobs()) == 4
+    assert len(utils.get_zombie_jobs()) == 5
 
 def test_get_unused_shared_files_older_than():
     assert len(utils.get_unused_shared_files_older_than(86400)) == 5

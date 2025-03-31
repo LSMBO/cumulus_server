@@ -70,7 +70,7 @@
         <number name="scan-window" label="Scan window" value="0" min="0" max="1000" command="--window %value%" help="Radius (in scans) of the retention time window that is used to scan extracted chromatograms of precursor ions; this parameter allows to override its automatic inference (which is performed for the first run in the experiment)" />
         <checkbox name="unrelated-runs" label="Unrelated runs" value="false" command="--individual-mass-acc --individual-windows" help="Different runs will be treated as unrelated, i.e. mass accuracy (when automatic) will be determined separately, as well as the retention time scan window" />
         <checkbox name="mbr" label="MBR" value="true" command="--reanalyse" help="Match between runs: create a spectra library from DIA data and reanalyse using this library" />
-				<select name="scoring" label="Scoring" help="Peptidoform and proteoform modes are meant to achieve confidence in amino acid sequence correctness at the peptide and protein levels, respectively">
+        <select name="scoring" label="Scoring" help="Peptidoform and proteoform modes are meant to achieve confidence in amino acid sequence correctness at the peptide and protein levels, respectively">
             <option value="generic" command="">Generic</option>
             <option value="peptidoforms" selected="true" command="--peptidoforms">Peptidoforms</option>
             <option value="proteoforms" command="--proteoforms">proteoforms</option>

@@ -114,7 +114,12 @@ def test_get_command_line():
     settings = get_settings("test/jobs/job1.settings")
     # get the full command line
     cmd = apps.get_command_line("diann_2.0", "test/job1_complete", settings, 16, "output_dir")
+    # print(cmd)
     assert cmd == "/storage/share/diann-2.0/diann-linux --temp 'temp' --threads 15 --out 'output_dir/report.parquet' --f './test/data/AT2377PAP.mzML' --f './test/data/AT2378PAP.mzML' --f './test/data/AT2379PAP.mzML' --f './test/data/AT2381PAP.mzML' --f './test/data/AT2382PAP.mzML' --lib '' --fasta-search --predictor --gen-spec-lib --fasta 'Human_pSP_CMO_20190213.fasta' --cut 'K*,R*' --missed-cleavages 1 --min-pep-len 7 --max-pep-len 30 --min-pr-charge 1 --max-pr-charge 4 --min-pr-mz 300 --max-pr-mz 1800 --min-fr-mz 200 --max-fr-mz 1800 --pg-level 1 --var-mods 5 --unimod4 --var-mod UniMod:35,15.994915,M --var-mod UniMod:1,42.010565,*n --mass-acc-ms1 5.0 --mass-acc 15.0 --window 10 --reanalyse --peptidoforms --smart-profiling --matrices --qvalue 1.0 --verbose 1"
+    # test another job
+    settings2 = get_settings("test/jobs/job3.settings")
+    cmd2 = apps.get_command_line("alphadia_1.10.1", "test/jobs/job3_complete", settings2, 16, "output_dir")
+    # print(cmd2)
 
 def test_generate_script():
     # get the settings of a job
