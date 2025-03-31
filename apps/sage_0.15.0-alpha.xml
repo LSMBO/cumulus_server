@@ -145,7 +145,7 @@
                     <number name="ppm_tolerance" config_path="quant.tmt_settings" label="ppm tolerance" value="5.0" step="0.1" min="0" help="Tolerance for DICE window around calculated precursor mass." />
                 </select>
             </when>
-        <conditional>
+        </conditional>
     </section>
 
     <section name="" title="" expanded="true">
