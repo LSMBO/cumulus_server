@@ -51,12 +51,15 @@ def get_app_list(dir_name = "apps"):
 		# add the path to the file
 		f = f"apps/{f}"
 		if f.endswith(".xml"):
-			root = ET.parse(f).getroot()
-			# store the link between the id of the app and the content of the file
-			id = root.attrib["id"]
-			# get the xml content
-			with open(f, 'r') as xml:
-				APPS[id] = xml.read()
+			try:
+				root = ET.parse(f).getroot()
+				# store the link between the id of the app and the content of the file
+				id = root.attrib["id"]
+				# get the xml content
+				with open(f, 'r') as xml:
+					APPS[id] = xml.read()
+			except Exception as e:
+				logger.error(f"Error on [get_app_list], {e.strerror}: {f}")
 	return APPS
 
 def is_finished(app_name, stdout):
