@@ -51,11 +51,11 @@
             <option value="z">z</option>
         </checklist>
         <number name="min_ion_index" config_path="database" label="Minimal ion index" value="2" min="1" help="Do not generate b1..bN or y1..yN ions for preliminary searching if value=N. Does not affect full scoring of PSMs." />
-        <keyvalues name="variable_mods" config_path="database" is_list="true" is_numeric="true" label="Variable modifications" help="Use '[' and ']' for protein N-terminal and C-terminal modifications. Use '^' and '$' for peptide N-terminal and C-terminal modifications.">
+        <keyvalues name="variable_mods" config_path="database" is_list="true" is_numeric="true" label="Variable modifications" label_key="Site" label_value="Mass" help="Use '[' and ']' for protein N-terminal and C-terminal modifications. Use '^' and '$' for peptide N-terminal and C-terminal modifications.">
             <option key="M" value="15.9949" />
             <option key="[" value="42" />
         </keyvalues>
-        <keyvalues name="static_mods" config_path="database" is_list="false" is_numeric="true" label="Static modifications" help="Static modifications are applied after variable modifications.">
+        <keyvalues name="static_mods" config_path="database" is_list="false" is_numeric="true" label="Static modifications" label_key="Site" label_value="Mass" help="Static modifications are applied after variable modifications.">
         </keyvalues>
         <number name="max_variable_mods" config_path="database" label="Maximal number of variable modifications" value="2" min="0" help="Limit k-combinations of variable modifications." />
         <string name="decoy_tag" config_path="database" label="Decoy tag" value="###REV###" help="The tag used to identify decoy entries in the FASTA database." />
