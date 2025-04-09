@@ -167,7 +167,7 @@
     <section name="multiplexing" title="Multiplexing" expanded="false" visibility="advanced">
         <conditional name="multiplex">
             <checkbox name="enabled" config_path="multiplexing" label="Enable Multiplexing" value="false" help="" />
-            <when value="yes">
+            <when value="true">
                 <string name="target_channels" config_path="multiplexing" label="Target Channels" value="4,8" help="" />
                 <number name="decoy_channel" config_path="multiplexing" label="Decoy Channel " value="12" help="" />
                 <number name="reference_channel" config_path="multiplexing" label="Reference Channel" value="0" help="" />
@@ -193,7 +193,7 @@
     <section name="transfer_library" title="Transfer Library" expanded="false" hidden="true" visibility="advanced">
         <conditional name="transfer_lib">
             <checkbox name="enabled" config_path="transfer_library" label="Enabled" value="false" help="" />
-            <when value="yes">
+            <when value="true">
                 <!-- <string name="fragment_types" config_path="transfer_library" label="Fragment types" value="b;y" help="" /> -->
                 <checklist name="fragment_types" config_path="transfer_library" label="Fragment types" help="">
                     <option value="b" selected="true">b</option>
@@ -223,7 +223,7 @@
     <section name="transfer_learning" title="Transfer Learning" expanded="false" hidden="true" visibility="advanced">
         <conditional name="transfer_learn">
             <checkbox name="enabled" config_path="transfer_learning" label="Enabled" value="false" help="" />
-            <when value="yes">
+            <when value="true">
                 <number name="batch_size" config_path="transfer_learning" label="Batch size" value="2000" help="" />
                 <number name="max_lr" config_path="transfer_learning" label="Maximum learning rate" value="0.0001" step="0.0001" help="" />
                 <number name="train_fraction" config_path="transfer_learning" label="Train fraction" value="0.7" step="0.01" help="" />

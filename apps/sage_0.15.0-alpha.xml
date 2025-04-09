@@ -24,11 +24,11 @@
     <section name="database" title="Database" expanded="true">
         <conditional name="use_prefilter">
             <checkbox name="prefilter" config_path="database" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
-            <when value="yes">
+            <when value="true">
                 <string name="prefilter_chunk_size" config_path="database" label="Chunk size" value="100" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
                 <checkbox name="prefilter_low_memory" config_path="database" label="Prefilter low memory" value="true" help="" visibility="hidden" />
             </when>
-            <when value="no">
+            <when value="false">
                 <string name="prefilter_chunk_size" config_path="database" label="Chunk size" value="100" help="" visibility="hidden" />
                 <checkbox name="prefilter_low_memory" config_path="database" label="Prefilter low memory" value="false" help="" visibility="hidden" />
             </when>
