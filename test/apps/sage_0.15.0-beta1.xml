@@ -1,0 +1,158 @@
+<tool id="sage_0.15.0-beta.1" name="Sage" version="0.15.0-beta.1" description="" command="/storage/share/sage-v0.15.0-beta.1-x86_64-unknown-linux-gnu/sage '%config-file%'" convert_config_to="json" end_tag=" finished in " end_tag_location="%stderr%" category="__work_in_progress__">
+
+    <section name="files" title="Input files" expanded="true">
+        <conditional name="raw">
+            <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
+                <option value="mzml" selected="true">mzML files</option>
+                <option value="bruker-d">Bruker .d folders</option>
+                <option value="thermo-raw">Thermo .raw files</option>
+            </select>
+            <when value="bruker-d">
+                <filelist name="mzml_paths" label="Select Bruker .d analyses" format="d" is_raw_input="true" multiple="true" is_folder="true" convert_to_mzml="true" value="" help=".d folders will be expected" />
+            </when>
+            <when value="thermo-raw">
+                <filelist name="mzml_paths" label="Select Thermo RAW files" format="raw" is_raw_input="true" convert_to_mzml="true" multiple="true" is_folder="false" value="" help="Warning: Thermo RAW files cannot be read for now, the files will be automatically converted to mzML files" />
+            </when>
+            <when value="mzml">
+                <filelist name="mzml_paths" label="Select mzML files" format="mzML" is_raw_input="true" multiple="true" is_folder="false" value="" help=".mzML files will be expected" />
+            </when>
+        </conditional>
+        <filelist name="fasta" config_path="database" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" help="Specify the FASTA file you want to use" />
+        <string name="output_directory" label="Output" value="%output_dir%" visibility="hidden" help="" />
+    </section>
+
+    <section name="database" title="Database" expanded="true">
+        <conditional name="use_prefilter">
+            <checkbox name="prefilter" config_path="database" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
+            <when value="true">
+                <string name="prefilter_chunk_size" config_path="database" label="Chunk size" value="100" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
+                <checkbox name="prefilter_low_memory" config_path="database" label="Prefilter low memory" value="true" help="" visibility="hidden" />
+            </when>
+            <when value="false">
+                <string name="prefilter_chunk_size" config_path="database" label="Chunk size" value="100" help="" visibility="hidden" />
+                <checkbox name="prefilter_low_memory" config_path="database" label="Prefilter low memory" value="false" help="" visibility="hidden" />
+            </when>
+        </conditional>
+        <number name="bucket_size" config_path="database" label="Bucket size" value="32768" min="1" visibility="advanced" help="How many fragments are in each internal mass bucket. Use a lower value (8192) for high-res MS/MS, and higher values for low-res MS/MS." />
+        <number name="missed_cleavages" config_path="database.enzyme" label="Missed cleavages" value="" placeholder="1" min="0" max="5" help="Number of missed cleavages to allow. Default is 1." />
+        <number name="min_len" config_path="database.enzyme" label="Minimum peptide length" value="" placeholder="5" min="1" help="Minimum AA length of peptides to search. Default is 5." />
+        <number name="max_len" config_path="database.enzyme" label="Maximum peptide length" value="" placeholder="50" min="1" help="Maximum AA length of peptides to search. Default is 50." />
+        <string name="cleave_at" config_path="database.enzyme" label="Amino acids to cleave at" value="KR" help="Leave empty for non-enzymatic digestion, use '$' to disable digestion and use sequences as they are in the file. Default is 'KR'" />
+        <string name="restrict" config_path="database.enzyme" label="Do not cleave if this AA follows the cleavage site" value="P" placeholder="P" help="Default is 'P'" />
+        <checkbox name="c_terminal" config_path="database.enzyme" label="Cleave at C-terminus of matching amino acid" value="true" help="Default is 'yes'" />
+        <number name="peptide_min_mass" config_path="database" label="Minimum peptide mass" value="" placeholder="500" step="0.1" min="1" help="Minimum monoisotopic mass of peptides to fragment. Default is 500." />
+        <number name="peptide_max_mass" config_path="database" label="Maximum peptide mass" value="" placeholder="5000" step="0.1" min="1" help="Maximum monoisotopic mass of peptides to fragment. Default is 5000." />
+        <checklist name="ion_kinds" config_path="database" label="Ion kinds" help="Which fragment ions to generate and search? Default is b and y ions.">
+            <option value="a">a</option>
+            <option value="b" selected="true">b</option>
+            <option value="c">c</option>
+            <option value="x">x</option>
+            <option value="y" selected="true">y</option>
+            <option value="z">z</option>
+        </checklist>
+        <number name="min_ion_index" config_path="database" label="Minimal ion index" value="" placeholder="2" min="1" visibility="advanced" help="Do not generate b1..bN or y1..yN ions for preliminary searching if value=N. Does not affect full scoring of PSMs. Default is 2." />
+        <keyvalues name="variable_mods" config_path="database" is_list="true" type_of="float" label="Variable modifications" label_key="Site" label_value="Mass" placeholder_key="Site" placeholder_value="Mass" help="Use '[' and ']' for protein N-terminal and C-terminal modifications. Use '^' and '$' for peptide N-terminal and C-terminal modifications.">
+            <option key="M" value="15.9949" />
+            <option key="[" value="42" />
+        </keyvalues>
+        <keyvalues name="static_mods" config_path="database" is_list="false" type_of="float" label="Static modifications" label_key="Site" label_value="Mass" placeholder_key="Site" placeholder_value="Mass" help="Static modifications are applied after variable modifications.">
+        </keyvalues>
+        <number name="max_variable_mods" config_path="database" label="Maximal number of variable modifications" value="" placeholder="2" min="0" help="Limit k-combinations of variable modifications. Default is 2." />
+        <string name="decoy_tag" config_path="database" label="Decoy tag" value="###REV###" placeholder="rev_" help="The tag used to identify decoy entries in the FASTA database. Default is 'rev_'." />
+        <checkbox name="generate_decoys" config_path="database" label="Generate decoys" value="false" help="If true, ignore decoys in the FASTA database matching 'Decoy tag', and generate internally reversed peptides." />
+    </section>
+
+    <section name="tolerances" title="Search tolerances" expanded="true">
+        <conditional name="precursor_tols">
+            <select name="tol_unit" label="Precursor tolerance unit" help="Tolerance can be either 'ppm' or 'da'">
+                <option value="ppm">ppm</option>
+                <option value="da" selected="true">Dalton</option>
+            </select>
+            <when value="da">
+                <range name="da" config_path="precursor_tol" label="Precursor tolerance" value="-500" value2="100" min="-1000" max="1000" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+            </when>
+            <when value="ppm">
+                <range name="ppm" config_path="precursor_tol" label="Precursor tolerance" value="-10" value2="10" min="-100" max="100" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+            </when>
+        </conditional>
+        <conditional name="fragment_tols">
+            <select name="tol_unit" label="Fragment tolerance unit" help="Tolerance can be either 'ppm' or 'da'">
+                <option value="ppm" selected="true">ppm</option>
+                <option value="da">Dalton</option>
+            </select>
+            <when value="da">
+                <range name="da" config_path="fragment_tol" label="Fragment tolerance" value="-500" value2="100" min="-1000" max="1000" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+            </when>
+            <when value="ppm">
+                <range name="ppm" config_path="fragment_tol" label="Fragment tolerance" value="-10" value2="10" min="-100" max="100" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+            </when>
+        </conditional>
+        <range name="isotope_errors" label="Isotope error" value="0" value2="0" min="-1" max="3" visibility="advanced" help="C13 isotopic envelope to consider for precursor" />
+        <checkbox name="wide_window" label="Search in wide-window/DIA mode" value="false" visibility="advanced" help="Ignore precursor tolerance and search in wide-window/DIA mode" />
+    </section>
+
+    <section name="processing" title="Spectral processing" expanded="true" visibility="advanced">
+        <checkbox name="deisotope" label="Perform deisotoping and charge state deconvolution on MS2 spectra" value="false" help="If selected, Sage will attempt to deisotope and deconvolute the charge state of fragment ions in an MS2 spectra. This can speed up searches on high-res MS/MS data. Default is 'no'." />
+        <number name="min_peaks" label="Minimum number of peaks per MS2 spectrum" value="" placeholder="15" min="1" help="Only process MS2 spectra with at least N peaks. Default is 15." />
+        <number name="max_peaks" label="Maximum number of peaks per MS2 spectrum" value="" placeholder="150" min="1" help="Take the top N most intense MS2 peaks to search. Default is 150." />
+        <number name="min_matched_peaks" label="Minimum number of matched b+y ions" value="" placeholder="4" min="0" help="Minimum number of matched b+y ions to use for reporting PSMs. This value should be tuned per-dataset, and should be increased if chimeric searching is enabled. Default is 4." />
+        <number name="max_fragment_charge" label="Maximum fragment ion charge states to consider" value="" placeholder="" min="0" help="The maximum fragment ion charge states to consider (default: null - use precursor z-1)." />
+    </section>
+
+    <section name="quantification" title="Quantification" expanded="true" visibility="advanced">
+        <conditional name="use_tmt">
+            <select name="tmt" config_path="quant" label="TMT" help="Select the TMT type you want to use">
+                <option value="" selected="true">None</option>
+                <option value="tmt6">TMT6</option>
+                <option value="tmt10">TMT10</option>
+                <option value="tmt11">TMT11</option>
+                <option value="tmt16">TMT16</option>
+                <option value="tmt18">TMT18</option>
+            </select>
+            <when value="tmt6">
+                <number name="level" config_path="quant.tmt_settings" label="MS-level to perform TMT" value="" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="sn" config_path="quant.tmt_settings" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt10">
+                <number name="level" config_path="quant.tmt_settings" label="MS-level to perform TMT" value="" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="sn" config_path="quant.tmt_settings" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt11">
+                <number name="level" config_path="quant.tmt_settings" label="MS-level to perform TMT" value="" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="sn" config_path="quant.tmt_settings" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt16">
+                <number name="level" config_path="quant.tmt_settings" label="MS-level to perform TMT" value="" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="sn" config_path="quant.tmt_settings" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt18">
+                <number name="level" config_path="quant.tmt_settings" label="MS-level to perform TMT" value="" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="sn" config_path="quant.tmt_settings" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+        </conditional>
+        <conditional name="use_lfq">
+            <checkbox name="lfq" config_path="quant" label="Perform label-free quantification" value="false" help="" />
+            <when value="true">
+                <select name="peak_scoring" config_path="quant.lfq_settings" label="Peak scoring" help="Hybrid scoring combines RT-based and spectral-angle based scoring to identify the best MS1 peak to quantify. It is recommended that you do not change this setting.">
+                    <option value="Hybrid" selected="true">Hybrid</option>
+                    <option value="RetentionTime">RetentionTime</option>
+                    <option value="SpectralAngle">SpectralAngle</option>
+                </select>
+                <select name="integration" config_path="quant.lfq_settings" label="Integration" help="The method used for integrating peak intensities. Default is 'sum'.">
+                    <option value="Sum" selected="true">Sum</option>
+                    <option value="Apex">Apex</option>
+                </select>
+                <number name="spectral_angle" config_path="quant.tmt_settings" label="Spectral angle" value="" placeholder="0.7" step="0.1" min="0" max="1" help="Threshold for the normalized spectral angle similarity measure (observed vs theoretical isotopic envelope), ranging from 0 to 1. Default is 0.7." />
+                <number name="ppm_tolerance" config_path="quant.tmt_settings" label="ppm tolerance" value="" placeholder="5.0" step="0.1" min="0" help="Tolerance for matching MS1 ions in parts per million. Default is 5." />
+            </when>
+        </conditional>
+    </section>
+
+    <section name="other" title="Other parameters" expanded="true" visibility="advanced">
+        <range name="precursor_charge" label="Precursor Charge" value="" placeholder="2" value2="" placeholder2="4" min="1" help="If charge states are not annotated in the mzML, or if 'wide window' mode is turned on, then consider all precursors with a charge state between those two values. Default is [2, 4]." />
+        <checkbox name="chimera" label="Search for chimeric/co-fragmenting PSMs" value="false" help="Search for chimeric/co-fragmenting PSMs." />
+        <checkbox name="predict_rt" label="Use retention time prediction model as an feature for LDA" value="true" help="" />
+        <number name="report_psms" label="Number of PSMs to report for each spectra" value="" placeholder="1" min="1" max="100" help="The number of PSMs to report for each spectrum. Higher values might disrupt re-scoring, it is best to search with multiple values. Default is 1." />
+    </section>
+
+</tool>

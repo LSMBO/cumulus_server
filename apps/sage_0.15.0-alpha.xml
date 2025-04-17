@@ -3,8 +3,8 @@
     <section name="files" title="Input files" expanded="true">
         <conditional name="raw">
             <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
-                <option value="mzml">mzML files</option>
-                <option value="bruker-d" selected="true">Bruker .d folders</option>
+                <option value="mzml" selected="true">mzML files</option>
+                <option value="bruker-d">Bruker .d folders</option>
                 <option value="thermo-raw">Thermo .raw files</option>
             </select>
             <when value="bruker-d">
@@ -69,10 +69,10 @@
                 <option value="da" selected="true">Dalton</option>
             </select>
             <when value="da">
-                <range name="da" config_path="precursor_tol.da" label="Precursor tolerance" value="-500" value2="100" min="-1000" max="1000" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+                <range name="prectol_da" config_path="precursor_tol.da" label="Precursor tolerance" value="-500" value2="100" min="-1000" max="1000" help="First value is substracted from the experimental precursor to match theoretical peptides" />
             </when>
             <when value="ppm">
-                <range name="ppm" config_path="precursor_tol.ppm" label="Precursor tolerance" value="-10" value2="10" min="-100" max="100" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+                <range name="prectol_ppm" config_path="precursor_tol.ppm" label="Precursor tolerance" value="-10" value2="10" min="-100" max="100" help="First value is substracted from the experimental precursor to match theoretical peptides" />
             </when>
         </conditional>
         <conditional name="fragment_tols">
@@ -81,17 +81,17 @@
                 <option value="da">Dalton</option>
             </select>
             <when value="da">
-                <range name="da" config_path="fragment_tol.da" label="Fragment tolerance" value="-500" value2="100" min="-1000" max="1000" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+                <range name="fragtol_da" config_path="fragment_tol.da" label="Fragment tolerance" value="-500" value2="100" min="-1000" max="1000" help="First value is substracted from the experimental precursor to match theoretical peptides" />
             </when>
             <when value="ppm">
-                <range name="ppm" config_path="fragment_tol.ppm" label="Fragment tolerance" value="-10" value2="10" min="-100" max="100" help="First value is substracted from the experimental precursor to match theoretical peptides" />
+                <range name="fragtol_ppm" config_path="fragment_tol.ppm" label="Fragment tolerance" value="-10" value2="10" min="-100" max="100" help="First value is substracted from the experimental precursor to match theoretical peptides" />
             </when>
         </conditional>
         <range name="isotope_errors" label="Isotope error" value="0" value2="0" min="-1" max="3" help="C13 isotopic envelope to consider for precursor" />
         <checkbox name="wide_window" label="Search in wide-window/DIA mode" value="false" help="Ignore precursor tolerance and search in wide-window/DIA mode" />
     </section>
 
-    <section name="processing" title="Spectral processing" expanded="true">
+    <section name="processing" title="Spectral processing" expanded="false">
         <checkbox name="deisotope" label="Perform deisotoping and charge state deconvolution on MS2 spectra" value="false" help="" />
         <number name="min_peaks" label="Minimum number of peaks per MS2 spectrum" value="15" min="1" help="Only process MS2 spectra with at least N peaks." />
         <number name="max_peaks" label="Maximum number of peaks per MS2 spectrum" value="150" min="1" help="Take the top N most intense MS2 peaks to search." />
@@ -99,7 +99,7 @@
         <number name="max_fragment_charge" label="Maximum fragment ion charge states to consider" value="-1" min="-1" help="-1 to disable this option." />
     </section>
 
-    <section name="quantification" title="Quantification" expanded="true">
+    <section name="quantification" title="Quantification" expanded="false">
         <conditional name="use_tmt">
             <select name="tmt" config_path="quant" label="TMT" help="Select the TMT type you want to use">
                 <option value="" selected="true">None</option>
@@ -148,7 +148,7 @@
         </conditional>
     </section>
 
-    <section name="" title="" expanded="true">
+    <section name="other" title="Other parameters" expanded="false">
         <range name="precursor_charge" label="Precursor Charge" value="2" value2="4" min="1" help="If charge states are not annotated in the mzML, or if 'wide window' mode is turned on, then consider all precursors with a charge state between those two values." />
         <checkbox name="chimera" label="Search for chimeric/co-fragmenting PSMs" value="false" help="" />
         <checkbox name="predict_rt" label="Use retention time prediction model as an feature for LDA" value="true" help="" />
