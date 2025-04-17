@@ -123,7 +123,7 @@ def test_get_file_age_in_seconds():
     assert utils.get_file_age_in_seconds(None) == 0
 
 def test_get_zombie_jobs():
-    assert len(utils.get_zombie_jobs()) == 5
+    assert len(utils.get_zombie_jobs()) == 6
 
 def test_get_unused_shared_files_older_than():
     assert len(utils.get_unused_shared_files_older_than(86400)) == 5

@@ -33,32 +33,36 @@
 import libs.cumulus_config as config
 import libs.cumulus_apps as apps
 import json
+import os
 import xml.etree.ElementTree as ET
 
 # load the test config file before running the tests
 config.load("test/cumulus.conf")
 config.init(False)
 
+def read_file(file_path):
+    content = ""
+    with open(file_path, 'r') as file:
+        content = file.read()
+    return content
+
 def get_settings(file):
-    settings = ""
-    with open(file, 'r') as xml:
-        settings = xml.read().replace("\n", "")
-    return json.loads(settings)
+    # settings = ""
+    # with open(file, 'r') as xml:
+    #     settings = xml.read().replace("\n", "")
+    # return json.loads(settings)
+    return json.loads(read_file(file))
 
 def test_get_app_list():
-    assert len(apps.get_app_list("test/apps")) == 3
+    assert len(apps.get_app_list("test/apps")) == 4
 
 def test_is_finished_ok():
-    stdout = ""
-    with open("test/logs/diann_1.9.2-ok.log.txt", 'r') as xml:
-        stdout = xml.read()
-    assert apps.is_finished("diann_1.9.1", stdout) == True
+    assert apps.is_finished(1, "diann_1.9.1") == True
+    assert apps.is_finished(7, "sage_0.15.0-beta.1") == True
 
 def test_is_finished_ko():
-    stdout = ""
-    with open("test/logs/diann_1.9.2-ko.log.txt", 'r') as xml:
-        stdout = xml.read()
-    assert apps.is_finished("diann_1.9.1", stdout) == False
+    assert apps.is_finished(7, "diann_1.9.1") == False
+    assert apps.is_finished(1, "fake_app") == False
 
 def test_get_file_path_raw():
     assert apps.get_file_path("test", "D:/Projets/DiaNN/test/TP19970FD_Slot1-01_1_20914.d", "true") == "./test/data/TP19970FD_Slot1-01_1_20914.d"
@@ -116,10 +120,19 @@ def test_get_command_line():
     cmd = apps.get_command_line("diann_2.0", "test/job1_complete", settings, 16, "output_dir")
     # print(cmd)
     assert cmd == "/storage/share/diann-2.0/diann-linux --temp 'temp' --threads 15 --out 'output_dir/report.parquet' --f './test/data/AT2377PAP.mzML' --f './test/data/AT2378PAP.mzML' --f './test/data/AT2379PAP.mzML' --f './test/data/AT2381PAP.mzML' --f './test/data/AT2382PAP.mzML' --lib '' --fasta-search --predictor --gen-spec-lib --fasta 'Human_pSP_CMO_20190213.fasta' --cut 'K*,R*' --missed-cleavages 1 --min-pep-len 7 --max-pep-len 30 --min-pr-charge 1 --max-pr-charge 4 --min-pr-mz 300 --max-pr-mz 1800 --min-fr-mz 200 --max-fr-mz 1800 --pg-level 1 --var-mods 5 --unimod4 --var-mod UniMod:35,15.994915,M --var-mod UniMod:1,42.010565,*n --mass-acc-ms1 5.0 --mass-acc 15.0 --window 10 --reanalyse --peptidoforms --smart-profiling --matrices --qvalue 1.0 --verbose 1"
-    # test another job
-    settings2 = get_settings("test/jobs/job3.settings")
-    cmd2 = apps.get_command_line("alphadia_1.10.1", "test/jobs/job3_complete", settings2, 16, "output_dir")
-    # print(cmd2)
+
+def test_get_command_line_with_config_file():
+    # delete previous config file if it exists
+    config = "test/jobs/job4_complete/.cumulus.settings.json"
+    if os.path.exists(config): os.remove(config)
+    # get the settings of a job
+    settings = get_settings("test/jobs/job4.settings")
+    # get the full command line, this will generate the new config file
+    apps.get_command_line("sage_0.15.0-beta.1", "test/jobs/job4_complete", settings, 16, "output_dir")
+    # compare the config file with the expected one
+    assert get_settings(config) == get_settings("test/jobs/job4_complete/expected.settings.json")
+    # remove the config file
+    os.remove(config)
 
 def test_generate_script():
     # get the settings of a job

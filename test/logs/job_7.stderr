@@ -1,0 +1,18 @@
+[2025-04-10T14:18:32Z INFO  sage_cli::runner] generated 1511840040 fragments, 45979614 peptides in 24.335796275s
+[2025-04-10T14:18:32Z INFO  sage_cli::runner] processing files 0 .. 6
+[2025-04-10T14:18:53Z INFO  sage_cli::runner] - file IO:    20952 ms
+[2025-04-10T14:19:15Z INFO  sage_cli::runner] - search:     21845 ms (60854 spectra/s)
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_alignment] aligning file #5: y = 0.9953x + 0.0006
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_alignment] aligning file #2: y = 1.0040x + 0.0014
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_alignment] aligning file #1: y = 0.9999x + -0.0004
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_alignment] aligning file #0: y = 1.0033x + -0.0007
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_alignment] aligning file #3: y = 1.0072x + 0.0013
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_alignment] aligning file #4: y = 0.9852x + -0.0000
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_alignment] aligned retention times across 6 files
+[2025-04-10T14:19:16Z INFO  sage_core::ml::retention_model] - fit retention time model, rsq = 0.8594884158778665
+[2025-04-10T14:19:16Z INFO  sage_core::ml::mobility_model] - fit mobility model, rsq = 0.9938260748169829, mse = 0.00018576841219476094
+[2025-04-10T14:19:21Z INFO  sage_cli::runner] discovered 1147 target peptide-spectrum matches at 1% FDR
+[2025-04-10T14:19:21Z INFO  sage_cli::runner] discovered 150 target peptides at 1% FDR
+[2025-04-10T14:19:21Z INFO  sage_cli::runner] discovered 126 target proteins at 1% FDR
+[2025-04-10T14:19:23Z INFO  sage_cli::runner] finished in 75s
+[2025-04-10T14:19:23Z INFO  sage_cli::runner] cite: "Sage: An Open-Source Tool for Fast Proteomics Searching and Quantification at Scale" https://doi.org/10.1021/acs.jproteome.3c00486

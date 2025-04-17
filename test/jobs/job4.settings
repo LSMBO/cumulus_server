@@ -1,0 +1,65 @@
+{
+  "raw-type": "bruker-d",
+  "tol_unit": "ppm",
+  "tmt": "",
+  "peak_scoring": "Hybrid",
+  "integration": "Sum",
+  "ion_kinds": [
+    "b",
+    "y"
+  ],
+    "variable_mods": [
+    [
+      "M",
+      "15.9949"
+    ],
+    [
+      "[",
+      "42"
+    ]
+  ],
+  "static_mods": {},
+  "prefilter": true,
+  "prefilter_low_memory": true,
+  "c_terminal": true,
+  "predict_rt": true,
+  "output_directory": "%output_dir%",
+  "prefilter_chunk_size": "100",
+  "cleave_at": "KR",
+  "restrict": "P",
+  "decoy_tag": "###REV###",
+  "bucket_size": "32768",
+  "missed_cleavages": "1",
+  "min_len": "5",
+  "max_len": "50",
+  "peptide_min_mass": "500",
+  "peptide_max_mass": "5000",
+  "min_ion_index": "2",
+  "max_variable_mods": "2",
+  "min_peaks": "15",
+  "max_peaks": "150",
+  "min_matched_peaks": "4",
+  "max_fragment_charge": "-1",
+  "level": "3",
+  "spectral_angle": "0.7",
+  "ppm_tolerance": "5.0",
+  "report_psms": "1",
+  "da-max": "100",
+  "da-min": "-500",
+  "ppm-max": "10",
+  "ppm-min": "-10",
+  "isotope_errors-max": "0",
+  "isotope_errors-min": "0",
+  "precursor_charge-max": "4",
+  "precursor_charge-min": "2",
+  "fasta": "//path/to/my/files/HumanSP_CpSP_AUH_20240725.fasta",
+  "mzml_paths": [
+    "//path/to/my/files/TU019934CK_Slot2-37_1_8492.d",
+    "//path/to/my/files//TU019936CK_Slot2-37_1_8494.d",
+    "//path/to/my/files/TU019943CK_Slot2-39_1_8501.d",
+    "//path/to/my/files/TU019945CK_Slot2-40_1_8503.d",
+    "//path/to/my/files/TU019947CK_Slot2-39_1_8505.d",
+    "//path/to/my/files/TU019950CK_Slot2-40_1_8508.d",
+    "//path/to/my/files/TU019954CK_Slot2-39_1_8512.d"
+  ]
+}

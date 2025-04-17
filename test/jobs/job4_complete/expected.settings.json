@@ -1,0 +1,72 @@
+{
+    "mzml_paths": [
+        "./test/data/TU019934CK_Slot2-37_1_8492.mzML",
+        "./test/data/TU019936CK_Slot2-37_1_8494.mzML",
+        "./test/data/TU019943CK_Slot2-39_1_8501.mzML",
+        "./test/data/TU019945CK_Slot2-40_1_8503.mzML",
+        "./test/data/TU019947CK_Slot2-39_1_8505.mzML",
+        "./test/data/TU019950CK_Slot2-40_1_8508.mzML",
+        "./test/data/TU019954CK_Slot2-39_1_8512.mzML"
+    ],
+    "database": {
+        "fasta": "HumanSP_CpSP_AUH_20240725.fasta",
+        "bucket_size": 32768,
+        "enzyme": {
+            "missed_cleavages": 1,
+            "min_len": 5,
+            "max_len": 50,
+            "cleave_at": "KR",
+            "restrict": "P",
+            "c_terminal": true
+        },
+        "peptide_min_mass": 500.0,
+        "peptide_max_mass": 5000.0,
+        "ion_kinds": [
+            "b",
+            "y"
+        ],
+        "min_ion_index": 2,
+        "variable_mods": {
+            "M": [
+                "15.9949"
+            ],
+            "[": [
+                "42"
+            ]
+        },
+        "static_mods": {},
+        "max_variable_mods": 2,
+        "decoy_tag": "###REV###",
+        "generate_decoys": false
+    },
+    "output_directory": "output_dir",
+    "precursor_tol": {
+        "ppm": [
+            -10,
+            10
+        ]
+    },
+    "fragment_tol": {
+        "ppm": [
+            -10,
+            10
+        ]
+    },
+    "isotope_errors": [
+        0,
+        0
+    ],
+    "wide_window": false,
+    "deisotope": false,
+    "min_peaks": 15,
+    "max_peaks": 150,
+    "min_matched_peaks": 4,
+    "max_fragment_charge": -1,
+    "precursor_charge": [
+        2,
+        4
+    ],
+    "chimera": false,
+    "predict_rt": true,
+    "report_psms": 1
+}
