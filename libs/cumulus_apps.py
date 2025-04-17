@@ -62,17 +62,28 @@ def get_app_list(dir_name = "apps"):
 				logger.error(f"Error on [get_app_list], {e.strerror}: {f}")
 	return APPS
 
-def is_finished(app_name, stdout):
-	logger.debug(f"is_finished({app_name}, stdout)")
+def is_finished(job_id, app_name):
+	logger.debug(f"is_finished({job_id, app_name})")
 	if app_name in APPS:
+		# get end_tag_location from the xml file, this attribute may be missing
+		tag_location = ET.fromstring(APPS[app_name]).attrib.get("end_tag_location")
+		# if tag_location is None, use the default value
+		file_content = ""
+		if tag_location == None: file_content = get_stdout_content(job_id)
+		elif tag_location == "%stderr%": file_content = get_stderr_content(job_id)
+		elif os.path.isfile(tag_location):
+			f = open(tag_location, "r")
+			file_content = f.read()
+			f.close()
+		else: return False
 		# extract the end tag from the app xml file associated to this job
 		tag = ET.fromstring(APPS[app_name]).attrib["end_tag"]
 		# return True if the end_tag is in stdout, False otherwise
-		is_tag_found = re.search(tag, stdout) != None
+		is_tag_found = re.search(tag, file_content) != None
 		# logger.debug(tag)
 		logger.debug(f"is_finished => {is_tag_found}")
 		return is_tag_found
-	else: return True
+	else: return False
 
 def get_file_path(job_dir, file_path, is_raw_input):
 	if is_raw_input == "true": return config.DATA_DIR + "/" + os.path.basename(file_path)
@@ -156,15 +167,37 @@ def get_param_command_line(param, settings, job_dir):
 			option = param.find(f"option[@value='{value}']")
 			if option != None and option.get("command") != None: cmd.append(option.get("command"))
 	elif param.tag == "checklist":
+		# settings[key] should be an array
+		# TODO this was not tested!!
 		if key in settings:
-			value = settings[key]
-			# if there is a command associated to the main select (in this case, no variable is expected)
-			if command != None: cmd.append(command)
-			# get all the options with the selected value, add the command if there is one (no variable expected)
-			for option in param.findall(f"option[@value='{value}']"):
+			for item in settings[key]:
+				# item is a tuple (key, value), key is the value of the option, value is the command to execute
+				# get the command associated to the option if there is one
+				option = param.find(f"option[@value='{item[0]}']")
 				if option != None and option.get("command") != None: cmd.append(option.get("command"))
-			# option = param.find(f"option[@value='{value}']")
-			# if option != None and option.get("command") != None: cmd.append(option.get("command"))
+			# value = settings[key]
+			# # if there is a command associated to the main element (in this case, no variable is expected)
+			# if command != None: cmd.append(command)
+			# # get all the options with the selected value, add the command if there is one (no variable expected)
+			# for option in param.findall(f"option[@value='{value}']"):
+			# 	if option != None and option.get("command") != None: cmd.append(option.get("command"))
+			# # option = param.find(f"option[@value='{value}']")
+			# # if option != None and option.get("command") != None: cmd.append(option.get("command"))
+	elif param.tag == "keyvalues":
+		if key in settings:
+			# if there is a command associated to the main element (in this case, no variable is expected)
+			if command != None: cmd.append(command)
+			# use the repeated_command for each option if there is one
+			repeated_command = param.get("repeated_command")
+			if repeated_command != None:
+				# settings[key] should be an array of arrays, each array containing a key and a value
+				for item in settings[key]:
+					key = item[0]
+					val = item[1]
+					current_cmd = repeated_command
+					current_cmd = replace_in_command(current_cmd, "%key%", key)
+					current_cmd = replace_in_command(current_cmd, "%value%", val)
+					cmd.append(current_cmd)
 	elif param.tag == "checkbox":
 		# add the command line if the key is in the settings (if it is, it means that it's checked)
 		# no variable is expected there
@@ -230,6 +263,18 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 				# else: logger.debug(f"Option with value {value} not found in select {key}")
 		elif param.tag == "checklist":
 			if key in settings: value = settings[key] # should be an array
+		elif param.tag == "keyvalues":
+			if key in settings:
+				value = {}
+				is_list = False
+				if param.get("is_list") != None and param.get("is_list") == "true": is_list = True
+				# settings[key] should be an array of arrays, each array containing a key and a value
+				for item in settings[key]:
+					k = item[0]
+					v = item[1]
+					# if param.is_list is missing or false, value must be a map of key:value
+					# if param.is_list is true, value has to be a map of key:[value1, value2, ...]
+					value[k] = [v] if is_list else v
 		elif param.tag == "checkbox":
 			if param.get("name") in settings: value = True if settings[key] else False
 			else: value = False
@@ -334,7 +379,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 					if command != "": cmd.append(command)
 					for when in child.findall("when"):
 						# check that this when is the selected one
-						if when.get('value') == settings[condition.get('name')]:
+						if condition.get('name') in settings and when.get('value') == settings[condition.get('name')]:
 							for param in when:
 								command = get_param_command_line(param, settings, job_dir)
 								if command != "": cmd.append(command)
