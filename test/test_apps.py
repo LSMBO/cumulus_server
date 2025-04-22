@@ -130,6 +130,7 @@ def test_get_command_line_with_config_file():
     # get the full command line, this will generate the new config file
     apps.get_command_line("sage_0.15.0-beta.1", "test/jobs/job4_complete", settings, 16, "output_dir")
     # compare the config file with the expected one
+    print(get_settings(config))
     assert get_settings(config) == get_settings("test/jobs/job4_complete/expected.settings.json")
     # remove the config file
     os.remove(config)

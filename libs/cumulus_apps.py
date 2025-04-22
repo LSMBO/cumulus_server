@@ -304,26 +304,15 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
 					if is_raw_input == "false": file = os.path.basename(file)
 					value = file
-				# current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
-				# value = []
-				# for file in current_files: 
-				# 	file = get_file_path(job_dir, file, is_raw_input)
-				# 	if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-				# 	if is_raw_input == "false": file = os.path.basename(file)
-				# 	value.append(file)
-		# if path is None or "", put the value in the root of the config_settings dict
-		if path == None or path == "":
-			config_settings[key] = value
-		else:
-			# separate the path by dots
-			full_path = path.split(".")
-			# make sure that all parts of the path exist in the dict, create them if they don't
-			current = config_settings
-			for p in full_path:
-				if p not in current: current[p] = {}
-				current = current[p]
-			# add the value to the dict
-			current[key] = value
+		# separate the path by dots
+		full_path = key.split(".")
+		# make sure that all parts of the path exist in the dict, create them if they don't, unless for the last part which is the key
+		current = config_settings
+		for i in range(len(full_path) - 1):
+			if full_path[i] not in current: current[full_path[i]] = {}
+			current = current[full_path[i]]
+		# add the value to the dict, the last part of the path is the key
+		current[full_path[-1]] = value
 		# print(config_settings)
 
 def replace_variables(text, nb_cpu, output_dir):

@@ -1,4 +1,4 @@
-<tool id="alphadia_1.10.1" name="AlphaDIA" version="1.10.1" description="" command="/storage/share/alphadia-1.10.1/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="=== Search Finished ===" category="__work_in_progress__">
+<tool id="alphadia_1.10.1" name="AlphaDIA" version="1.10.1" description="" command="/storage/share/miniconda3/envs/alphadia/bin/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="=== Search Finished ===" category="__work_in_progress__">
 
     <section name="input" title="Input files" expanded="true">
         <conditional name="raw">
@@ -17,11 +17,11 @@
 
     <section name="general" title="General" expanded="true" visibility="advanced">
         <string name="workflow_name" label="Workflow" value="PeptideCentric.v1" visibility="hidden" help="" />
-        <string name="thread_count" config_path="general" label="Number of Threads" value="%nb_threads%" visibility="hidden" help="" />
-        <checkbox name="reuse_quant" config_path="general" label="Reuse Ion Quantities" value="false" help="" />
-        <checkbox name="reuse_calibration" config_path="general" label="Reuse Calibration" value="false" help="" />
-        <checkbox name="use_gpu" config_path="general" label="Use GPU" value="false" help="" visibility="hidden" />
-        <select name="log_level" config_path="general" label="Log Level" help="">
+        <string name="general.thread_count" label="Number of Threads" value="%nb_threads%" visibility="hidden" help="" />
+        <checkbox name="general.reuse_quant" label="Reuse Ion Quantities" value="false" help="" />
+        <checkbox name="general.reuse_calibration" label="Reuse Calibration" value="false" help="" />
+        <checkbox name="general.use_gpu" label="Use GPU" value="false" help="" visibility="hidden" />
+        <select name="general.log_level" label="Log Level" help="">
             <option value="DEBUG">DEBUG</option>
             <option value="INFO" selected="true">INFO</option>
             <option value="PROGRESS">PROGRESS</option>
@@ -37,9 +37,9 @@
                 <option value="speclib">Spectral library</option>
             </select>
             <when value="fasta">
-                <checkbox name="enabled" config_path="library_prediction" label="Enable Prediction" value="true" visibility="hidden" help="" />
-                <filelist name="fasta_paths" config_path="" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="true" is_folder="false" value="" help="Specify the FASTA file you want to use" />
-                <select name="enzyme" config_path="library_prediction" label="Enzyme" help="">
+                <checkbox name="library_prediction.enabled" label="Enable Prediction" value="true" visibility="hidden" help="" />
+                <filelist name="fasta_paths" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="true" is_folder="false" value="" help="Specify the FASTA file you want to use" />
+                <select name="library_prediction.enzyme" label="Enzyme" help="">
                     <option value="arg-c">Arg-C</option>
                     <option value="asp-n">Asp-N</option>
                     <option value="bnps-skatole">BNPS-skatole</option>
@@ -84,18 +84,18 @@
                     <option value="non-specific">Non-specific</option>
                     <option value="no-cleave">No-cleave</option>
                 </select>
-                <string name="fixed_modifications" config_path="library_prediction" label="Fixed modifications" value="Carbamidomethyl@C" help="" />
-                <string name="variable_modifications" config_path="library_prediction" label="Variable modifications" value="Oxidation@M;Acetyl@Protein_N-term" help="" />
-                <number name="max_var_mod_num" config_path="library_prediction" label="Maximum variable modifications" value="2" min="0" max="5" help="" />
-                <number name="missed_cleavages" config_path="library_prediction" label="Missed cleavages" value="1" min="0" max="5" help="" />
-                <range name="precursor_len" config_path="library_prediction" label="Precursor length" value="7" value2="35" min="5" max="100" help="" />
-                <range name="precursor_charge" config_path="library_prediction" label="Precursor charge" value="2" value2="4" min="1" max="10" help="" />
-                <range name="precursor_mz" config_path="library_prediction" label="Precursor m/z" value="400" value2="1200" step="0.01" min="0" max="3000" help="" />
-                <range name="fragment_mz" config_path="library_prediction" label="Fragment m/z" value="200" value2="2000" step="0.01" min="0" max="3000" help="" />
-                <string name="fragment_types" config_path="library_prediction" label="Fragment types" value="b;y" visibility="advanced" help="" />
-                <number name="max_fragment_charge" config_path="library_prediction" label="Maximum fragment charge" value="2" min="1" max="5" visibility="advanced" help="" />
-                <number name="nce" config_path="library_prediction" label="Normalized collision energy" value="25" step="0.01" min="0" max="1000" visibility="advanced" help="" />
-                <select name="instrument" config_path="library_prediction" label="Instrument" visibility="advanced" help="">
+                <string name="library_prediction.fixed_modifications" label="Fixed modifications" value="Carbamidomethyl@C" help="" />
+                <string name="library_prediction.variable_modifications" label="Variable modifications" value="Oxidation@M;Acetyl@Protein_N-term" help="" />
+                <number name="library_prediction.max_var_mod_num" label="Maximum variable modifications" value="2" min="0" max="5" help="" />
+                <number name="library_prediction.missed_cleavages" label="Missed cleavages" value="1" min="0" max="5" help="" />
+                <range name="library_prediction.precursor_len" label="Precursor length" value="7" value2="35" min="5" max="100" help="" />
+                <range name="library_prediction.precursor_charge" label="Precursor charge" value="2" value2="4" min="1" max="10" help="" />
+                <range name="library_prediction.precursor_mz" label="Precursor m/z" value="400" value2="1200" step="0.01" min="0" max="3000" help="" />
+                <range name="library_prediction.fragment_mz" label="Fragment m/z" value="200" value2="2000" step="0.01" min="0" max="3000" help="" />
+                <string name="library_prediction.fragment_types" label="Fragment types" value="b;y" visibility="advanced" help="" />
+                <number name="library_prediction.max_fragment_charge" label="Maximum fragment charge" value="2" min="1" max="5" visibility="advanced" help="" />
+                <number name="library_prediction.nce" label="Normalized collision energy" value="25" step="0.01" min="0" max="1000" visibility="advanced" help="" />
+                <select name="library_prediction.instrument" label="Instrument" visibility="advanced" help="">
                     <option value="timstof" selected="true">TimsTOF</option>
                     <option value="astral">Astral</option>
                     <option value="eclipse">Eclipse</option>
@@ -112,90 +112,89 @@
                     <option value="orbitrap-tribrid">Orbitrap Tribrid</option>
                     <option value="thermo-tribrid">Thermo Tribrid</option>
                 </select>
-                <filelist name="peptdeep_model_path" config_path="library_prediction" label="PeptDeep Model Path" multiple="false" is_folder="true" is_raw_input="false" format="" value="" visibility="advanced" help="" />
-                <select name="peptdeep_model_type" config_path="library_prediction" label="PeptDeep Model Type" visibility="advanced" help="">
+                <filelist name="library_prediction.peptdeep_model_path" label="PeptDeep Model Path" multiple="false" is_folder="true" is_raw_input="false" format="" value="" visibility="advanced" help="" />
+                <select name="library_prediction.peptdeep_model_type" label="PeptDeep Model Type" visibility="advanced" help="">
                     <option value="generic" selected="true">Generic</option>
                     <option value="phospho">phospho</option>
                     <option value="digly">digly</option>
                 </select>
             </when>
             <when value="speclib">
-                <checkbox name="enabled" config_path="library_prediction" label="Enable Prediction" value="false" visibility="hidden" help="" />
+                <checkbox name="library_prediction.enabled" label="Enable Prediction" value="false" visibility="hidden" help="" />
                 <filelist name="library" label="Spectra library file" format="hdf;tsv" is_raw_input="false" multiple="false" is_folder="false" value="" help="Specify the spectral library" />
             </when>
         </conditional>
     </section>
 
     <section name="search" title="Search" expanded="true">
-        <number name="target_ms1_tolerance" config_path="search" label="MS1 Tolerance" value="5" step="0.01" min="1" max="100" help="" />
-        <number name="target_ms2_tolerance" config_path="search" label="MS2 Tolerance" value="10" step="0.01" min="1" max="100" help="" />
-        <number name="target_mobility_tolerance" config_path="search" label="Mobility Tolerance" value="0" step="0.01" min="0" max="100" help="" />
-        <number name="target_rt_tolerance" config_path="search" label="RT Tolerance" value="0" step="0.01" min="0" max="100" help="" />
-        <string name="channel_filter" config_path="search" label="Channel Filter" value="" visibility="advanced" help="" />
-        <checkbox name="exclude_shared_ions" config_path="search" label="Exclude Shared Ions" value="true" visibility="advanced" help="" />
-        <checkbox name="compete_for_fragments" config_path="search" label="Compete for Fragments" value="true" visibility="advanced" help="" />
-        <number name="target_num_candidates" config_path="search" label="Number of Candidates" value="3" visibility="advanced" help="" />
-        <number name="quant_window" config_path="search" label="Quant window" value="3" visibility="advanced" help="" />
-        <checkbox name="quant_all" config_path="search" label="Use all MS2 observations" value="true" visibility="advanced" help="" />
+        <number name="search.target_ms1_tolerance" label="MS1 Tolerance" value="5" step="0.01" min="1" max="100" help="" />
+        <number name="search.target_ms2_tolerance" label="MS2 Tolerance" value="10" step="0.01" min="1" max="100" help="" />
+        <number name="search.target_mobility_tolerance" label="Mobility Tolerance" value="0" step="0.01" min="0" max="100" help="" />
+        <number name="search.target_rt_tolerance" label="RT Tolerance" value="0" step="0.01" min="0" max="100" help="" />
+        <string name="search.channel_filter" label="Channel Filter" value="" visibility="advanced" help="" />
+        <checkbox name="search.exclude_shared_ions" label="Exclude Shared Ions" value="true" visibility="advanced" help="" />
+        <checkbox name="search.compete_for_fragments" label="Compete for Fragments" value="true" visibility="advanced" help="" />
+        <number name="search.target_num_candidates" label="Number of Candidates" value="2" visibility="advanced" help="" />
+        <number name="search.quant_window" label="Quant window" value="3" visibility="advanced" help="" />
+        <checkbox name="search.quant_all" label="Use all MS2 observations" value="true" visibility="advanced" help="" />
     </section>
 
     <section name="fdr" title="False Discovery Rate Correction" expanded="true">
-        <number name="fdr" config_path="fdr" label="FDR" value="0.01" min="0.0" max="1.0" step="0.01" help="" />
-        <select name="group_level" config_path="fdr" label="Inference Level" help="">
+        <number name="fdr.fdr" label="FDR" value="0.01" min="0.0" max="1.0" step="0.01" help="" />
+        <select name="fdr.group_level" label="Inference Level" help="">
             <option value="genes">Genes</option>
             <option value="proteins" selected="true">Proteins</option>
         </select>
-        <select name="inference_strategy" config_path="fdr" label="Inference Strategy" help="">
+        <select name="fdr.inference_strategy" label="Inference Strategy" help="">
             <option value="library">Library</option>
             <option value="maximum_parsimony">Maximum parsimony</option>
             <option value="heuristic" selected="true">Heuristic</option>
         </select>
-        <checkbox name="channel_wise_fdr" config_path="fdr" label="Channel wise FDR" value="false" visibility="advanced" help="" />
-        <checkbox name="keep_decoys" config_path="fdr" label="Keep Decoys" value="false" visibility="advanced" help="" />
-        <checkbox name="enable_two_step_classifier" config_path="fdr" label="Two Step Classifier" value="false" visibility="advanced" help="" />
-        <number name="two_step_classifier_max_iterations" config_path="fdr" label="Two Step Classifier Max Iterations" value="5" visibility="advanced" help="" />
-        <checkbox name="enable_nn_hyperparameter_tuning" config_path="fdr" label="Hyperparameter Tuning" value="false" visibility="advanced" help="" />
+        <checkbox name="fdr.channel_wise_fdr" label="Channel wise FDR" value="false" visibility="advanced" help="" />
+        <checkbox name="fdr.keep_decoys" label="Keep Decoys" value="false" visibility="advanced" help="" />
+        <checkbox name="fdr.enable_two_step_classifier" label="Two Step Classifier" value="false" visibility="advanced" help="" />
+        <number name="fdr.two_step_classifier_max_iterations" label="Two Step Classifier Max Iterations" value="5" visibility="advanced" help="" />
+        <checkbox name="fdr.enable_nn_hyperparameter_tuning" label="Hyperparameter Tuning" value="false" visibility="advanced" help="" />
     </section>
 
     <section name="search_initial" title="Initial Search Settings" expanded="false" visibility="advanced">
-        <number name="initial_ms1_tolerance" config_path="search_initial" label="MS1 Tolerance" value="30" step="0.01" min="1" max="100" help="" />
-        <number name="initial_ms2_tolerance" config_path="search_initial" label="MS2 Tolerance" value="30" step="0.01" min="1" max="100" help="" />
-        <number name="initial_mobility_tolerance" config_path="search_initial" label="Mobility Tolerance" value="0" step="0.01" min="0" max="100" help="" />
-        <number name="initial_rt_tolerance" config_path="search_initial" label="RT Tolerance" value="0" step="0.01" min="0" max="100" help="" />
+        <number name="search_initial.initial_ms1_tolerance" label="MS1 Tolerance" value="30" step="0.01" min="1" max="100" help="" />
+        <number name="search_initial.initial_ms2_tolerance" label="MS2 Tolerance" value="30" step="0.01" min="1" max="100" help="" />
+        <number name="search_initial.initial_mobility_tolerance" label="Mobility Tolerance" value="0" step="0.01" min="0" max="100" help="" />
+        <number name="search_initial.initial_rt_tolerance" label="RT Tolerance" value="0" step="0.01" min="0" max="100" help="" />
     </section>
 
     <section name="multiplexing" title="Multiplexing" expanded="false" visibility="advanced">
         <conditional name="multiplex">
-            <checkbox name="enabled" config_path="multiplexing" label="Enable Multiplexing" value="false" help="" />
-            <when value="yes">
-                <string name="target_channels" config_path="multiplexing" label="Target Channels" value="4,8" help="" />
-                <number name="decoy_channel" config_path="multiplexing" label="Decoy Channel " value="12" help="" />
-                <number name="reference_channel" config_path="multiplexing" label="Reference Channel" value="0" help="" />
-                <checkbox name="competetive_scoring" config_path="multiplexing" label="Competitive Scoring" value="false" help="" />
+            <checkbox name="multiplexing.enabled" label="Enable Multiplexing" value="false" help="" />
+            <when value="true">
+                <string name="multiplexing.target_channels" label="Target Channels" value="4,8" help="" />
+                <number name="multiplexing.decoy_channel" label="Decoy Channel " value="12" help="" />
+                <number name="multiplexing.reference_channel" label="Reference Channel" value="0" help="" />
+                <checkbox name="multiplexing.competetive_scoring" label="Competitive Scoring" value="false" help="" />
             </when>
         </conditional>
     </section>
 
     <section name="search_output" title="Search output" expanded="false">
-        <select name="file_format" config_path="search_output" label="File format" help="">
+        <select name="search_output.file_format" label="File format" help="">
             <option value="tsv" selected="true">TSV</option>
             <option value="parquet">Parquet</option>
         </select>
-        <checkbox name="peptide_level_lfq" config_path="search_output" label="Peptide level LFQ" value="false" help="" />
-        <checkbox name="precursor_level_lfq" config_path="search_output" label="Precursor level LFQ" value="false" help="" />
-        <number name="min_k_fragments" config_path="search_output" label="Minimum number of fragments" value="12" visibility="advanced" help="" />
-        <number name="min_correlation" config_path="search_output" label="Minimum correlation" value="0.9" step="0.01" visibility="advanced" help="" />
-        <number name="num_samples_quadratic" config_path="search_output" label="Number of samples for quadratic fit" value="50" visibility="advanced" help="" />
-        <number name="min_nonnan" config_path="search_output" label="Minimum number of non-nan values" value="3" visibility="advanced" help="" />
-        <checkbox name="normalize_lfq" config_path="search_output" label="Normalize LFQ" value="true" visibility="advanced" help="" />
+        <checkbox name="search_output.peptide_level_lfq" label="Peptide level LFQ" value="false" help="" />
+        <checkbox name="search_output.precursor_level_lfq" label="Precursor level LFQ" value="false" help="" />
+        <number name="search_output.min_k_fragments" label="Minimum number of fragments" value="12" visibility="advanced" help="" />
+        <number name="search_output.min_correlation" label="Minimum correlation" value="0.9" step="0.01" visibility="advanced" help="" />
+        <number name="search_output.num_samples_quadratic" label="Number of samples for quadratic fit" value="50" visibility="advanced" help="" />
+        <number name="search_output.min_nonnan" label="Minimum number of non-nan values" value="3" visibility="advanced" help="" />
+        <checkbox name="search_output.normalize_lfq" label="Normalize LFQ" value="true" visibility="advanced" help="" />
     </section>
 
     <section name="transfer_library" title="Transfer Library" expanded="false" hidden="true" visibility="advanced">
         <conditional name="transfer_lib">
-            <checkbox name="enabled" config_path="transfer_library" label="Enabled" value="false" help="" />
-            <when value="yes">
-                <!-- <string name="fragment_types" config_path="transfer_library" label="Fragment types" value="b;y" help="" /> -->
-                <checklist name="fragment_types" config_path="transfer_library" label="Fragment types" help="">
+            <checkbox name="transfer_library.enabled" label="Enabled" value="false" help="" />
+            <when value="true">
+                <checklist name="transfer_library.fragment_types" label="Fragment types" help="">
                     <option value="b" selected="true">b</option>
                     <option value="y" selected="true">y</option>
                     <option value="b_modloss">b_modloss</option>
@@ -211,30 +210,30 @@
                     <option value="c_lossH">c_lossH</option>
                     <option value="z_addH">z_addH</option>
                 </checklist>
-                <number name="max_charge" config_path="transfer_library" label="Maximum charge" value="2" help="" />
-                <number name="top_k_samples" config_path="transfer_library" label="Top k samples" value="3" help="" />
-                <checkbox name="norm_delta_max" config_path="transfer_library" label="Norm delta max" value="true" help="" />
-                <number name="precursor_correlation_cutoff" config_path="transfer_library" label="Precursor correlation cutoff" value="0.5" step="0.01" help="" />
-                <number name="fragment_correlation_ratio" config_path="transfer_library" label="Fragment correlation ratio" value="0.75" step="0.01" help="" />
+                <number name="transfer_library.max_charge" label="Maximum charge" value="2" help="" />
+                <number name="transfer_library.top_k_samples" label="Top k samples" value="3" help="" />
+                <checkbox name="transfer_library.norm_delta_max" label="Norm delta max" value="true" help="" />
+                <number name="transfer_library.precursor_correlation_cutoff" label="Precursor correlation cutoff" value="0.5" step="0.01" help="" />
+                <number name="transfer_library.fragment_correlation_ratio" label="Fragment correlation ratio" value="0.75" step="0.01" help="" />
             </when>
         </conditional>
     </section>
 
     <section name="transfer_learning" title="Transfer Learning" expanded="false" hidden="true" visibility="advanced">
         <conditional name="transfer_learn">
-            <checkbox name="enabled" config_path="transfer_learning" label="Enabled" value="false" help="" />
-            <when value="yes">
-                <number name="batch_size" config_path="transfer_learning" label="Batch size" value="2000" help="" />
-                <number name="max_lr" config_path="transfer_learning" label="Maximum learning rate" value="0.0001" step="0.0001" help="" />
-                <number name="train_fraction" config_path="transfer_learning" label="Train fraction" value="0.7" step="0.01" help="" />
-                <number name="validation_fraction" config_path="transfer_learning" label="Validation fraction" value="0.2" step="0.01" help="" />
-                <number name="test_fraction" config_path="transfer_learning" label="Test fraction" value="0.1" step="0.01" help="" />
-                <number name="test_interval" config_path="transfer_learning" label="Test interval" value="1" help="" />
-                <number name="lr_patience" config_path="transfer_learning" label="Learning rate patience" value="3" help="" />
-                <number name="epochs" config_path="transfer_learning" label="Number of epochs" value="51" help="" />
-                <number name="warmup_epochs" config_path="transfer_learning" label="Warmup epochs" value="5" help="" />
-                <number name="nce" config_path="transfer_learning" label="Normalized collision energy" value="25" step="0.01" help="" />
-                <select name="instrument" config_path="transfer_learning" label="Instrument" help="">
+            <checkbox name="transfer_learning.enabled" label="Enabled" value="false" help="" />
+            <when value="true">
+                <number name="transfer_learning.batch_size" label="Batch size" value="2000" help="" />
+                <number name="transfer_learning.max_lr" label="Maximum learning rate" value="0.0001" step="0.0001" help="" />
+                <number name="transfer_learning.train_fraction" label="Train fraction" value="0.7" step="0.01" help="" />
+                <number name="transfer_learning.validation_fraction" label="Validation fraction" value="0.2" step="0.01" help="" />
+                <number name="transfer_learning.test_fraction" label="Test fraction" value="0.1" step="0.01" help="" />
+                <number name="transfer_learning.test_interval" label="Test interval" value="1" help="" />
+                <number name="transfer_learning.lr_patience" label="Learning rate patience" value="3" help="" />
+                <number name="transfer_learning.epochs" label="Number of epochs" value="51" help="" />
+                <number name="transfer_learning.warmup_epochs" label="Warmup epochs" value="5" help="" />
+                <number name="transfer_learning.nce" label="Normalized collision energy" value="25" step="0.01" help="" />
+                <select name="transfer_learning.instrument" label="Instrument" help="">
                     <option value="timstof" selected="true">TimsTOF</option>
                     <option value="astral">Astral</option>
                     <option value="eclipse">Eclipse</option>

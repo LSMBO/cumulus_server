@@ -41,9 +41,9 @@
     },
     "output_directory": "output_dir",
     "precursor_tol": {
-        "ppm": [
-            -10,
-            10
+        "da": [
+            -500,
+            100
         ]
     },
     "fragment_tol": {
