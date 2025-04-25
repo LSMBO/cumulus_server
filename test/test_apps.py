@@ -71,14 +71,20 @@ def test_get_file_path_raw():
     assert apps.get_file_path("test", "D:/Projets/DiaNN/test/homosapiens_uniprot.fasta", "false") == "test/homosapiens_uniprot.fasta"
 
 def test_get_all_files_to_convert_to_mzml():
-    settings = get_settings("test/jobs/raw2mzml.settings")
     # 95 raw files but 5 of them already exist in the data folder as mzML files
-    assert len(apps.get_all_files_to_convert_to_mzml("job_dir", "diann_2.0", settings)) == 90
+    settings = get_settings("test/jobs/raw2mzml.settings")
+    # assert len(apps.get_all_files_to_convert_to_mzml("job_dir", "diann_2.0", settings)) == 90
+    assert len(apps.get_files("job_dir", "diann_2.0", settings, False, True)) == 90
+    # 7 mzml files, not to be converted
+    settings = get_settings("test/jobs/job4.settings")
+    assert len(apps.get_files("job_dir", "sage_0.15.0-beta.1", settings, False, True)) == 7
 
 def test_get_all_files_in_settings():
     settings = get_settings("test/jobs/raw2mzml.settings")
-    assert len(apps.get_all_files_in_settings("job_dir", "diann_2.0", settings, False)) == 96
-    assert len(apps.get_all_files_in_settings("job_dir", "diann_2.0", settings, True)) == 96
+    # assert len(apps.get_all_files_in_settings("job_dir", "diann_2.0", settings, False)) == 96
+    assert len(apps.get_files("job_dir", "diann_2.0", settings, False)) == 96
+    # assert len(apps.get_all_files_in_settings("job_dir", "diann_2.0", settings, True)) == 96
+    assert len(apps.get_files("job_dir", "diann_2.0", settings, True)) == 96
 
 def are_all_files_transfered_complete():
     # all files are transfered
@@ -130,7 +136,6 @@ def test_get_command_line_with_config_file():
     # get the full command line, this will generate the new config file
     apps.get_command_line("sage_0.15.0-beta.1", "test/jobs/job4_complete", settings, 16, "output_dir")
     # compare the config file with the expected one
-    print(get_settings(config))
     assert get_settings(config) == get_settings("test/jobs/job4_complete/expected.settings.json")
     # remove the config file
     os.remove(config)

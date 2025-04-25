@@ -10,6 +10,9 @@
     ],
     "database": {
         "fasta": "HumanSP_CpSP_AUH_20240725.fasta",
+        "prefilter": true,
+        "prefilter_chunk_size": 100,
+        "prefilter_low_memory": true,
         "bucket_size": 32768,
         "enzyme": {
             "missed_cleavages": 1,
@@ -28,13 +31,15 @@
         "min_ion_index": 2,
         "variable_mods": {
             "M": [
-                "15.9949"
+                15.9949
+            ],
+            "C": [
+                57.0215, 119.0041
             ],
             "[": [
-                "42"
+                42
             ]
         },
-        "static_mods": {},
         "max_variable_mods": 2,
         "decoy_tag": "###REV###",
         "generate_decoys": false

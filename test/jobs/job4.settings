@@ -10,16 +10,12 @@
     "y"
   ],
     "database.variable_mods": [
-    [
-      "M",
-      "15.9949"
-    ],
-    [
-      "[",
-      "42"
-    ]
+    ["M", "15.9949"],
+    ["C", "57.0215"],
+    ["C", "119.0041"],
+    ["[", "42"]
   ],
-  "database.static_mods": {},
+  "use_prefilter_condition": true,
   "database.prefilter": true,
   "database.prefilter_low_memory": true,
   "database.enzyme.c_terminal": true,
@@ -55,12 +51,12 @@
   "precursor_charge-min": "2",
   "database.fasta": "//path/to/my/files/HumanSP_CpSP_AUH_20240725.fasta",
   "mzml_paths": [
-    "//path/to/my/files/TU019934CK_Slot2-37_1_8492.d",
-    "//path/to/my/files//TU019936CK_Slot2-37_1_8494.d",
-    "//path/to/my/files/TU019943CK_Slot2-39_1_8501.d",
-    "//path/to/my/files/TU019945CK_Slot2-40_1_8503.d",
-    "//path/to/my/files/TU019947CK_Slot2-39_1_8505.d",
-    "//path/to/my/files/TU019950CK_Slot2-40_1_8508.d",
-    "//path/to/my/files/TU019954CK_Slot2-39_1_8512.d"
+    "//path/to/my/files/TU019934CK_Slot2-37_1_8492.mzml",
+    "//path/to/my/files//TU019936CK_Slot2-37_1_8494.mzml",
+    "//path/to/my/files/TU019943CK_Slot2-39_1_8501.mzml",
+    "//path/to/my/files/TU019945CK_Slot2-40_1_8503.mzml",
+    "//path/to/my/files/TU019947CK_Slot2-39_1_8505.mzml",
+    "//path/to/my/files/TU019950CK_Slot2-40_1_8508.mzml",
+    "//path/to/my/files/TU019954CK_Slot2-39_1_8512.mzml"
   ]
 }

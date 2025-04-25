@@ -23,12 +23,14 @@
 
     <section name="database" title="Database" expanded="true">
         <conditional name="use_prefilter">
-            <checkbox name="database.prefilter" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
+            <checkbox name="use_prefilter_condition" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
             <when value="true">
-                <string name="database.prefilter_chunk_size" label="Chunk size" value="100" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
+                <checkbox name="database.prefilter" label="Prefilter" value="true" visibility="hidden" />
+                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="100" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
                 <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="true" help="" visibility="hidden" />
             </when>
             <when value="false">
+                <checkbox name="database.prefilter" label="Prefilter" value="false" visibility="hidden" />
                 <string name="database.prefilter_chunk_size" label="Chunk size" value="100" help="" visibility="hidden" />
                 <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="false" help="" visibility="hidden" />
             </when>
@@ -101,7 +103,7 @@
 
     <section name="quantification" title="Quantification" expanded="true" visibility="advanced">
         <conditional name="use_tmt">
-            <select name="quant.tmt" label="TMT" help="Select the TMT type you want to use">
+            <select name="use_tmt_condition" label="TMT" help="Select the TMT type you want to use">
                 <option value="" selected="true">None</option>
                 <option value="tmt6">TMT6</option>
                 <option value="tmt10">TMT10</option>
@@ -110,29 +112,35 @@
                 <option value="tmt18">TMT18</option>
             </select>
             <when value="tmt6">
+                <string name="quant.tmt" label="TMT" value="tmt6" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt10">
+                <string name="quant.tmt" label="TMT" value="tmt10" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt11">
+                <string name="quant.tmt" label="TMT" value="tmt11" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt16">
+                <string name="quant.tmt" label="TMT" value="tmt16" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt18">
+                <string name="quant.tmt" label="TMT" value="tmt18" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
         </conditional>
         <conditional name="use_lfq">
-            <checkbox name="quant.lfq" label="Perform label-free quantification" value="false" help="" />
+            <checkbox name="use_lfq_condition" label="Perform label-free quantification" value="false" help="" />
             <when value="true">
+                <checkbox name="quant.lfq" label="Perform label-free quantification" value="true" visibility="hidden" />
                 <select name="quant.lfq_settings.peak_scoring" label="Peak scoring" help="Hybrid scoring combines RT-based and spectral-angle based scoring to identify the best MS1 peak to quantify. It is recommended that you do not change this setting.">
                     <option value="Hybrid" selected="true">Hybrid</option>
                     <option value="RetentionTime">RetentionTime</option>
