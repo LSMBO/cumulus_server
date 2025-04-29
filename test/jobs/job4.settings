@@ -10,10 +10,9 @@
     "y"
   ],
     "database.variable_mods": [
-    ["M", "15.9949"],
-    ["C", "57.0215"],
-    ["C", "119.0041"],
-    ["[", "42"]
+    ["M", ["15.9949"]],
+    ["C", ["57.0215","119.0041"]],
+    ["[", ["42"]]
   ],
   "use_prefilter_condition": true,
   "database.prefilter": true,

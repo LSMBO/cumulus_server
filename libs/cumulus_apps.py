@@ -296,23 +296,26 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 		elif param.tag == "keyvalues":
 			if key in settings:
 				value = {}
-				is_list = False
-				if param.get("is_list") != None and param.get("is_list") == "true": is_list = True
+				# is_list = False
+				# if param.get("is_list") != None and param.get("is_list") == "true": is_list = True
+				is_list = True if param.get("is_list") != None and param.get("is_list") == "true" else False
+				type_of = param.get("type_of") if param.get("type_of") != None else "string"
 				# settings[key] should be an array of arrays, each array containing a key and a value
 				for item in settings[key]:
+					# v can be a single value or a list, and the type of the value can be either integer, float or string
 					k = item[0]
-					# v = item[1]
-					# if the value is a float (check attribute type_of), convert to float
-					if param.get("type_of") != None and param.get("type_of") == "float":
-						v = float(item[1])
-					else: v = item[1]
-					# if param.is_list is missing or false, value must be a map of key:value
-					# if param.is_list is true, value has to be a map of key:[value1, value2, ...]
+					v = item[1]
 					if is_list:
-						# the value is an array, it may already exist, if so, append the value to the array
-						if k in value: value[k].append(v)
-						else: value[k] = [v]
-					else: value[k] = v
+						values = []
+						for i in range(len(v)):
+							if type_of == "float": values.append(float(v[i]))
+							elif type_of == "int": values.append(int(v[i]))
+							else: values.append(v[i])
+						value[k] = values
+					else:
+						if type_of == "float": value[k] = float(v)
+						elif type_of == "int": value[k] = int(v)
+						else: value[k] = v
 				add_config_to_settings(key, value, config_settings)
 		elif param.tag == "checkbox":
 			if key in settings: value = True if settings[key] else False
