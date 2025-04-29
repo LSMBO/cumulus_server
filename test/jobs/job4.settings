@@ -31,7 +31,7 @@
   "database.enzyme.max_len": "50",
   "database.peptide_min_mass": "500",
   "database.peptide_max_mass": "5000",
-  "database.min_ion_index": "2",
+  "database.min_ion_index": "",
   "database.max_variable_mods": "2",
   "min_peaks": "15",
   "max_peaks": "150",

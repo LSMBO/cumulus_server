@@ -230,7 +230,7 @@ def get_param_command_line(param, settings, job_dir):
 		if key in settings: cmd.append(replace_in_command(command, "%value%", settings[key]))
 	elif param.tag == "number":
 		# add the command line if the key is in the settings, variable %value% can be expected
-		if key in settings: cmd.append(replace_in_command(command, "%value%", settings[key]))
+		if key in settings and settings[key] != "": cmd.append(replace_in_command(command, "%value%", settings[key]))
 	elif param.tag == "range":
 		# add the command line if the keys for min and max are in the settings, variables %value% and %value2% can be expected
 		key_min = param.get("name") + "-min"
@@ -260,6 +260,8 @@ def get_param_command_line(param, settings, job_dir):
 	return " ".join(cmd)
 
 def get_param_number(param, value):
+	# if value was not defined, return None
+	if value == "": return None
 	# value is a string representing a number, either int or float
 	step = param.get("step")
 	# if step is not defined, it's a int
@@ -270,7 +272,6 @@ def get_param_number(param, value):
 	else: return int(value)
 
 def add_config_to_settings(key, value, config_settings):
-	if(key == "database.prefilter_low_memory"): print(value)
 	# separate the path by dots
 	full_path = key.split(".")
 	# make sure that all parts of the path exist in the dict, create them if they don't, unless for the last part which is the key
@@ -321,8 +322,10 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 			# if key in settings: value = settings[key]
 			if key in settings: add_config_to_settings(key, settings[key], config_settings)
 		elif param.tag == "number":
-			# if key in settings: value = get_param_number(param, settings[key])
-			if key in settings: add_config_to_settings(key, get_param_number(param, settings[key]), config_settings)
+			if key in settings: 
+				# add_config_to_settings(key, get_param_number(param, settings[key]), config_settings)
+				number = get_param_number(param, settings[key])
+				if number != None: add_config_to_settings(key, number, config_settings)
 		elif param.tag == "range":
 			key_min = param.get("name") + "-min"
 			key_max = param.get("name") + "-max"
