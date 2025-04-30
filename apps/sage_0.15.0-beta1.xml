@@ -105,7 +105,7 @@
 
     <section name="quantification" title="Quantification" expanded="true" visibility="advanced">
         <conditional name="use_tmt">
-            <select name="quant.tmt" label="TMT" help="Select the TMT type you want to use">
+            <select name="quant.tmt" label="TMT" exclude_from_config="true" help="Select the TMT type you want to use">
                 <option value="" selected="true">None</option>
                 <option value="tmt6">TMT6</option>
                 <option value="tmt10">TMT10</option>
@@ -113,30 +113,35 @@
                 <option value="tmt16">TMT16</option>
                 <option value="tmt18">TMT18</option>
             </select>
-            <when value="tmt.*" allow_regex="true">
+            <!-- <when value="tmt.*" allow_regex="true">
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
-            </when>
-            <!-- <when value="tmt6">
+            </when> -->
+            <when value="tmt6">
+                <string name="quant.tmt" label="TMT" value="tmt6" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt10">
+                <string name="quant.tmt" label="TMT" value="tmt10" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt11">
+                <string name="quant.tmt" label="TMT" value="tmt11" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt16">
+                <string name="quant.tmt" label="TMT" value="tmt16" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
             <when value="tmt18">
+                <string name="quant.tmt" label="TMT" value="tmt18" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
-            </when> -->
+            </when>
         </conditional>
         <conditional name="use_lfq">
             <checkbox name="quant.lfq" label="Perform label-free quantification" value="false" help="" />
