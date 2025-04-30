@@ -326,7 +326,10 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 			add_config_to_settings(key, value, config_settings)
 		elif param.tag == "string":
 			# if key in settings: value = settings[key]
-			if key in settings: add_config_to_settings(key, settings[key], config_settings)
+			if key in settings: 
+				# if the value is empty and allow_empty is set to false, don't add it to the config file
+				if settings[key] == "" and param.get("allow_empty") != None and param.get("allow_empty") == "false": return
+				add_config_to_settings(key, settings[key], config_settings)
 		elif param.tag == "number":
 			if key in settings: 
 				# add_config_to_settings(key, get_param_number(param, settings[key]), config_settings)

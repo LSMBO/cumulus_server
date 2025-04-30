@@ -25,11 +25,11 @@
         <conditional name="use_prefilter">
             <checkbox name="database.prefilter" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
             <when value="true">
-                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="100" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
+                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
                 <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="true" help="" visibility="hidden" />
             </when>
             <when value="false">
-                <string name="database.prefilter_chunk_size" label="Chunk size" value="100" help="" visibility="hidden" />
+                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="" help="" visibility="hidden" />
                 <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="false" help="" visibility="hidden" />
             </when>
         </conditional>
@@ -38,9 +38,9 @@
         <number name="database.enzyme.min_len" label="Minimum peptide length" placeholder="5" min="1" help="Minimum AA length of peptides to search. Default is 5." />
         <number name="database.enzyme.max_len" label="Maximum peptide length" placeholder="50" min="1" help="Maximum AA length of peptides to search. Default is 50." />
         <conditional name="cleavage">
-            <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="KR" help="Leave empty for non-enzymatic digestion, use '$' to disable digestion and use sequences as they are in the file. Default is 'KR'" />
+            <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="KR" allow_empty="true" help="Leave empty for non-enzymatic digestion, use '$' to disable digestion and use sequences as they are in the file. Default is 'KR'" />
             <when value=".+" allow_regex="true">
-                <string name="database.enzyme.restrict" label="Do not cleave if this AA follows the cleavage site" value="P" placeholder="P" help="Default is 'P'" />
+                <string name="database.enzyme.restrict" label="Do not cleave if this AA follows the cleavage site" value="P" allow_empty="false" placeholder="P" help="Default is 'P'" />
                 <checkbox name="database.enzyme.c_terminal" label="Cleave at C-terminus of matching amino acid" value="true" help="Default is 'yes'" />
             </when>
         </conditional>
@@ -62,7 +62,7 @@
         <keyvalues name="database.static_mods" is_list="false" type_of="float" label="Static modifications" label_key="Site" label_value="Mass" placeholder_key="Site" placeholder_value="Mass" help="Static modifications are applied after variable modifications.">
         </keyvalues>
         <number name="database.max_variable_mods" label="Maximal number of variable modifications" placeholder="2" min="0" help="Limit k-combinations of variable modifications. Default is 2." />
-        <string name="database.decoy_tag" label="Decoy tag" value="###REV###" placeholder="rev_" help="The tag used to identify decoy entries in the FASTA database. Default is 'rev_'." />
+        <string name="database.decoy_tag" label="Decoy tag" value="###REV###" placeholder="rev_" allow_empty="false" help="The tag used to identify decoy entries in the FASTA database. Default is 'rev_'." />
         <checkbox name="database.generate_decoys" label="Generate decoys" value="false" help="If true, ignore decoys in the FASTA database matching 'Decoy tag', and generate internally reversed peptides." />
     </section>
 
@@ -105,7 +105,7 @@
 
     <section name="quantification" title="Quantification" expanded="true" visibility="advanced">
         <conditional name="use_tmt">
-            <select name="quant.tmt" label="TMT" help="Select the TMT type you want to use">
+            <select name="quant.tmt" label="TMT" exclude_from_config="true" help="Select the TMT type you want to use">
                 <option value="" selected="true">None</option>
                 <option value="tmt6">TMT6</option>
                 <option value="tmt10">TMT10</option>
@@ -113,7 +113,28 @@
                 <option value="tmt16">TMT16</option>
                 <option value="tmt18">TMT18</option>
             </select>
-            <when value="tmt.*" allow_regex="true">
+            <when value="tmt6">
+                <string name="quant.tmt" label="TMT" value="tmt6" visibility="hidden" />
+                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt10">
+                <string name="quant.tmt" label="TMT" value="tmt10" visibility="hidden" />
+                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt11">
+                <string name="quant.tmt" label="TMT" value="tmt11" visibility="hidden" />
+                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt16">
+                <string name="quant.tmt" label="TMT" value="tmt16" visibility="hidden" />
+                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
+                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
+            </when>
+            <when value="tmt18">
+                <string name="quant.tmt" label="TMT" value="tmt18" visibility="hidden" />
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
