@@ -285,6 +285,9 @@ def add_config_to_settings(key, value, config_settings):
 
 def get_param_config_value(config_settings, format, job_dir, param, settings):
 	if format in ALLOWED_CONFIG_FORMATS:
+		# if the param is set to be excluded from the config file, skip it
+		if param.get("exclude_from_config") != None and param.get("exclude_from_config") == "true": return
+		# read the value of the param in the settings
 		key = param.get("name")
 		value = "" # placeholder
 		if param.tag == "select":
@@ -375,7 +378,12 @@ def write_config_file(config_file, config_settings, format, nb_cpu, output_dir):
 def is_condition_fulfilled(condition, when, settings):
 	# the condition has to be in the settings and the value has to match the one in the "when" tag
 	if condition.tag == "select" or condition.tag == "string" or condition.tag == "number": 
-		return condition.get('name') in settings and when.get('value') == settings[condition.get('name')]
+		if when.get("allow_regex") != None and when.get("allow_regex") == "true":
+			# if the condition is a regex, check if the value matches the regex
+			return condition.get('name') in settings and re.search(when.get('value'), settings[condition.get('name')])
+		else:
+			# default behavior, check if the value is equal to the one in the settings
+			return condition.get('name') in settings and when.get('value') == settings[condition.get('name')]
 	elif condition.tag == "checkbox": 
 		if condition.get('name') in settings:
 			if settings[condition.get('name')] == True: return when.get('value') == "true"
@@ -408,7 +416,7 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 					condition = child[0]
 					command = get_param_command_line(condition, settings, job_dir)
 					if command != "": cmd.append(command)
-					# get_param_config_value(config_settings, config_format, job_dir, condition, settings)
+					get_param_config_value(config_settings, config_format, job_dir, condition, settings)
 					for when in child.findall("when"):
 						# check that this when is the selected one
 						# if condition.get('name') in settings and when.get('value') == settings[condition.get('name')]:

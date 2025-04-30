@@ -2,7 +2,7 @@
 
     <section name="files" title="Input files" expanded="true">
         <conditional name="raw">
-            <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
+            <select name="raw-type" label="Select input file type" exclude_from_config="true" help="Specify the type of input file you want to use">
                 <option value="mzml" selected="true">mzML files</option>
                 <option value="bruker-d">Bruker .d folders</option>
                 <option value="thermo-raw">Thermo .raw files</option>
@@ -23,14 +23,12 @@
 
     <section name="database" title="Database" expanded="true">
         <conditional name="use_prefilter">
-            <checkbox name="use_prefilter_condition" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
+            <checkbox name="database.prefilter" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
             <when value="true">
-                <checkbox name="database.prefilter" label="Prefilter" value="true" visibility="hidden" />
                 <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="100" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
                 <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="true" help="" visibility="hidden" />
             </when>
             <when value="false">
-                <checkbox name="database.prefilter" label="Prefilter" value="false" visibility="hidden" />
                 <string name="database.prefilter_chunk_size" label="Chunk size" value="100" help="" visibility="hidden" />
                 <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="false" help="" visibility="hidden" />
             </when>
@@ -39,9 +37,13 @@
         <number name="database.enzyme.missed_cleavages" label="Missed cleavages" placeholder="1" min="0" max="5" help="Number of missed cleavages to allow. Default is 1." />
         <number name="database.enzyme.min_len" label="Minimum peptide length" placeholder="5" min="1" help="Minimum AA length of peptides to search. Default is 5." />
         <number name="database.enzyme.max_len" label="Maximum peptide length" placeholder="50" min="1" help="Maximum AA length of peptides to search. Default is 50." />
-        <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="KR" help="Leave empty for non-enzymatic digestion, use '$' to disable digestion and use sequences as they are in the file. Default is 'KR'" />
-        <string name="database.enzyme.restrict" label="Do not cleave if this AA follows the cleavage site" value="P" placeholder="P" help="Default is 'P'" />
-        <checkbox name="database.enzyme.c_terminal" label="Cleave at C-terminus of matching amino acid" value="true" help="Default is 'yes'" />
+        <conditional name="cleavage">
+            <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="KR" help="Leave empty for non-enzymatic digestion, use '$' to disable digestion and use sequences as they are in the file. Default is 'KR'" />
+            <when value=".+" allow_regex="true">
+                <string name="database.enzyme.restrict" label="Do not cleave if this AA follows the cleavage site" value="P" placeholder="P" help="Default is 'P'" />
+                <checkbox name="database.enzyme.c_terminal" label="Cleave at C-terminus of matching amino acid" value="true" help="Default is 'yes'" />
+            </when>
+        </conditional>
         <number name="database.peptide_min_mass" label="Minimum peptide mass" placeholder="500" step="0.1" min="1" help="Minimum monoisotopic mass of peptides to fragment. Default is 500." />
         <number name="database.peptide_max_mass" label="Maximum peptide mass" placeholder="5000" step="0.1" min="1" help="Maximum monoisotopic mass of peptides to fragment. Default is 5000." />
         <checklist name="database.ion_kinds" label="Ion kinds" help="Which fragment ions to generate and search? Default is b and y ions.">
@@ -66,7 +68,7 @@
 
     <section name="tolerances" title="Search tolerances" expanded="true">
         <conditional name="precursor_tols">
-            <select name="precursor_tol_unit" label="Precursor tolerance unit" help="Tolerance can be either 'ppm' or 'da'">
+            <select name="precursor_tol_unit" exclude_from_config="true" label="Precursor tolerance unit" help="Tolerance can be either 'ppm' or 'da'">
                 <option value="ppm">ppm</option>
                 <option value="da" selected="true">Dalton</option>
             </select>
@@ -78,7 +80,7 @@
             </when>
         </conditional>
         <conditional name="fragment_tols">
-            <select name="fragment_tol_unit" label="Fragment tolerance unit" help="Tolerance can be either 'ppm' or 'da'">
+            <select name="fragment_tol_unit" exclude_from_config="true" label="Fragment tolerance unit" help="Tolerance can be either 'ppm' or 'da'">
                 <option value="ppm" selected="true">ppm</option>
                 <option value="da">Dalton</option>
             </select>
@@ -103,7 +105,7 @@
 
     <section name="quantification" title="Quantification" expanded="true" visibility="advanced">
         <conditional name="use_tmt">
-            <select name="use_tmt_condition" label="TMT" help="Select the TMT type you want to use">
+            <select name="quant.tmt" label="TMT" help="Select the TMT type you want to use">
                 <option value="" selected="true">None</option>
                 <option value="tmt6">TMT6</option>
                 <option value="tmt10">TMT10</option>
@@ -111,36 +113,14 @@
                 <option value="tmt16">TMT16</option>
                 <option value="tmt18">TMT18</option>
             </select>
-            <when value="tmt6">
-                <string name="quant.tmt" label="TMT" value="tmt6" visibility="hidden" />
-                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
-                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
-            </when>
-            <when value="tmt10">
-                <string name="quant.tmt" label="TMT" value="tmt10" visibility="hidden" />
-                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
-                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
-            </when>
-            <when value="tmt11">
-                <string name="quant.tmt" label="TMT" value="tmt11" visibility="hidden" />
-                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
-                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
-            </when>
-            <when value="tmt16">
-                <string name="quant.tmt" label="TMT" value="tmt16" visibility="hidden" />
-                <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
-                <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
-            </when>
-            <when value="tmt18">
-                <string name="quant.tmt" label="TMT" value="tmt18" visibility="hidden" />
+            <when value="tmt.*" allow_regex="true">
                 <number name="quant.tmt_settings.level" label="MS-level to perform TMT" placeholder="3" min="1" help="The MS-level to perform TMT quantification on. Default is 3." />
                 <checkbox name="quant.tmt_settings.sn" label="use Signal/Noise instead of intensity for TMT quant" value="false" help="Use Signal/Noise instead of intensity for TMT quantification. Requires  noise values in mzML." />
             </when>
         </conditional>
         <conditional name="use_lfq">
-            <checkbox name="use_lfq_condition" label="Perform label-free quantification" value="false" help="" />
+            <checkbox name="quant.lfq" label="Perform label-free quantification" value="false" help="" />
             <when value="true">
-                <checkbox name="quant.lfq" label="Perform label-free quantification" value="true" visibility="hidden" />
                 <select name="quant.lfq_settings.peak_scoring" label="Peak scoring" help="Hybrid scoring combines RT-based and spectral-angle based scoring to identify the best MS1 peak to quantify. It is recommended that you do not change this setting.">
                     <option value="Hybrid" selected="true">Hybrid</option>
                     <option value="RetentionTime">RetentionTime</option>

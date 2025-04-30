@@ -36,7 +36,7 @@
   "max_peaks": "150",
   "min_matched_peaks": "4",
   "max_fragment_charge": "-1",
-  "quant.tmt_settings.levelevel": "3",
+  "quant.tmt_settings.level": "3",
   "quant.lfq_settings.spectral_angle": "0.7",
   "quant.lfq_settings.ppm_tolerance": "5.0",
   "report_psms": "1",
