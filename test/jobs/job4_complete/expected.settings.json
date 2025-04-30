@@ -67,7 +67,6 @@
     "min_matched_peaks": 4,
     "max_fragment_charge": -1,
     "quant": {
-        "tmt": "",
         "lfq": false
     },
     "precursor_charge": [
