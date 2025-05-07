@@ -136,8 +136,10 @@ def diskusage():
 
 @app.route("/fail", methods=["POST"])
 def fail_job():
-	logger.info("Fail job")
-	utils.set_job_failed(request.form["job_id"], request.form["error_message"])
+	job_id = request.form["job_id"]
+	error_message = request.form["error_message"]
+	logger.info(f"Fail job {job_id}: {error_message}")
+	utils.set_job_failed(job_id, error_message)
 
 @app.route("/config")
 def check(): return jsonify(config.export())
