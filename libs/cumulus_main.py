@@ -134,6 +134,11 @@ def storage():
 def diskusage():
 	return jsonify(utils.get_disk_usage())
 
+@app.route("/fail", methods=["POST"])
+def fail_job():
+	logger.info("Fail job")
+	utils.set_job_failed(request.form["job_id"], request.form["error_message"])
+
 @app.route("/config")
 def check(): return jsonify(config.export())
 

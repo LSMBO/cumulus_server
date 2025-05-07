@@ -296,3 +296,9 @@ def get_unused_shared_files_older_than(max_age_seconds):
 		if get_file_age_in_seconds(file) > max_age_seconds:
 			if not db.is_file_in_use(file): files.append(file)
 	return files
+
+def set_job_failed(job_id, error):
+	db.set_status(job_id, "FAILED")
+	db.set_end_date(job_id)
+	add_to_stderr(job_id, error)
+	logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
