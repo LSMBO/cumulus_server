@@ -158,7 +158,7 @@
     </section>
 
     <section name="other" title="Other parameters" expanded="true" visibility="advanced">
-        <range name="precursor_charge" label="Precursor Charge" placeholder="2" placeholder2="4" min="1" help="If charge states are not annotated in the mzML, or if 'wide window' mode is turned on, then consider all precursors with a charge state between those two values. Default is [2, 4]." />
+        <range name="precursor_charge" label="Precursor Charge" value="2" value2="4" min="1" help="If charge states are not annotated in the mzML, or if 'wide window' mode is turned on, then consider all precursors with a charge state between those two values. Default is [2, 4]." />
         <checkbox name="chimera" label="Search for chimeric/co-fragmenting PSMs" value="false" help="Search for chimeric/co-fragmenting PSMs." />
         <checkbox name="predict_rt" label="Use retention time prediction model as an feature for LDA" value="true" help="" />
         <number name="report_psms" label="Number of PSMs to report for each spectra" placeholder="1" min="1" max="100" help="The number of PSMs to report for each spectrum. Higher values might disrupt re-scoring, it is best to search with multiple values. Default is 1." />
