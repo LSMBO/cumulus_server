@@ -140,6 +140,7 @@ def fail_job():
 	error_message = request.form["error_message"]
 	logger.info(f"Fail job {job_id}: {error_message}")
 	utils.set_job_failed(job_id, error_message)
+	return ""
 
 @app.route("/config")
 def check(): return jsonify(config.export())
