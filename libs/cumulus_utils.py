@@ -259,7 +259,7 @@ def get_file_age_in_seconds(file):
 	# time() is the current time
 	# divide by the number of seconds in a day to have the number of days
 	t = time.time() - os.path.getmtime(file)
-	logger.debug(f"File '{os.path.basename(file)}': {t / 86400} days")
+	logger.debug(f"File '{os.path.basename(file)}': {round(t / 86400, 2)} days")
 	return t
 
 def get_disk_usage():
