@@ -22,24 +22,21 @@
     </section>
 
     <section name="database" title="Database" expanded="true">
-        <conditional name="use_prefilter">
-            <checkbox name="database.prefilter" label="Prefilter" value="false" help="Only activate this option when you expect your search space to be huge and exceed the amount of memory." />
-            <when value="true">
-                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
-                <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="true" help="" visibility="hidden" />
-            </when>
-            <when value="false">
-                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="" help="" visibility="hidden" />
-                <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="false" help="" visibility="hidden" />
-            </when>
-        </conditional>
         <number name="database.bucket_size" label="Bucket size" value="32768" min="1" visibility="advanced" help="How many fragments are in each internal mass bucket. Use a lower value (8192) for high-res MS/MS, and higher values for low-res MS/MS." />
         <number name="database.enzyme.missed_cleavages" label="Missed cleavages" placeholder="1" min="0" max="5" help="Number of missed cleavages to allow. Default is 1." />
         <number name="database.enzyme.min_len" label="Minimum peptide length" placeholder="5" min="1" help="Minimum AA length of peptides to search. Default is 5." />
         <number name="database.enzyme.max_len" label="Maximum peptide length" placeholder="50" min="1" help="Maximum AA length of peptides to search. Default is 50." />
         <conditional name="cleavage">
-            <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="KR" allow_empty="true" help="Leave empty for non-enzymatic digestion, use '$' to disable digestion and use sequences as they are in the file. Default is 'KR'" />
-            <when value=".+" allow_regex="true">
+            <checkbox name="database.cleavage" label="Non-specific digestion" exclude_from_config="true" value="false" help="" />
+            <when value="true">
+                <checkbox name="database.prefilter" label="Prefilter" value="true" help="" visibility="hidden" />
+                <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="true" help="" visibility="hidden" />
+                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
+                <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="" allow_empty="true" help="" visibility="hidden" />
+            </when>
+            <when value="false">
+                <checkbox name="database.prefilter" label="Prefilter" value="false" help="" visibility="hidden" />
+                <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="KR" allow_empty="false" help="Use '$' to disable digestion and use sequences as they are in the file. Default is 'KR'" />
                 <string name="database.enzyme.restrict" label="Do not cleave if this AA follows the cleavage site" value="P" allow_empty="false" placeholder="P" help="Default is 'P'" />
                 <checkbox name="database.enzyme.c_terminal" label="Cleave at C-terminus of matching amino acid" value="true" help="Default is 'yes'" />
             </when>
