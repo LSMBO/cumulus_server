@@ -158,6 +158,8 @@ def run():
 	time.sleep(10)
 	# possible statuses: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED
 	while True:
+		# reload the app list if needed (allows to update the app list without restarting the daemon)
+		if apps.is_there_app_update(): apps.get_app_list()
 		# check the running jobs to see if they are finished
 		check_running_jobs()
 		# get all the PENDING jobs, oldest ones first
