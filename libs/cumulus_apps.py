@@ -34,6 +34,7 @@ import json
 import logging
 import os
 import re
+import time
 import xml.etree.ElementTree as ET
 import yaml
 
@@ -45,11 +46,31 @@ FINAL_FILE = config.get("final.file")
 OUTPUT_DIR = config.get("output.folder")
 ALLOWED_CONFIG_FORMATS = ['json', 'yaml']
 APPS = {}
+DATE_OF_LAST_APP_UPDATE = ""
+
+def is_there_app_update(dir_name = "apps"):
+	# if no date of last update is set, return True
+	if DATE_OF_LAST_APP_UPDATE == "": return True
+	# list all the files in the apps directory and check if the date of the last update is more recent than the one in the global variable
+	for f in os.listdir(dir_name):
+		# check if the file is a xml file
+		if f.endswith(".xml"):
+			# get the date of the last update
+			date_of_last_update = os.path.getmtime(f"{dir_name}/{f}")
+			# if the date is more recent than the one in the global variable, return True
+			if date_of_last_update > DATE_OF_LAST_APP_UPDATE:
+				return True
+	# if no file is more recent, return False
+	return False
 
 def get_app_list(dir_name = "apps"):
+	global DATE_OF_LAST_APP_UPDATE
+	# reset the APPS dict
+	APPS.clear()
+	# get the list of apps in the directory
 	for f in os.listdir(dir_name):
 		# add the path to the file
-		f = f"apps/{f}"
+		f = f"{dir_name}/{f}"
 		if f.endswith(".xml"):
 			try:
 				root = ET.parse(f).getroot()
@@ -60,6 +81,9 @@ def get_app_list(dir_name = "apps"):
 					APPS[id] = xml.read()
 			except Exception as e:
 				logger.error(f"Error on [get_app_list], {e.strerror}: {f}")
+	# store the current time as the date of last app update
+	DATE_OF_LAST_APP_UPDATE = time.time()
+	# return the list of apps
 	return APPS
 
 def is_finished(job_id, app_name):
@@ -175,7 +199,6 @@ def get_param_command_line(param, settings, job_dir):
 	key = param.get("name")
 	command = param.get("command")
 	# attribute 'command' is not mandatory, it can be missing, return "" if it is
-	# if command == None: return ""
 	# check the type of the param and get the command line accordingly
 	if param.tag == "select":
 		if key in settings:
@@ -187,21 +210,12 @@ def get_param_command_line(param, settings, job_dir):
 			if option != None and option.get("command") != None: cmd.append(option.get("command"))
 	elif param.tag == "checklist":
 		# settings[key] should be an array
-		# TODO this was not tested!!
 		if key in settings:
 			for item in settings[key]:
 				# item is a tuple (key, value), key is the value of the option, value is the command to execute
 				# get the command associated to the option if there is one
 				option = param.find(f"option[@value='{item[0]}']")
 				if option != None and option.get("command") != None: cmd.append(option.get("command"))
-			# value = settings[key]
-			# # if there is a command associated to the main element (in this case, no variable is expected)
-			# if command != None: cmd.append(command)
-			# # get all the options with the selected value, add the command if there is one (no variable expected)
-			# for option in param.findall(f"option[@value='{value}']"):
-			# 	if option != None and option.get("command") != None: cmd.append(option.get("command"))
-			# # option = param.find(f"option[@value='{value}']")
-			# # if option != None and option.get("command") != None: cmd.append(option.get("command"))
 	elif param.tag == "keyvalues":
 		if key in settings:
 			# if there is a command associated to the main element (in this case, no variable is expected)
@@ -321,9 +335,12 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 						else: value[k] = v
 				add_config_to_settings(key, value, config_settings)
 		elif param.tag == "checkbox":
-			if key in settings: value = True if settings[key] else False
-			else: value = False
-			add_config_to_settings(key, value, config_settings)
+			# if key in settings: value = True if settings[key] else False
+			# else: value = False
+			# add_config_to_settings(key, value, config_settings)
+			if key in settings:
+				value = True if settings[key] else False
+				add_config_to_settings(key, value, config_settings)
 		elif param.tag == "string":
 			# if key in settings: value = settings[key]
 			if key in settings: 
