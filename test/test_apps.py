@@ -77,9 +77,9 @@ def test_get_all_files_to_convert_to_mzml():
     settings = get_settings("test/jobs/raw2mzml.settings")
     # assert len(apps.get_all_files_to_convert_to_mzml("job_dir", "diann_2.0", settings)) == 90
     assert len(apps.get_files("job_dir", "diann_2.0", settings, False, True)) == 90
-    # 7 mzml files, not to be converted
+    # 7 input files already converted to mzml
     settings = get_settings("test/jobs/job4.settings")
-    assert len(apps.get_files("job_dir", "sage_0.15.0-beta.1", settings, False, True)) == 7
+    assert len(apps.get_files("job_dir", "sage_0.15.0-beta.1", settings, False, True)) == 0
 
 def test_get_all_files_in_settings():
     settings = get_settings("test/jobs/raw2mzml.settings")
@@ -138,7 +138,7 @@ def test_get_command_line_with_config_file():
     # get the full command line, this will generate the new config file
     apps.get_command_line("sage_0.15.0-beta.1", "test/jobs/job4_complete", settings, 16, "output_dir")
     # compare the config file with the expected one
-    # assert get_settings(config) == get_settings("test/jobs/job4_complete/expected.settings.json")
+    assert get_settings(config) == get_settings("test/jobs/job4_complete/expected.settings.json")
     # remove the config file
     os.remove(config)
 

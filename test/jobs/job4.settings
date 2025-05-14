@@ -1,25 +1,27 @@
 {
-  "raw-type": "bruker-d",
+  "raw-type": "mzml",
   "precursor_tol_unit": "da",
   "fragment_tol_unit": "ppm",
   "quant.tmt": "",
-  "quant.lfq_settings.peak_scoring": "Hybrid",
-  "quant.lfq_settings.integration": "Sum",
   "database.ion_kinds": [
     "b",
     "y"
   ],
-    "database.variable_mods": [
-    ["M", ["15.9949"]],
-    ["C", ["57.0215","119.0041"]],
-    ["[", ["42"]]
+  "database.variable_mods": [
+    ["M",["15.9949"]],
+    ["[",["42"]],
+    ["C",["57.0215","119.0041"]]
   ],
-  "use_prefilter_condition": true,
+  "database.cleavage": false,
   "database.prefilter": false,
+  "database.enzyme.c_terminal": true,
+  "database.generate_decoys": false,
+  "wide_window": false,
+  "deisotope": false,
+  "quant.lfq": false,
+  "chimera": false,
   "predict_rt": true,
   "output_directory": "%output_dir%",
-  "database.prefilter_chunk_size": "100",
-  "database.cleavage": false,
   "database.enzyme.cleave_at": "KR",
   "database.enzyme.restrict": "P",
   "database.decoy_tag": "###REV###",
@@ -31,22 +33,19 @@
   "database.peptide_max_mass": "5000",
   "database.min_ion_index": "",
   "database.max_variable_mods": "2",
-  "min_peaks": "15",
-  "max_peaks": "150",
-  "min_matched_peaks": "4",
-  "max_fragment_charge": "-1",
-  "quant.tmt_settings.level": "3",
-  "quant.lfq_settings.spectral_angle": "0.7",
-  "quant.lfq_settings.ppm_tolerance": "5.0",
-  "report_psms": "1",
-  "precursor_tol.da-max": "100",
+  "min_peaks": "",
+  "max_peaks": "",
+  "min_matched_peaks": "",
+  "max_fragment_charge": "",
+  "report_psms": "",
   "precursor_tol.da-min": "-500",
-  "fragment_tol.ppm-max": "10",
+  "precursor_tol.da-max": "100",
   "fragment_tol.ppm-min": "-10",
-  "isotope_errors-max": "0",
+  "fragment_tol.ppm-max": "10",
   "isotope_errors-min": "0",
-  "precursor_charge-max": "4",
+  "isotope_errors-max": "0",
   "precursor_charge-min": "2",
+  "precursor_charge-max": "4",
   "database.fasta": "//path/to/my/files/HumanSP_CpSP_AUH_20240725.fasta",
   "mzml_paths": [
     "//path/to/my/files/TU019934CK_Slot2-37_1_8492.mzml",
@@ -56,5 +55,7 @@
     "//path/to/my/files/TU019947CK_Slot2-39_1_8505.mzml",
     "//path/to/my/files/TU019950CK_Slot2-40_1_8508.mzml",
     "//path/to/my/files/TU019954CK_Slot2-39_1_8512.mzml"
-  ]
+  ],
+  "app_id": "sage_0.15.0-beta.1",
+  "advanced_parameters_visible": false
 }
