@@ -168,41 +168,10 @@ def run():
 		time.sleep(REFRESH_RATE)
 
 def clean():
-	# TODO this has not been tested yet!
 	# wait a minute before starting the daemon
 	time.sleep(60)
 	# clean the old files once a day
 	while True:
-		# # list the job directories and remove those who are DONE|FAILED and too old, set the status to ARCHIVED
-		# for job in os.listdir(config.JOB_DIR):
-			# job_id = int(job.split("_")[1])
-			# job_dir = config.JOB_DIR + "/" + job
-			# #logger.warning(f"Checking job {job_id} stored in '{job}'")
-			# if utils.get_file_age_in_days(job_dir) > MAX_AGE:
-				# # if job does not exist in the database, delete its folder
-				# if not db.check_job_existency(job_id):
-					# logger.warning(f"Job {job_id} had content but was not found in the database, deleting all content")
-					# utils.delete_job_folder_no_db(job_dir)
-					# # TODO also delete log files
-				# else:
-					# status = db.get_status(job_id)
-					# if status == "DONE" or status == "FAILED" or status == "CANCELLED":
-						# db.set_status(job_id, "ARCHIVED_" + status)
-						# utils.delete_job_folder(job_dir)
-						# logger.warning(f"Job {job_id} has been archived and its content has been deleted")
-		# # list the raw files that are too old, if they are not used in any RUNNING|PENDING job delete them
-		# for file in os.listdir(config.DATA_DIR):
-			# file = config.DATA_DIR + "/" + file
-			# if utils.get_file_age_in_days(file) > MAX_AGE:
-				# # verify if this file is used or will be used
-				# is_used = False
-				# for job_id in db.get_jobs_per_status("RUNNING") + db.get_jobs_per_status("PENDING"):
-					# if apps.is_file_required(db.get_job_dir(job_id), db.get_app_name(job_id), db.get_settings(job_id), file):
-						# is_used = True
-						# break
-				# if not is_used: 
-					# utils.delete_raw_file(file)
-					# logger.warning(f"File {os.path.basename(file)} has been deleted due to old age")
 		# list the jobs older than the max age in seconds
 		max_age_in_seconds = int(config.get("data.max.age.in.days")) * 86400
 		for job_id, status, job_dir in db.get_ended_jobs_older_than(max_age_in_seconds):
@@ -213,6 +182,11 @@ def clean():
 		for job_dir in utils.get_zombie_jobs():
 			logger.warning(f"Job folder {job_dir} is not linked to any real job and will be deleted")
 			utils.delete_job_folder_no_db(job_dir)
+		# delete log files that are not linked to any job
+		zombie_log_files = utils.get_zombie_log_files()
+		logger.warning(f"{len(zombie_log_files)} log files are not linked to any real job and will be deleted")
+		for log_file in zombie_log_files:
+			os.remove(log_file)
 		# list the shared files that are old and not used
 		for file in utils.get_unused_shared_files_older_than(max_age_in_seconds):
 			utils.delete_raw_file(file)

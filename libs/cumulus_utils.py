@@ -287,6 +287,19 @@ def get_zombie_jobs():
 				if not db.check_job_existency(job_id): zombie_job_folders.append(config.JOB_DIR + "/" + job)
 	return zombie_job_folders
 
+def get_zombie_log_files():
+	# list the log files in the main log dir that are not used for jobs
+	zombie_log_files = []
+	for log in os.listdir(config.LOG_DIR):
+		if os.path.isfile(config.LOG_DIR + "/" + log):
+			# only consider files that look like logs
+			if re.search("job_\\d+\\.stdout", log) != None or re.search("job_\\d+\\.stderr", log) != None:
+				# extract the job id from the file name
+				job_id = int(log.split("_")[1].split(".")[0])
+				# check if the job id is in the database
+				if not db.check_job_existency(job_id): zombie_log_files.append(config.LOG_DIR + "/" + log)
+	return zombie_log_files
+
 def get_unused_shared_files_older_than(max_age_seconds):
 	# list the shared files and folders
 	files = []
