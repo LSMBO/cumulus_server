@@ -184,7 +184,7 @@ def clean():
 			utils.delete_job_folder_no_db(job_dir)
 		# delete log files that are not linked to any job
 		zombie_log_files = utils.get_zombie_log_files()
-		logger.warning(f"{len(zombie_log_files)} log files are not linked to any real job and will be deleted")
+		if len(zombie_log_files) > 0: logger.warning(f"{len(zombie_log_files)} log files are not linked to any real job and will be deleted")
 		for log_file in zombie_log_files:
 			os.remove(log_file)
 		# list the shared files that are old and not used
