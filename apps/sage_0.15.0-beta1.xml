@@ -31,7 +31,7 @@
             <when value="true">
                 <checkbox name="database.prefilter" label="Prefilter" value="true" help="" visibility="hidden" />
                 <checkbox name="database.prefilter_low_memory" label="Prefilter low memory" value="true" help="" visibility="hidden" />
-                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
+                <number name="database.prefilter_chunk_size" min="1" label="Chunk size" placeholder="100" value="100" help="Split the FASTA file in chunks, high values may consume all available memory, low values will slow down the search." />
                 <string name="database.enzyme.cleave_at" label="Amino acids to cleave at" value="" allow_empty="true" help="" visibility="hidden" />
             </when>
             <when value="false">
