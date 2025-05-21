@@ -134,7 +134,7 @@
         <string name="search.channel_filter" label="Channel Filter" value="" visibility="advanced" help="" />
         <checkbox name="search.exclude_shared_ions" label="Exclude Shared Ions" value="true" visibility="advanced" help="" />
         <checkbox name="search.compete_for_fragments" label="Compete for Fragments" value="true" visibility="advanced" help="" />
-        <number name="search.target_num_candidates" label="Number of Candidates" value="2" visibility="advanced" help="" />
+        <number name="search.target_num_candidates" label="Number of Candidates" value="3" visibility="advanced" help="" />
         <number name="search.quant_window" label="Quant window" value="3" visibility="advanced" help="" />
         <checkbox name="search.quant_all" label="Use all MS2 observations" value="true" visibility="advanced" help="" />
     </section>
