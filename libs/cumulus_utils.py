@@ -57,7 +57,7 @@ class Host:
 	def __str__(self):
 		return f"{self.name}\t{self.address}\t{self.port}\t{self.user}\t{self.cpu}\t{self.ram}"
 	def to_dict(self):
-		runnings, pendings = db.get_alive_jobs_per_host(self.name)
+		pendings, runnings = db.get_alive_jobs_per_host(self.name)
 		return {"name": self.name, "cpu": self.cpu, "ram": self.ram, "jobs_running": runnings, "jobs_pending": pendings}
 
 def get_all_hosts(reload_list = False):
@@ -77,6 +77,46 @@ def get_all_hosts(reload_list = False):
 		if not os.path.isdir(config.PIDS_DIR): os.mkdir(config.PIDS_DIR)
 	# return the list
 	return HOSTS
+
+def get_highest_cpu():
+	# get the highest cpu from the hosts
+	highest_cpu = 0
+	for host in get_all_hosts():
+		if host.cpu > highest_cpu: highest_cpu = host.cpu
+	return highest_cpu
+
+def get_highest_ram():
+	# get the highest ram from the hosts
+	highest_ram = 0
+	for host in get_all_hosts():
+		if host.ram > highest_ram: highest_ram = host.ram
+	return highest_ram
+
+def get_hosts_for_strategy(strategy):
+	# get the list of hosts for the given strategy, disregarding the jobs currently running
+	# if the strategy is not in the list, return all hosts
+	hosts = []
+	if strategy == "best_cpu":
+		cpu = get_highest_cpu()
+		for host in get_all_hosts():
+			if host.cpu == cpu: hosts.append(host)
+		return hosts
+	elif strategy == "best_ram":
+		ram = get_highest_ram()
+		for host in get_all_hosts():
+			if host.ram == ram: hosts.append(host)
+		return hosts
+	elif strategy == "first_available":
+		return get_all_hosts()
+	elif strategy.startswith("host:"):
+		# the strategy name may contain the name of an host
+		host_name = strategy.split(":")[1]
+		for host in get_all_hosts():
+			if host.name == host_name: hosts.append(host)
+		return hosts
+	else:
+		logger.warning(f"Unknown strategy '{strategy}', returning all hosts")
+		return get_all_hosts()
 
 def get_host(host_name):
 	matches = list(filter(lambda host: host.name == host_name, get_all_hosts()))

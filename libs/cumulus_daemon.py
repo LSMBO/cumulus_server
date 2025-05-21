@@ -81,42 +81,21 @@ def check_running_jobs():
 				db.set_end_date(job_id)
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
 
-def find_best_host(job_id):
+def find_host(job_id):
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
 	strategy = db.get_strategy(job_id)
 	if strategy == "": 
 		logger.warning(f"No strategy is given for job {job_id}, use the first available host instead")
 		db.set_strategy(job_id, "first_available")
-	selected_host = None
-	hosts = utils.get_all_hosts()
-	# logger.debug(f"Strategy: '{strategy}'")
-	
-	# strategy should not be empty, but just in case the default value will be first_available
-	if strategy.startswith !=" best_ram" and strategy != "best_cpu" and not strategy.startswith("host:"):
-		# the default strategy is to take the first available host, return the first host who is not running anything
-		for host in hosts:
-			runnings, _ = db.get_alive_jobs_per_host(host.name)
-			if runnings == 0: selected_host = host
-	else:
-		# otherwise, find the host that fits the strategy
-		if strategy == "best_ram":
-			for host in hosts:
-				if selected_host is None or host.ram > selected_host.ram: selected_host = host 
-		elif strategy == "best_cpu":
-			for host in hosts:
-				if selected_host is None or host.cpu > selected_host.cpu: selected_host = host 
-		elif strategy.startswith("host:"):
-			# the strategy name may contain the name of an host
-			for host in hosts:
-				# logger.debug(host.name)
-				if f"host:{host.name}" == strategy: selected_host = host
-		# reset the selected host if it is already in use
-		if selected_host is not None:
-			runnings, _ = db.get_alive_jobs_per_host(selected_host.name)
-			if runnings > 0: selected_host = None
-	
-	# return the selected host, it can be None
-	return selected_host
+	# get the list of hosts matching the strategy
+	hosts = utils.get_hosts_for_strategy(strategy)
+	# return the first host that is not running anything
+	for host in hosts:
+		_, running = db.get_alive_jobs_per_host(host.name)
+		if running == 0: return host
+	# if no host is available, return None
+	logger.debug(f"No host available for job {job_id} with strategy '{strategy}' at this moment, maybe later...")
+	return None
 
 def start_job(job_id, job_dir, app_name, settings, host):
 	# generate the script to run
@@ -144,7 +123,7 @@ def start_pending_jobs():
 		if apps.are_all_files_transfered(job_dir, app_name, settings):
 			logger.info(f"Job {job_id} is ready to start")
 			# check that there is an available host matching the strategy
-			host = find_best_host(job_id)
+			host = find_host(job_id)
 			# if all is ok, the job can start and its status can turn to RUNNING
 			if host is not None: start_job(job_id, job_dir, app_name, settings, host)
 			else: logger.warning(f"No host available for job {job_id}...")
