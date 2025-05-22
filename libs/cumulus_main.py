@@ -161,6 +161,6 @@ def start():
 		)
 	# start the daemons once all functions are defined
 	threading.Thread(target=daemon.run, args=(), daemon=True).start()
-	threading.Thread(target=daemon.clean, args=(), daemon=True).start()
+	if not IS_DEBUG: threading.Thread(target=daemon.clean, args=(), daemon=True).start()
 	# start waitress WSGI server
 	serve(app, host = config.get("local.host"), port = config.get("local.port"))
