@@ -490,12 +490,10 @@ def generate_script_content(job_id, job_dir, app_name, settings, host_cpu):
 	cmd += f"ln -s {stderr} .cumulus.stderr\n"
 	# for file in get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 	for file in get_files(job_dir, app_name, settings, False, True):
-		converter = None
 		# use the appropriate converter based on the file extension
-		if file.endswith(".d"): converter = converter_bruker
-		elif file.endswith(".raw"): converter = converter_thermo
-		# if the converter is set, add the command to convert the file
-		if converter != None: cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr}\n"
+		if file.endswith(".d"): cmd += f"{converter_bruker} -i {file} -o {get_mzml_file_path(file)} 1>> {stdout} 2>> {stderr}\n"
+		elif file.endswith(".raw"): cmd += f"mono '{converter_thermo}' -i {file} 1>> {stdout} 2>> {stderr}\n"
+		# if the converter is not set, log an error
 		else: logger.error(f"No converter set for the file {file}, skipping it")
 	# generate the command line based on the xml file and the given settings
 	cmd += get_command_line(app_name, job_dir, settings, host_cpu, output_dir)
