@@ -68,11 +68,11 @@ def get_all_hosts(reload_list = False):
 		# get the list of hosts from the file
 		f = open(config.get("hosts.file.path"), "r")
 		for host in f.read().strip("\n").split("\n"):
+			# skip the first line (header), this line only contains string and tabs
+			if re.search("^[a-zA-Z\\s\\t]+$", host) is None: continue
 			name, address, user, port, rsa_key, cpu, ram = host.split("\t")
 			HOSTS.append(Host(name, address, port, user, rsa_key, cpu, ram))
 		f.close()
-		# remove first item of the list, it's the header of the file
-		HOSTS.pop(0)
 		# make sure the pids directory exists
 		if not os.path.isdir(config.PIDS_DIR): os.mkdir(config.PIDS_DIR)
 	# return the list
