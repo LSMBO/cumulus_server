@@ -47,7 +47,9 @@ user=`whoami`
 if [[ ! -d $mountdir ]]
 then
 	# install required components (this may not work if the system is not up-to-date)
-	sudo apt --yes install nfs-common libgomp1 mono-complete chrony
+	sudo apt --yes install nfs-common libgomp1 mono-complete chrony docker.io
+	# add the user to the docker group (so that the user can run docker commands without sudo)
+	sudo usermod -aG docker $user
 	# create the directory that will be used as a mounting point
 	sudo install -d -m 0755 -o $user -g $user $mountdir
 	# update the fstab file
