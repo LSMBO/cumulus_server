@@ -17,7 +17,7 @@ refresh.rate.in.seconds = 30
 data.max.age.in.days = 90
 
 converter.raw.to.mzml = /storage/share/ThermoRawFileParser1.4.5/ThermoRawFileParser.exe
-converter.d.to.mzml = docker run -it -u `stat -c "%u:%g" /storage` -v /storage:/storage mfreitas/tdf2mzml tdf2mzml.py
+converter.d.to.mzml = docker run -u `stat -c "%u:%g" /storage` -v /storage:/storage mfreitas/tdf2mzml tdf2mzml.py
 ntp_server = pool.ntp.org
 
 version = 1.0.3
