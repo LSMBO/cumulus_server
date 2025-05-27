@@ -69,7 +69,7 @@ def get_all_hosts(reload_list = False):
 		f = open(config.get("hosts.file.path"), "r")
 		for host in f.read().strip("\n").split("\n"):
 			# skip the first line (header), this line only contains string and tabs
-			if re.search("^[a-zA-Z\\s\\t]+$", host) is None: continue
+			if re.search("^[a-zA-Z\\s\\t]+$", host) is not None: continue
 			name, address, user, port, rsa_key, cpu, ram = host.split("\t")
 			HOSTS.append(Host(name, address, port, user, rsa_key, cpu, ram))
 		f.close()
