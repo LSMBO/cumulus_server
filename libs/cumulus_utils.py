@@ -52,8 +52,8 @@ class Host:
 		self.port = port
 		self.user = user
 		self.rsa_key = rsa_key
-		self.cpu = cpu
-		self.ram = ram
+		self.cpu = int(cpu)
+		self.ram = int(ram)
 	def __str__(self):
 		return f"{self.name}\t{self.address}\t{self.port}\t{self.user}\t{self.cpu}\t{self.ram}"
 	def to_dict(self):
@@ -82,14 +82,14 @@ def get_highest_cpu():
 	# get the highest cpu from the hosts
 	highest_cpu = 0
 	for host in get_all_hosts():
-		if host.cpu > highest_cpu: highest_cpu = host.cpu
+		if host.cpu > highest_cpu: highest_cpu = int(host.cpu)
 	return highest_cpu
 
 def get_highest_ram():
 	# get the highest ram from the hosts
 	highest_ram = 0
 	for host in get_all_hosts():
-		if host.ram > highest_ram: highest_ram = host.ram
+		if host.ram > highest_ram: highest_ram = int(host.ram)
 	return highest_ram
 
 def get_hosts_for_strategy(strategy):
