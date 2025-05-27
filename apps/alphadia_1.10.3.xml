@@ -1,4 +1,4 @@
-<tool id="alphadia_1.10.3" name="AlphaDIA" version="1.10.3" description="Modular and open DIA search" command="/storage/share/miniconda3/envs/alphadia/bin/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="=== Search Finished ===" category="__work_in_progress__">
+<tool id="alphadia_1.10.3" name="AlphaDIA" version="1.10.3" url="https://github.com/MannLabs/alphadia" description="Modular and open DIA search" command="/storage/share/miniconda3/envs/alphadia/bin/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="=== Search Finished ===" category="__work_in_progress__">
 
     <section name="input" title="Input files" expanded="true">
         <conditional name="raw">
