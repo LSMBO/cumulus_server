@@ -45,6 +45,19 @@ REFRESH_RATE = int(config.get("refresh.rate.in.seconds"))
 # MAX_AGE = int(config.get("data.max.age.in.days"))
 
 def is_process_running(job_id):
+	"""
+	Check if a process associated with a given job ID is currently running.
+
+	This function first retrieves the process ID (PID) and host name for the specified job.
+	It checks if the process is alive using a local file listing all pids for a given host. 
+	If the process is not found there, it attempts a remote check on the specified host.
+
+	Args:
+		job_id (str or int): The unique identifier for the job whose process status is to be checked.
+
+	Returns:
+		bool: True if the process is running, False otherwise.
+	"""
 	pid = utils.get_pid(job_id)
 	host_name = db.get_host(job_id)
 	# if the pid is still alive, it's RUNNING
@@ -59,6 +72,19 @@ def is_process_running(job_id):
 		return utils.remote_check(host, pid)
 
 def check_running_jobs():
+	"""
+	Checks all jobs with status "RUNNING" to determine if their associated processes are still active.
+
+	For each running job:
+	- Verifies if the process is still running.
+	- If the process is not running:
+		- Records the job's end date.
+		- Determines if the job finished successfully or failed using the appropriate app module.
+		- Updates the job's status to "DONE" or "FAILED" accordingly.
+		- Logs the outcome (success or failure) with job details.
+
+	This function relies on external modules for database access, process checking, and application-specific job status evaluation.
+	"""
 	for job_id in db.get_jobs_per_status("RUNNING"):
 		# # get stdout
 		# stdout = apps.get_stdout_content(job_id)
@@ -82,6 +108,23 @@ def check_running_jobs():
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
 
 def find_host(job_id):
+	"""
+	Finds and returns an available host for a given job based on the specified scheduling strategy.
+
+	Args:
+		job_id (str or int): The identifier of the job for which a host is to be found.
+
+	Returns:
+		Host or None: The first available host object that matches the strategy and is not currently running any jobs.
+		Returns None if no suitable host is available at the moment.
+
+	Behavior:
+		- Retrieves the scheduling strategy for the job from the database.
+		- If no strategy is set, defaults to "first_available" and logs a warning.
+		- Gets a list of hosts matching the strategy.
+		- Returns the first host that is not running any jobs.
+		- Logs a debug message and returns None if no host is available.
+	"""
 	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
 	strategy = db.get_strategy(job_id)
 	if strategy == "": 
@@ -98,6 +141,22 @@ def find_host(job_id):
 	return None
 
 def start_job(job_id, job_dir, app_name, settings, host):
+	"""
+	Starts a job on a remote host by generating and executing a script, then updates the job status in the database.
+
+	Args:
+		job_id (str): Unique identifier for the job.
+		job_dir (str): Directory where the job files are located.
+		app_name (str): Name of the application to run.
+		settings (dict): Dictionary of settings for the job/application.
+		host (Host): Host object representing the remote machine where the job will run.
+
+	Side Effects:
+		- Generates a script file for the job and writes it to disk.
+		- Executes the script remotely via SSH on the specified host.
+		- Updates the job's host, status, and start date in the database.
+		- Logs information about the job execution process.
+	"""
 	# generate the script to run
 	# cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host.cpu)
 	cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
@@ -113,6 +172,23 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	logger.info(f"Starting {db.get_job_to_string(job_id)}")
 
 def start_pending_jobs():
+	"""
+	Starts all pending jobs that are ready to run.
+
+	This function iterates through all jobs with a "PENDING" status, checks if all required files have been transferred,
+	and if so, attempts to find an available host according to the job's strategy. If a suitable host is found, the job
+	is started and its status is updated to "RUNNING". If not all files are present or no host is available, the job
+	remains pending and appropriate log messages are generated.
+
+	Logging:
+		- Logs debug information for each job's status.
+		- Logs info when a job is ready to start.
+		- Logs a warning if no host is available for a ready job.
+		- Logs debug information if a job is not ready to start yet.
+
+	Dependencies:
+		- Relies on external modules/functions: db, apps, find_host, start_job, and logger.
+	"""
 	# get all the PENDING jobs, oldest ones first
 	for job_id in db.get_jobs_per_status("PENDING"):
 		logger.debug(f"Job {job_id} is PENDING")
@@ -131,6 +207,18 @@ def start_pending_jobs():
 			logger.debug(f"Job {job_id} is NOT ready to start YET")
 
 def run():
+	"""
+	Runs the main daemon loop for managing jobs.
+
+	This function initializes the configuration, waits briefly before starting,
+	and then enters an infinite loop to:
+		- Reload the application list if updates are detected.
+		- Check the status of running jobs and update their states.
+		- Start any pending jobs, prioritizing the oldest ones.
+		- Sleep for a defined refresh rate before repeating the process.
+
+	Possible job statuses include: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED.
+	"""
 	# load the config file
 	config.init()
 	# wait a little before starting the daemon
@@ -147,6 +235,20 @@ def run():
 		time.sleep(REFRESH_RATE)
 
 def clean():
+	"""
+	Periodically cleans up old and unused files and directories related to jobs.
+
+	This function performs the following maintenance tasks in an infinite loop, running once every 24 hours after an initial 60-second delay:
+	- Archives and deletes job folders for jobs that have ended and are older than the configured maximum age.
+	- Deletes job directories that are not linked to any existing job ("zombie" job folders).
+	- Deletes log files that are not associated with any job.
+	- Deletes shared files that are old and unused.
+
+	All deletions and archival actions are logged with warnings.
+
+	Note:
+		The maximum age for jobs and shared files is determined by the "data.max.age.in.days" configuration value.
+	"""
 	# wait a minute before starting the daemon
 	time.sleep(60)
 	# clean the old files once a day

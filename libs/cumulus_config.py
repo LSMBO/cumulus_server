@@ -42,6 +42,21 @@ PIDS_DIR = ""
 LOG_DIR = ""
 
 def load(config_file_path):
+	"""
+	Loads configuration key-value pairs from a file into the global CONFIG dictionary.
+
+	The function clears the existing CONFIG dictionary, then attempts to read configuration
+	data from the specified file. If the file does not exist, it falls back to a default
+	configuration file path. Each line in the configuration file is processed to remove comments
+	(denoted by '#' or '//'), and lines containing key-value pairs separated by '=' are parsed
+	and added to CONFIG with whitespace trimmed from keys and values.
+
+	Args:
+		config_file_path (str): Path to the configuration file to load.
+
+	Side Effects:
+		Modifies the global CONFIG dictionary with the loaded configuration values.
+	"""
 	# clear the current config
 	CONFIG.clear()
 	# if the file does not exist, use the default one
@@ -60,10 +75,38 @@ def load(config_file_path):
 	f.close()
 
 def get(key): 
+	"""
+	Retrieve the value associated with the given key from the configuration.
+
+	If the configuration has not been loaded yet, it loads the configuration
+	from the file specified by CONFIG_FILE_PATH before retrieving the value.
+
+	Args:
+		key (str): The key whose value should be retrieved from the configuration.
+
+	Returns:
+		Any: The value associated with the specified key.
+
+	Raises:
+		KeyError: If the key is not found in the configuration.
+	"""
 	if len(CONFIG) == 0: load(CONFIG_FILE_PATH)
 	return CONFIG[key]
 
 def init(create_dirs = True):
+	"""
+	Initializes global directory paths for data, jobs, PIDs, and logs based on configuration values.
+
+	Parameters:
+		create_dirs (bool): If True, creates the directories if they do not exist. Defaults to True.
+
+	Side Effects:
+		- Sets the global variables DATA_DIR, JOB_DIR, PIDS_DIR, and LOG_DIR.
+		- Optionally creates the directories on the filesystem if they are missing.
+
+	Raises:
+		OSError: If directory creation fails.
+	"""
 	# initialize the paths
 	global DATA_DIR, JOB_DIR, PIDS_DIR, LOG_DIR
 	DATA_DIR = get("storage.path") + get("storage.data.subpath")
@@ -78,6 +121,17 @@ def init(create_dirs = True):
 		if not os.path.isdir(LOG_DIR): os.mkdir(LOG_DIR)
 
 def export():
+	"""
+	Exports selected configuration values as a dictionary. Not all configuration keys are included, only what is relevant for an outside caller.
+
+	Returns:
+		dict: A dictionary containing the following configuration keys and their corresponding values:
+			- "output.folder": The output folder path.
+			- "temp.folder": The temporary folder path.
+			- "data.max.age.in.days": The maximum age of data in days.
+			- "controller.version": The version of the controller.
+			- "client.min.version": The minimum required client version.
+	"""
 	return {
 		"output.folder": CONFIG["output.folder"],
 		"temp.folder": CONFIG["temp.folder"],
@@ -87,7 +141,25 @@ def export():
 	}
 
 def get_final_stdout_path(job_id):
+	"""
+	Generates the file path for the standard output (stdout) log of a job.
+
+	Args:
+		job_id (int): The unique identifier of the job.
+
+	Returns:
+		str: The full path to the stdout log file for the specified job.
+	"""
 	return f"{LOG_DIR}/job_{job_id}.stdout"
 
 def get_final_stderr_path(job_id):
+	"""
+	Returns the file path for the standard error (stderr) log of a specific job.
+
+	Args:
+		job_id (int): The unique identifier of the job.
+
+	Returns:
+		str: The full path to the stderr log file for the given job.
+	"""
 	return f"{LOG_DIR}/job_{job_id}.stderr"

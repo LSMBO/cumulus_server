@@ -43,6 +43,14 @@ import libs.cumulus_apps as apps
 logger = logging.getLogger(__name__)
 
 def connect():
+	"""
+	Establishes a connection to the SQLite database specified in the configuration.
+	If the database file does not exist, it will be created. Also ensures that the
+	'jobs' table exists in the database, creating it if necessary.
+
+	Returns:
+		tuple: A tuple containing the SQLite connection object and the cursor object.
+	"""
 	# connect to the database, create it if it does not exist yet
 	cnx = sqlite3.connect(config.get("database.file.path"), isolation_level = None)
 	cursor = cnx.cursor()
@@ -68,6 +76,30 @@ def connect():
 	return cnx, cursor
 
 def create_job(form):
+	"""
+	Creates a new job entry in the database with the provided form data.
+
+	Args:
+		form (dict): A dictionary containing job parameters. Expected keys include:
+			- "username": The owner of the job.
+			- "app_name": The name of the application to run.
+			- "strategy": The execution strategy for the job.
+			- "description": A description of the job.
+			- "settings": A JSON string of job settings.
+
+	Returns:
+		tuple: A tuple containing:
+			- job_id (int): The ID of the newly created job.
+			- job_dir_name (str): The name of the directory assigned to the job.
+
+	Raises:
+		KeyError: If required keys are missing from the form.
+		Exception: If database operations fail.
+
+	Notes:
+		- The job is created with status "PENDING".
+		- The job directory is named using the job ID, owner, app name, and creation timestamp.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# status should be PENDING when created, RUNNING when it's started, DONE if it's finished successfully, FAILED if it's finished in error, CANCELLED if user chose to cancel it, ARCHIVED if the job has been cleaned due to old age
@@ -90,6 +122,20 @@ def create_job(form):
 	return job_id, job_dir_name
 
 def get_value(job_id, field):
+	"""
+	Retrieve the value of a specified field from the 'jobs' table for a given job ID.
+
+	Args:
+		job_id (int): The ID of the job to look up.
+		field (str): The name of the field to retrieve from the 'jobs' table.
+
+	Returns:
+		Any: The value of the specified field for the given job ID, or an empty string if the job does not exist or the field is not found.
+
+	Note:
+		Calls the function 'connect' from sqlite3 that returns a tuple (connection, cursor).
+		The function currently does not handle exceptions or SQL injection risks related to the `field` parameter.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# TODO test that it does not fail if the job_id does not exist
@@ -103,6 +149,22 @@ def get_value(job_id, field):
 	return value
 
 def set_value(job_id, field, value):
+	"""
+	Updates the specified field of a job record in the 'jobs' table with a new value.
+
+	Args:
+		job_id (int): The ID of the job to update.
+		field (str): The name of the field/column to update.
+		value (Any): The new value to set for the specified field.
+
+	Raises:
+		Exception: If the database operation fails.
+
+	Note:
+		Calls the function 'connect' from sqlite3 that returns a tuple (connection, cursor).
+		The function uses parameterized queries for the value and job_id, but the field name is interpolated directly into the SQL statement.
+		Ensure that the 'field' parameter is validated to prevent SQL injection.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
@@ -125,6 +187,15 @@ def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
 def check_job_existency(job_id):
+	"""
+	Checks if a job with the specified job_id exists in the 'jobs' table of the database.
+
+	Args:
+		job_id (int): The ID of the job to check for existence.
+
+	Returns:
+		bool: True if a job with the given job_id exists, False otherwise.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# search the job that corresponds to the id
@@ -136,6 +207,16 @@ def check_job_existency(job_id):
 	return response[0] > 0
 
 def get_job_to_string(job_id):
+	"""
+	Retrieve a string representation of a job from the database by its ID.
+
+	Args:
+		job_id (int): The unique identifier of the job to retrieve.
+
+	Returns:
+		str: A formatted string containing the job's ID, owner, application name, status, and host.
+			 Returns an empty string if no job is found with the given ID.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# search the job that corresponds to the id
@@ -149,6 +230,22 @@ def get_job_to_string(job_id):
 	return job
 
 def get_last_jobs(job_id, number = 100):
+	"""
+	Retrieve the most recent jobs from the database, including detailed information for a specific job.
+
+	Args:
+		job_id (int): The ID of the job for which detailed information should be retrieved.
+		number (int, optional): The maximum number of recent jobs to retrieve. Defaults to 100.
+
+	Returns:
+		list: A list of dictionaries representing jobs. For the job matching `job_id`, the dictionary includes detailed fields such as
+			'id', 'owner', 'app_name', 'status', 'strategy', 'description', 'settings' (as a dict), 'host', 'creation_date',
+			'start_date', 'end_date', 'stdout', 'stderr', and 'files'. For other jobs, only a subset of fields is included.
+
+	Notes:
+		- For the job matching `job_id`, if 'stdout' or 'stderr' are empty, their content is retrieved using helper functions.
+		- The function closes the database connection before returning.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
@@ -167,6 +264,37 @@ def get_last_jobs(job_id, number = 100):
 	return jobs
 
 def search_jobs(form):
+	"""
+	Searches for jobs in the database based on user-provided search parameters.
+
+	Args:
+		form (dict): A dictionary containing search parameters. Expected keys include:
+			- "current_job_id" (str or int): The ID of the current job to highlight.
+			- "owner" (str): Filter jobs by owner (empty string for all).
+			- "app" (str): Filter jobs by application name (empty string or "all" for all).
+			- "description" (str): Filter jobs by description (empty string for all).
+			- "number" (str or int): Maximum number of jobs to return (empty string for default 100).
+			- "pending", "running", "done", "failed", "cancelled", "archived" (optional): If present, include jobs with the corresponding status.
+			- "date" (str): The date field to filter on (e.g., "creation_date").
+			- "from" (str): Start date in "YYYY-MM-DD" format (empty string for no lower bound).
+			- "to" (str): End date in "YYYY-MM-DD" format (empty string for current time).
+			- "file" (str): Filter jobs by required file (empty string for all).
+
+	Returns:
+		list: A list of dictionaries, each representing a job. Each dictionary contains:
+			- For the current job (matching "current_job_id"):
+				- "id", "owner", "app_name", "status", "strategy", "description", "settings", "host",
+				  "creation_date", "start_date", "end_date", "stdout", "stderr", "files"
+			- For other jobs:
+				- "id", "owner", "app_name", "status", "host", "creation_date", "end_date"
+
+	Notes:
+		- The function connects to the database, constructs a SQL query based on the provided filters,
+		  and returns the matching jobs.
+		- The "settings" field is parsed from JSON.
+		- For the current job, additional details such as stdout, stderr, and files are included.
+		- The function closes the database connection before returning.
+	"""
 	# get the user search parameters
 	current_job_id = int(form["current_job_id"])
 	owner = "%" if form["owner"] == "" else "%" + form["owner"] + "%"
@@ -209,6 +337,16 @@ def search_jobs(form):
 	return jobs
 
 def get_jobs_per_status(status):
+	"""
+	Retrieve a list of job IDs from the database that match the specified status.
+	This function is used when we need to know all the running jobs, pending jobs, etc.
+
+	Args:
+		status (str): The status to filter jobs by.
+
+	Returns:
+		list: A list of job IDs (int) that have the specified status.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
@@ -221,6 +359,20 @@ def get_jobs_per_status(status):
 	return jobs
 
 def get_alive_jobs_per_host(host_name):
+	"""
+	Retrieves the number of 'PENDING' and 'RUNNING' jobs for a specified host from the database.
+
+	Args:
+		host_name (str): The name of the host for which to count alive jobs.
+
+	Returns:
+		tuple: A tuple (pending, running) where:
+			- pending (int): The number of jobs with status 'PENDING'.
+			- running (int): The number of jobs with status 'RUNNING'.
+
+	Raises:
+		Any exceptions raised by the database connection or query execution.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
@@ -235,6 +387,19 @@ def get_alive_jobs_per_host(host_name):
 	return pending, running
 
 def delete_job(job_id):
+	"""
+	Deletes a job from the database and removes its associated log files.
+
+	Args:
+		job_id (int): The unique identifier of the job to be deleted.
+
+	Side Effects:
+		- Removes the job entry from the 'jobs' table in the database.
+		- Deletes the standard output and standard error log files associated with the job, if they exist.
+
+	Raises:
+		Any exceptions raised by the database connection, execution, or file operations will propagate.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# delete the job
@@ -248,8 +413,23 @@ def delete_job(job_id):
 	stderr = config.get_final_stderr_path(job_id)
 	if os.path.isfile(stderr): os.remove(stderr)
 
-# function used for test only, to set a fake creation date (default value is to remove one day)
 def set_fake_creation_date(job_id, seconds_to_add = -86400):
+	"""
+	Sets a fake creation date for a job by adding a specified number of seconds to its current creation date.
+	This function is only used for testing purposes to manipulate the creation date of a job.
+
+	Args:
+		job_id (int): The ID of the job whose creation date will be modified.
+		seconds_to_add (int, optional): The number of seconds to add to the current creation date. 
+			Defaults to -86400 (subtracts one day).
+
+	Raises:
+		Exception: If database connection or update fails.
+
+	Note:
+		This function connects to the database, updates the 'creation_date' field for the specified job,
+		and commits the change.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# get the current creation date for the job
@@ -263,6 +443,18 @@ def set_fake_creation_date(job_id, seconds_to_add = -86400):
 	cnx.close()
 
 def get_ended_jobs_older_than(max_age_seconds):
+	"""
+	Retrieve jobs from the database that have ended and are older than a specified age.
+
+	Args:
+		max_age_seconds (int): The minimum age in seconds a job must be (since its creation date) to be included in the results.
+
+	Returns:
+		list of tuple: A list of tuples, each containing (job_id, status, job_dir) for jobs that:
+			- Have a creation date older than `max_age_seconds` seconds,
+			- Are not in an 'ARCHIVE_%' status,
+			- Are not in 'PENDING' or 'RUNNING' status.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
@@ -276,6 +468,18 @@ def get_ended_jobs_older_than(max_age_seconds):
 	return jobs
 
 def is_file_in_use(file):
+	"""
+	Checks if a given file is currently in use by any job with status 'RUNNING' or 'PENDING' in the database.
+
+	Args:
+		file (str): The path or identifier of the file to check.
+
+	Returns:
+		bool: True if the file is required by any running or pending job, False otherwise.
+
+	Raises:
+		Any exceptions raised by the database connection or query execution.
+	"""
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that are RUNNING or PENDING
