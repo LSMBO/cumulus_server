@@ -479,7 +479,9 @@ def generate_script_content(job_id, job_dir, app_name, settings, host_cpu):
 	stdout = config.get_final_stdout_path(job_id)
 	stderr = config.get_final_stderr_path(job_id)
 	# convert the input files eventually
-	converter = config.get("converter.raw.to.mzml")
+	# TODO if raw files are Bruker, use a different converter
+	converter_thermo = config.get("converter.raw.to.mzml")
+	converter_bruker = config.get("converter.d.to.mzml")
 	cmd = ""
 	# create the stdout and stderr files
 	cmd += f"touch {stdout}\n"
@@ -488,7 +490,13 @@ def generate_script_content(job_id, job_dir, app_name, settings, host_cpu):
 	cmd += f"ln -s {stderr} .cumulus.stderr\n"
 	# for file in get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
 	for file in get_files(job_dir, app_name, settings, False, True):
-		cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr}\n"
+		converter = None
+		# use the appropriate converter based on the file extension
+		if file.endswith(".d"): converter = converter_bruker
+		elif file.endswith(".raw"): converter = converter_thermo
+		# if the converter is set, add the command to convert the file
+		if converter != None: cmd += f"mono '{converter}' -i {file}  1>> {stdout} 2>> {stderr}\n"
+		else: logger.error(f"No converter set for the file {file}, skipping it")
 	# generate the command line based on the xml file and the given settings
 	cmd += get_command_line(app_name, job_dir, settings, host_cpu, output_dir)
 	# redirect the output to the log directory
