@@ -561,7 +561,7 @@ def cancel_job(job_id):
 		Exception: If the job cannot be found, the process cannot be killed, or the database update fails.
 	"""
 	# get all the jobs in case this is a workflow job
-	job_ids = db.get_following_jobs(job_id)
+	job_ids = db.get_associated_jobs(job_id)
 	# cancel all the corresponding jobs
 	for id in job_ids:
 		# get the pid and the host
@@ -720,7 +720,7 @@ def set_job_failed(job_id, error_message):
 		- Logs a warning message indicating the job failure.
 	"""
 	# get all the jobs in case this is a workflow job
-	job_ids = db.get_following_jobs(job_id)
+	job_ids = db.get_associated_jobs(job_id)
 	# fail all the jobs in the workflow
 	for id in job_ids:
 		db.set_status(id, "FAILED")

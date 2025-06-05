@@ -62,7 +62,7 @@ def is_process_running(job_id):
 	host_name = db.get_host(job_id)
 	is_alive = False
 	# get all the jobs that are associated to this job_id (could be several if the job is part of a workflow)
-	for id in db.get_following_jobs(job_id):
+	for id in db.get_associated_jobs(job_id):
 		pid = utils.get_pid(id)
 		# if the pid is still alive, it's RUNNING
 		is_alive = utils.is_alive(host_name, str(pid))
@@ -77,7 +77,7 @@ def is_process_running(job_id):
 		host = utils.get_host(host_name)
 		# return utils.remote_check(host, pid)
 		# check the pids of all the jobs that are associated to this job_id
-		for id in db.get_following_jobs(job_id):
+		for id in db.get_associated_jobs(job_id):
 			pid = utils.get_pid(id)
 			if utils.remote_check(host, pid): return True
 		return False

@@ -200,54 +200,80 @@ def set_value(job_id, field, value):
 	# disconnect
 	cnx.close()
 
-def get_following_jobs(job_id):
+def get_workflow_parent_id(job_id):
 	"""
-	Retrieve a list of job IDs that follow the specified job in a workflow chain.
-
-	Workflows use the `start_after_id` field to link jobs together. This function traverses the chain
-	starting from the given `job_id`, following each subsequent job via the `start_after_id` field,
-	and returns a list of all job IDs in the sequence.
+	Retrieves the first job id for the workflow of the given job.
+	It uses the start_after_id field to find the parent job that starts after the specified job ID.
 
 	Args:
-		job_id (int): The ID of the starting job.
+		job_id (int): The ID of the job for which to find the parent job in the workflow.
 
 	Returns:
-		list: A list of job IDs representing the chain of jobs following the given job, including the starting job.
+		int: The first job id for which there is no start_after_id.
 	"""
-	# prepare the list of ids
-	ids = [job_id]
+	# start with the given job_id, it's possible that this id is the parent
+	parent_job_id = job_id
 	# connect to the database
 	cnx, cursor = connect()
-	cursor.execute("SELECT id FROM jobs WHERE start_after_id = ?", (job_id,))
-	if cursor.arraysize > 0:
-		next_id, = cursor.fetchone()
-		while next_id is not None:
-			ids.append(next_id)
-			cursor.execute("SELECT id FROM jobs WHERE start_after_id = ?", (next_id,))
-			next_id = cursor.fetchone()[0] if cursor.arraysize > 0 else None
-	# disconnect from the database
+	while True:
+		# search the job that corresponds to the id
+		cursor.execute("SELECT start_after_id FROM jobs WHERE id = ?", (parent_job_id,))
+		if cursor.arraysize == 0: break # the job should exist, but if it does not, we stop here
+		results = cursor.fetchone()
+		if results[0] == None: break # if the job has no parent, we stop here (real stop condition)
+		parent_job_id = results[0]
 	cnx.close()
-	# return the list of ids
+	return parent_job_id
+
+def get_associated_jobs(job_id):
+	"""
+	Retrieve all job IDs associated with the same workflow as the given job.
+	If the specified job is part of a workflow, this function returns a list of job IDs
+	representing the sequence of jobs in that workflow, starting from the parent job and
+	following the chain of jobs linked by the `start_after_id` field. If the job is not
+	part of a workflow, the returned list contains only the given job ID.
+	Args:
+		job_id (int): The ID of the job for which to retrieve associated jobs.
+	Returns:
+		list[int]: A list of job IDs in the workflow, or a list containing only the given job ID
+		if it is not part of a workflow.
+	"""
+	# if the job has no start_after_id, it is not part of a workflow or it's the first job in a workflow
+	parent_job_id = get_workflow_parent_id(job_id)
+	# prepare the list of ids
+	ids = [parent_job_id]
+	# connect to the database
+	cnx, cursor = connect()
+	next_id = parent_job_id
+	while True:
+		# search the job that corresponds to the id
+		cursor.execute("SELECT id FROM jobs WHERE start_after_id = ?", (next_id,))
+		if cursor.arraysize == 0: break # if no job is found, we stop here (real stop condition)
+		results = cursor.fetchone()
+		if results == None: break
+		next_id = results[0]
+		ids.append(next_id)
+	cnx.close()
 	return ids
 
 def set_status(job_id, status): set_value(job_id, "status", status)
 def get_status(job_id): return get_value(job_id, "status")
 def set_host(job_id, host):
 	# if the job represents a workflow, set the host to all other jobs
-	for id in get_following_jobs(job_id): set_value(id, "host", host)
+	for id in get_associated_jobs(job_id): set_value(id, "host", host)
 def get_host(job_id): return get_value(job_id, "host")
 def set_start_date(job_id): set_value(job_id, "start_date", int(time.time()))
 def set_end_date(job_id):
 	# if the job represents a workflow, set the host to all other jobs
 	# this allows to clean all the jobs in a workflow at once in the cleaning daemon
 	end = int(time.time())
-	for id in get_following_jobs(job_id): set_value(id, "end_date", end)
+	for id in get_associated_jobs(job_id): set_value(id, "end_date", end)
 def get_settings(job_id): return json.loads(get_value(job_id, "settings"))
 def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
 def set_strategy(job_id, strategy):
 	# if the job represents a workflow, set the strategy to all other jobs
-	for id in get_following_jobs(job_id): set_value(job_id, "strategy", strategy)
+	for id in get_associated_jobs(job_id): set_value(job_id, "strategy", strategy)
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
@@ -283,7 +309,7 @@ def get_job_to_string(job_id):
 			 Returns an empty string if no job is found with the given ID.
 	"""
 	# differentiate between a job and a workflow job
-	job_ids = get_following_jobs(job_id)
+	job_ids = get_associated_jobs(job_id)
 	tag = "Job" if len(job_ids) == 1 else "Workflow job"
 	# connect to the database
 	cnx, cursor = connect()
@@ -322,7 +348,7 @@ def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", descript
 		- The function ensures that the job with the specified job_id and its related jobs (if any) are included in the results.
 	"""
 	# get the list of job ids to retrieve
-	job_ids = get_following_jobs(job_id)
+	job_ids = get_associated_jobs(job_id)
 	# prepare parts of the SQL request
 	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
 	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
@@ -330,37 +356,41 @@ def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", descript
 	cnx, cursor = connect()
 	# prepare the list of jobs to return
 	jobs = []
+	expected_jobs = number + len(job_ids) - 1  # we expect to retrieve at most this many jobs, including the jobs that are part of a workflow
 	# prepare a variable to hold the position of the job with id job_id
 	job_index = None
 	# prepare a variable to hold the lowest job_id
 	lowest_job_id = None
 	# search all the jobs with a limit, but because we filter on files and it can't be done in SQL, we may have to retrieve more jobs than the limit
-	while True:
+	keep_searching = True
+	while keep_searching:
 		# make a loop to search multiple times until the limit is reached or no more jobs are found
-		request_job_id =  f"AND id < {job_id}" if job_id is not None else ""
+		request_job_id =  f"AND id < {lowest_job_id}" if lowest_job_id is not None else ""
 		# first search all the jobs, except the one with id job_id, that fit the conditions and are not part of a workflow
 		results = cursor.execute(f"SELECT id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_job_id} {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
 		# if no jobs are found, break the loop
-		if cursor.arraysize == 0: break
-		# otherwise, parse the results
-		for id, owner, app_name, status, host, creation_date, end_date, job_dir, start_after_id in results:
-			# convert the settings from string to json
-			settings = json.loads(settings)
-			# filter by file here, so we can use a specific function for each app
-			if file == "" or apps.is_in_required_files(job_dir, app_name, settings, file):
-				if id == job_id:
-					# store the index of the job with id job_id
-					job_index = len(jobs)
-					# keep placeholders for the jobs corresponding to job_id and its following jobs (if workflow)
-					for i in range(len(job_ids)): jobs.append({})
-				elif start_after_id is None:
-					# if the job is not the one with id job_id, just add it to the list
-					# but if the job is part of a workflow, only add its first job
-					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
-			#  update the lowest job_id if necessary
-			if lowest_job_id is None or id < lowest_job_id: lowest_job_id = id
-			# break the loop if the list has achieved the limit (workflows should count as one job)
-			if len(jobs) == number + len(job_ids) - 1: break
+		if cursor.arraysize > 0 and results is not None:
+			# otherwise, parse the results
+			for id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id in results:
+				# convert the settings from string to json
+				settings = json.loads(settings)
+				# filter by file here, so we can use a specific function for each app
+				if file == "" or apps.is_in_required_files(job_dir, app_name, settings, file):
+					if id == job_id:
+						# store the index of the job with id job_id
+						job_index = len(jobs)
+						# keep placeholders for the jobs corresponding to job_id and its following jobs (if workflow)
+						for i in range(len(job_ids)): jobs.append({})
+					elif start_after_id is None:
+						# if the job is not the one with id job_id, just add it to the list
+						# but if the job is part of a workflow, only add its first job
+						jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
+				#  update the lowest job_id if necessary
+				if lowest_job_id is None or id < lowest_job_id: lowest_job_id = id
+				# break the current loop if the list has achieved the limit (workflows should count as one job)
+				if len(jobs) >= expected_jobs or lowest_job_id == 1: break
+		else: keep_searching = False
+		if len(jobs) >= expected_jobs or lowest_job_id == 1: keep_searching = False
 	# then search the job with id job_id and its followers, and put them at the proper place in the list
 	if job_index != None:
 		results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id from jobs WHERE id IN ({", ".join(["?"] * len(job_ids))}) ORDER BY id ASC", (job_ids))
@@ -368,7 +398,7 @@ def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", descript
 			# stdout and stderr for old jobs used to be kept in the database
 			if stdout == "": stdout = apps.get_stdout_content(id)
 			if stderr == "": stderr = apps.get_stderr_content(id)
-			jobs[job_index]({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "files": apps.get_file_list(job_dir)})
+			jobs[job_index] = {"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "files": apps.get_file_list(job_dir)}
 			job_index += 1
 	# disconnect from the database and return the list of jobs
 	cnx.close()
@@ -435,6 +465,7 @@ def get_jobs_per_status(status):
 def get_alive_jobs_per_host(host_name):
 	"""
 	Retrieves the number of 'PENDING' and 'RUNNING' jobs for a specified host from the database.
+	Jobs that are part of a workflow are NOT joined together, meaning that each job is counted separately.
 
 	Args:
 		host_name (str): The name of the host for which to count alive jobs.
@@ -449,6 +480,10 @@ def get_alive_jobs_per_host(host_name):
 	"""
 	# connect to the database
 	cnx, cursor = connect()
+	# search the jobs that fit the conditions
+	results = cursor.execute("SELECT id, status, start_after_id from jobs WHERE host = ? AND (status = 'RUNNING' or status = 'PENDING')", (host_name,))
+
+
 	# search the jobs that fit the conditions
 	results = cursor.execute("SELECT status from jobs WHERE host = ? AND (status = 'RUNNING' or status = 'PENDING')", (host_name,))
 	# count each type of job
@@ -476,7 +511,7 @@ def delete_job(job_id):
 		Any exceptions raised by the database connection, execution, or file operations will propagate.
 	"""
 	# get all the jobs in case this is a workflow job
-	job_ids = get_following_jobs(job_id)
+	job_ids = get_associated_jobs(job_id)
 	# connect to the database
 	cnx, cursor = connect()
 	# delete all the jobs
