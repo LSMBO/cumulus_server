@@ -1,0 +1,41 @@
+<tool id="flashlfq_2.0.0" name="FlashLFQ" version="2.0.0" url="https://github.com/smith-chem-wisc/FlashLFQ" description="Ultra-fast label-free quantification algorithm for mass-spectrometry proteomics" end_tag="Finished writing output" command="dotnet /storage/share/flashlfq/v2.0.0/CMD.dll --thr %nb_threads% --out '%output_dir%'" category="__work_in_progress__">
+
+    <section name="main" title="Settings" expanded="true">
+        <filelist name="psm-file" label="Select PSM file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" command="--idt '%value%'" help="Add your identification file here. Accepted file formats are Morpheus .tsv, MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv." />
+        <conditional name="spectra">
+            <select name="raw-type" label="Select the type of your spectra file" help="All formats others than mzML will be converted to mzML before processing.">
+                <option value="mzml" selected="true">mzML files</option>
+                <option value="bruker">Bruker .d analyses</option>
+                <option value="thermo">Thermo .raw files</option>
+            </select>
+            <when value="mzml">
+                <filelist name="mzml-list" label="Select mzML files" format="mzML" is_raw_input="true" multiple="true" is_folder="false" value="" help=".mzML files will be expected" />
+            </when>
+            <when value="bruker">
+                <filelist name="bruker-list" label="Select Bruker .d analyses" format="d" is_raw_input="true" multiple="true" is_folder="true" value="" convert_to_mzml="true" help=".d folders will be expected" />
+            </when>
+            <when value="thermo-raw">
+                <filelist name="thermo-list" label="Select RAW files" format="raw" is_raw_input="true" convert_to_mzml="true" multiple="true" is_folder="false" value="" help=".raw files will be expected" />
+            </when>
+        </conditional>
+        <string name="spectra_dir" label="Spectra directory" value="" command="-rep '%data_dir%'" help="" visibility="hidden" />
+        <number name="ppm" label="PPM Tolerance" value="10.0" min="0" step="0.1" command="--ppm %value%" help="The mass tolerance in parts per million for both MS/MS-identified species and match-between-runs." />
+        <checkbox name="mbr" label="Peptide identity propagation (Match Between Runs)" value="false" command="--mbr" help="Maps MS/MS identifications from one run onto other runs in which they were not identified, using retention time and isotopic envelope similarity." />
+        <checkbox name="nor" label="Normalize intensities" value="false" command="--nor" help="Corrects systematic intensity errors with median normalization. The main assumption is that most proteins do not change in abundance between samples." />
+        <checkbox name="usepepq" label="Use PEP Q Values" value="false" command="--usepepq" help="Determines how FlashLFQ chooses which peptides to quantify (only applies to MetaMorpheus identifications). Using PEP Q generally yields more peptide IDs." />
+        <checkbox name="sha" label="Use shared peptides for protein quantification" value="false" command="--sha" help="Uses peptide sequences shared between proteins for protein quantification." />
+        <checkbox name="bay" label="Bayesian Protein Fold-Change Analysis" value="false" command="--bay" help="This estimates each protein's fold-change relative to the control condition using Bayesian statistics. Also calculates posterior error probability (PEP) and false discovery rate (FDR)." />
+    </section>
+
+    <section name="advanced" title="Advanced settings" visibility="advanced" expanded="true">
+        <checkbox name="int" label="Integrate Peak Areas" value="false" command="--int" help="By default, FlashLFQ reports the peak height and not peak area. Enabling integration reports the peak area." />
+        <checkbox name="chg" label="Only quantify identified charge" value="false" command="--chg" help="FlashLFQ will only quantify the identified charge, and will not look for alternative charges." />
+        <checkbox name="rmc" label="Require MS/MS Identification in Condition" value="false" command="--rmc" help="Only try to match peptides from proteins if an MS/MS identified peptide from that protein was observed in the condition." />
+        <number name="iso" label="Isotope PPM Tolerance" value="5.0" min="0" step="0.1" command="--iso %value%" help="The mass tolerance in parts per million of isotope peaks (e.g., M+1, M+2 peaks)." />
+        <number name="nis" label="Number of isotopes required" value="2" min="0" step="1" command="--nis %value%" help="The number of isotopic peaks required to detect an isotopic envelope." />
+        <number name="mrt" label="Maximum MBR window (minutes)" value="1.0" min="0" step="0.1" command="--mrt %value%" help="The retention-time error allowed in match-between runs. This is not the systematic time shift, but a sort of &quot;variance&quot; or &quot;error&quot; in the retention time allowed." />
+        <number name="mcm" label="MCMC iterations" value="3000" min="0" step="100" command="--mcm %value%" help="The number of iterations to perform for the Markov-Chain Monte Carlo sampler in the Bayesian stats engine. A larger number of iterations will result in a slower but more precise estimate of the protein fold-change, the PEP, and the FDR." />
+        <number name="rns" label="MCMC random seed" placeholder="%rand%" min="0" step="1" command="--rns %value%" help="The seed for the random number generator in the Markov-Chain Monte Carlo sampler. You should probably not change this unless unless you are trying to reproduce an analysis." />
+    </section>
+
+</tool>
