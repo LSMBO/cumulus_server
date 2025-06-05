@@ -548,6 +548,7 @@ def get_pid(job_id):
 def cancel_job(job_id):
 	"""
 	Cancels a running or pending job by its job ID.
+	If the job is part of a workflow, the same is done for all jobs in the workflow.
 
 	This function retrieves the process ID (PID) and host associated with the given job,
 	attempts to terminate the process remotely, and updates the job's status and end date
@@ -559,14 +560,18 @@ def cancel_job(job_id):
 	Raises:
 		Exception: If the job cannot be found, the process cannot be killed, or the database update fails.
 	"""
-	# get the pid and the host
-	pid = get_pid(job_id)
-	host_name = db.get_host(job_id)
-	# use ssh to kill the pid (may not be needed if the job is still pending)
-	remote_cancel(get_host(host_name), pid)
-	# change the status
-	db.set_status(job_id, "CANCELLED")
-	db.set_end_date(job_id)
+	# get all the jobs in case this is a workflow job
+	job_ids = db.get_following_jobs(job_id)
+	# cancel all the corresponding jobs
+	for id in job_ids:
+		# get the pid and the host
+		pid = get_pid(id)
+		host_name = db.get_host(id)
+		# use ssh to kill the pid (may not be needed if the job is still pending)
+		remote_cancel(get_host(host_name), pid)
+		# change the status
+		db.set_status(id, "CANCELLED")
+		db.set_end_date(id)
 
 def add_to_stderr(job_id, text):
 	"""
@@ -702,6 +707,7 @@ def get_unused_shared_files_older_than(max_age_seconds):
 def set_job_failed(job_id, error_message):
 	"""
 	Marks the specified job as failed, records the error message, and logs the failure.
+	If the job is part of a workflow, the same is done for all jobs in the workflow.
 
 	Args:
 		job_id (int or str): The unique identifier of the job to mark as failed.
@@ -713,7 +719,11 @@ def set_job_failed(job_id, error_message):
 		- Appends the error message to the job's standard error log.
 		- Logs a warning message indicating the job failure.
 	"""
-	db.set_status(job_id, "FAILED")
-	db.set_end_date(job_id)
-	add_to_stderr(job_id, error_message)
+	# get all the jobs in case this is a workflow job
+	job_ids = db.get_following_jobs(job_id)
+	# fail all the jobs in the workflow
+	for id in job_ids:
+		db.set_status(id, "FAILED")
+		db.set_end_date(id)
+		add_to_stderr(id, error_message)
 	logger.warning(f"Failure of {db.get_job_to_string(job_id)}")

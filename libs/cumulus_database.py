@@ -45,8 +45,9 @@ logger = logging.getLogger(__name__)
 def connect():
 	"""
 	Establishes a connection to the SQLite database specified in the configuration.
-	If the database file does not exist, it will be created. Also ensures that the
-	'jobs' table exists in the database, creating it if necessary.
+	This function does not check if the database file exists; it simply attempts to connect
+ 	to the database file specified in the configuration. The database must have been 
+	initialized at the start of the execution.
 
 	Returns:
 		tuple: A tuple containing the SQLite connection object and the cursor object.
@@ -54,6 +55,20 @@ def connect():
 	# connect to the database, create it if it does not exist yet
 	cnx = sqlite3.connect(config.get("database.file.path"), isolation_level = None)
 	cursor = cnx.cursor()
+	return cnx, cursor
+
+def initialize_database():
+	"""
+	Initializes the database by connecting to it and ensuring the 'jobs' table exists.
+	This function is typically called at the start of the application to set up the
+	database environment. If the database file does not exist, it will be created. 
+	Also ensures that the 'jobs' table exists in the database, creating it if necessary.
+
+	Returns:
+	None
+	"""
+	# connect to the database, create it if it does not exist yet
+	cnx, cursor = connect()
 	# create the main table if it does not exist
 	cursor.execute("""
 		CREATE TABLE IF NOT EXISTS jobs(
@@ -70,10 +85,20 @@ def connect():
 			end_date INTEGER,
 			stdout TEXT,
 			stderr TEXT,
-			job_dir TEXT)
+			job_dir TEXT,
+			start_after_id INTEGER)
 	""")
 	cnx.commit()
-	return cnx, cursor
+	# the database may already exist, but we want to ensure that the following columns are present
+	cursor.execute("SELECT COUNT(*) FROM pragma_table_info('jobs') WHERE name = 'start_after_id'")
+	response = cursor.fetchone()
+	if response[0] == 0:
+		# add the start_after_id column if it does not exist
+		cursor.execute("ALTER TABLE jobs ADD COLUMN start_after_id INTEGER")
+		cnx.commit()
+	# close the connection
+	cnx.close()
+	logger.info("Database initialized successfully.")
 
 def create_job(form):
 	"""
@@ -86,6 +111,7 @@ def create_job(form):
 			- "strategy": The execution strategy for the job.
 			- "description": A description of the job.
 			- "settings": A JSON string of job settings.
+			- "start_after_id": (optional) The ID of the previous job if the job is part of a workflow (if missing, it's a standard job).
 
 	Returns:
 		tuple: A tuple containing:
@@ -107,8 +133,9 @@ def create_job(form):
 	owner = form["username"]
 	app_name = form["app_name"]
 	creation_date = int(time.time())
+	start_after_id = form["start_after_id"] if "start_after_id" in form else None
 	# settings are already passed as a stringified json
-	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", ""))
+	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", "", start_after_id))
 	# return the id of the job
 	job_id = cursor.lastrowid
 	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
@@ -173,16 +200,54 @@ def set_value(job_id, field, value):
 	# disconnect
 	cnx.close()
 
+def get_following_jobs(job_id):
+	"""
+	Retrieve a list of job IDs that follow the specified job in a workflow chain.
+
+	Workflows use the `start_after_id` field to link jobs together. This function traverses the chain
+	starting from the given `job_id`, following each subsequent job via the `start_after_id` field,
+	and returns a list of all job IDs in the sequence.
+
+	Args:
+		job_id (int): The ID of the starting job.
+
+	Returns:
+		list: A list of job IDs representing the chain of jobs following the given job, including the starting job.
+	"""
+	# prepare the list of ids
+	ids = [job_id]
+	# connect to the database
+	cnx, cursor = connect()
+	cursor.execute("SELECT id FROM jobs WHERE start_after_id = ?", (job_id,))
+	if cursor.arraysize > 0:
+		next_id, = cursor.fetchone()
+		while next_id is not None:
+			ids.append(next_id)
+			cursor.execute("SELECT id FROM jobs WHERE start_after_id = ?", (next_id,))
+			next_id = cursor.fetchone()[0] if cursor.arraysize > 0 else None
+	# disconnect from the database
+	cnx.close()
+	# return the list of ids
+	return ids
+
 def set_status(job_id, status): set_value(job_id, "status", status)
 def get_status(job_id): return get_value(job_id, "status")
-def set_host(job_id, host): set_value(job_id, "host", host)
+def set_host(job_id, host):
+	# if the job represents a workflow, set the host to all other jobs
+	for id in get_following_jobs(job_id): set_value(id, "host", host)
 def get_host(job_id): return get_value(job_id, "host")
 def set_start_date(job_id): set_value(job_id, "start_date", int(time.time()))
-def set_end_date(job_id): set_value(job_id, "end_date", int(time.time()))
+def set_end_date(job_id):
+	# if the job represents a workflow, set the host to all other jobs
+	# this allows to clean all the jobs in a workflow at once in the cleaning daemon
+	end = int(time.time())
+	for id in get_following_jobs(job_id): set_value(id, "end_date", end)
 def get_settings(job_id): return json.loads(get_value(job_id, "settings"))
 def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
-def set_strategy(job_id, strategy): set_value(job_id, "strategy", strategy)
+def set_strategy(job_id, strategy):
+	# if the job represents a workflow, set the strategy to all other jobs
+	for id in get_following_jobs(job_id): set_value(job_id, "strategy", strategy)
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 
@@ -217,90 +282,119 @@ def get_job_to_string(job_id):
 		str: A formatted string containing the job's ID, owner, application name, status, and host.
 			 Returns an empty string if no job is found with the given ID.
 	"""
+	# differentiate between a job and a workflow job
+	job_ids = get_following_jobs(job_id)
+	tag = "Job" if len(job_ids) == 1 else "Workflow job"
 	# connect to the database
 	cnx, cursor = connect()
 	# search the job that corresponds to the id
-	cursor.execute("SELECT owner, app_name, status, host from jobs WHERE id = ?", (job_id,))
+	cursor.execute("SELECT owner, app_name, status, host FROM jobs WHERE id = ?", (job_id,))
 	job = ""
 	if cursor.arraysize > 0:
 		owner, app_name, status, host = cursor.fetchone()
-		job = f"Job {job_id}, owner:{owner}, app:{app_name}, status:{status}, host:{host}"
+		job = f"{tag} {job_id}, owner:{owner}, app:{app_name}, status:{status}, host:{host}"
 	# disconnect and return the string
 	cnx.close()
 	return job
 
-def get_last_jobs(job_id, number = 100):
+def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", description = "%", statuses = [], date_field = "creation_date", date_from = 0, date_to = int(time.time()), file = ""):
 	"""
-	Retrieve the most recent jobs from the database, including detailed information for a specific job.
+	Search for jobs in the database based on various filtering criteria.
 
 	Args:
-		job_id (int): The ID of the job for which detailed information should be retrieved.
-		number (int, optional): The maximum number of recent jobs to retrieve. Defaults to 100.
+		job_id (int): The job ID to use as a reference for searching and retrieving related jobs.
+		number (int, optional): The maximum number of jobs to retrieve. Defaults to 100.
+		owner (str, optional): The owner of the job(s) to search for. Supports SQL LIKE patterns. Defaults to "%".
+		app_name (str, optional): The application name associated with the job(s). Supports SQL LIKE patterns. Defaults to "%".
+		description (str, optional): The description of the job(s). Supports SQL LIKE patterns. Defaults to "%".
+		statuses (list, optional): List of status conditions to filter jobs. If empty or contains 6 elements, no status filtering is applied. Defaults to [].
+		date_field (str, optional): The name of the date field to filter on (e.g., "creation_date"). Defaults to "creation_date".
+		date_from (int, optional): The start of the date range (as a Unix timestamp). Defaults to 0.
+		date_to (int, optional): The end of the date range (as a Unix timestamp). Defaults to the current time.
+		file (str, optional): File filter (not used in SQL filtering). Defaults to "".
 
 	Returns:
-		list: A list of dictionaries representing jobs. For the job matching `job_id`, the dictionary includes detailed fields such as
-			'id', 'owner', 'app_name', 'status', 'strategy', 'description', 'settings' (as a dict), 'host', 'creation_date',
-			'start_date', 'end_date', 'stdout', 'stderr', and 'files'. For other jobs, only a subset of fields is included.
+		list: A list of dictionaries, each representing a job with its details.
 
 	Notes:
-		- For the job matching `job_id`, if 'stdout' or 'stderr' are empty, their content is retrieved using helper functions.
-		- The function closes the database connection before returning.
+		- The function retrieves jobs matching the specified filters, handling workflows and job dependencies.
+		- If filtering by files, additional post-processing may be performed since file filtering is not handled in SQL.
+		- The function ensures that the job with the specified job_id and its related jobs (if any) are included in the results.
 	"""
+	# get the list of job ids to retrieve
+	job_ids = get_following_jobs(job_id)
+	# prepare parts of the SQL request
+	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
+	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
 	# connect to the database
 	cnx, cursor = connect()
-	# search the jobs that fit the conditions
-	results = cursor.execute("SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir from jobs ORDER BY id DESC LIMIT ?", (number,))
-	# put the results in a dict
+	# prepare the list of jobs to return
 	jobs = []
-	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir in results:
-		if id == job_id:
+	# prepare a variable to hold the position of the job with id job_id
+	job_index = None
+	# prepare a variable to hold the lowest job_id
+	lowest_job_id = None
+	# search all the jobs with a limit, but because we filter on files and it can't be done in SQL, we may have to retrieve more jobs than the limit
+	while True:
+		# make a loop to search multiple times until the limit is reached or no more jobs are found
+		request_job_id =  f"AND id < {job_id}" if job_id is not None else ""
+		# first search all the jobs, except the one with id job_id, that fit the conditions and are not part of a workflow
+		results = cursor.execute(f"SELECT id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_job_id} {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
+		# if no jobs are found, break the loop
+		if cursor.arraysize == 0: break
+		# otherwise, parse the results
+		for id, owner, app_name, status, host, creation_date, end_date, job_dir, start_after_id in results:
+			# convert the settings from string to json
+			settings = json.loads(settings)
+			# filter by file here, so we can use a specific function for each app
+			if file == "" or apps.is_in_required_files(job_dir, app_name, settings, file):
+				if id == job_id:
+					# store the index of the job with id job_id
+					job_index = len(jobs)
+					# keep placeholders for the jobs corresponding to job_id and its following jobs (if workflow)
+					for i in range(len(job_ids)): jobs.append({})
+				elif start_after_id is None:
+					# if the job is not the one with id job_id, just add it to the list
+					# but if the job is part of a workflow, only add its first job
+					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
+			#  update the lowest job_id if necessary
+			if lowest_job_id is None or id < lowest_job_id: lowest_job_id = id
+			# break the loop if the list has achieved the limit (workflows should count as one job)
+			if len(jobs) == number + len(job_ids) - 1: break
+	# then search the job with id job_id and its followers, and put them at the proper place in the list
+	if job_index != None:
+		results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id from jobs WHERE id IN ({", ".join(["?"] * len(job_ids))}) ORDER BY id ASC", (job_ids))
+		for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id in results:
 			# stdout and stderr for old jobs used to be kept in the database
-			if stdout == "": stdout = apps.get_stdout_content(job_id)
-			if stderr == "": stderr = apps.get_stderr_content(job_id)
-			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(job_dir)})
-		else:
-			jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
+			if stdout == "": stdout = apps.get_stdout_content(id)
+			if stderr == "": stderr = apps.get_stderr_content(id)
+			jobs[job_index]({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "files": apps.get_file_list(job_dir)})
+			job_index += 1
+	# disconnect from the database and return the list of jobs
 	cnx.close()
 	return jobs
 
-def search_jobs(form):
+def get_last_jobs(job_id, number = 100):
 	"""
-	Searches for jobs in the database based on user-provided search parameters.
+	Retrieve the most recent jobs associated with a given job ID.
 
 	Args:
-		form (dict): A dictionary containing search parameters. Expected keys include:
-			- "current_job_id" (str or int): The ID of the current job to highlight.
-			- "owner" (str): Filter jobs by owner (empty string for all).
-			- "app" (str): Filter jobs by application name (empty string or "all" for all).
-			- "description" (str): Filter jobs by description (empty string for all).
-			- "number" (str or int): Maximum number of jobs to return (empty string for default 100).
-			- "pending", "running", "done", "failed", "cancelled", "archived" (optional): If present, include jobs with the corresponding status.
-			- "date" (str): The date field to filter on (e.g., "creation_date").
-			- "from" (str): Start date in "YYYY-MM-DD" format (empty string for no lower bound).
-			- "to" (str): End date in "YYYY-MM-DD" format (empty string for current time).
-			- "file" (str): Filter jobs by required file (empty string for all).
+		job_id (Any): The identifier of the job to search for.
+		number (int, optional): The maximum number of recent jobs to retrieve. Defaults to 100.
 
 	Returns:
-		list: A list of dictionaries, each representing a job. Each dictionary contains:
-			- For the current job (matching "current_job_id"):
-				- "id", "owner", "app_name", "status", "strategy", "description", "settings", "host",
-				  "creation_date", "start_date", "end_date", "stdout", "stderr", "files"
-			- For other jobs:
-				- "id", "owner", "app_name", "status", "host", "creation_date", "end_date"
-
-	Notes:
-		- The function connects to the database, constructs a SQL query based on the provided filters,
-		  and returns the matching jobs.
-		- The "settings" field is parsed from JSON.
-		- For the current job, additional details such as stdout, stderr, and files are included.
-		- The function closes the database connection before returning.
+		list: A list of job records matching the given job ID, limited to the specified number.
 	"""
+	return search_jobs_args(job_id, number)
+
+def search_jobs(form):
 	# get the user search parameters
 	current_job_id = int(form["current_job_id"])
 	owner = "%" if form["owner"] == "" else "%" + form["owner"] + "%"
 	app_name = "%" if form["app"] == "" or form["app"] == "all" else "%" + form["app"] + "%"
 	desc = "%" if form["description"] == "" else "%" + form["description"] + "%"
 	number = 100 if form["number"] == "" else form["number"]
+	file = form["file"]
 	# prepare the part of the request for the status
 	statuses = []
 	if "pending" in form: statuses.append("status = 'PENDING'")
@@ -309,32 +403,12 @@ def search_jobs(form):
 	if "failed" in form: statuses.append("status = 'FAILED'")
 	if "cancelled" in form: statuses.append("status = 'CANCELLED'")
 	if "archived" in form: statuses.append("status LIKE 'ARCHIVED%'")
-	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
 	# prepare the part of the request for the date
 	date_field = form["date"]
 	date_from = 0 if form["from"] == "" else time.mktime(datetime.strptime(form["from"], "%Y-%m-%d").timetuple())
 	date_to = int(time.time()) if form["to"] == "" else time.mktime(datetime.strptime(form["to"], "%Y-%m-%d").timetuple())
-	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
-	# connect to the database
-	cnx, cursor = connect()
-	# logger.debug(f"SELECT id, owner, app_name, status, creation_date FROM jobs WHERE owner LIKE '{owner}' AND app_name LIKE '{app_name}' AND description LIKE '{desc}' {request_status} {request_date} ORDER BY id DESC LIMIT '{number}'")
-	results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, desc, number))
-	# put the results in a dict
-	jobs = []
-	for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir in results:
-		# convert the settings from string to json
-		settings = json.loads(settings)
-		# filter by file here, so we can use a specific function for each app
-		if form["file"] == "" or apps.is_in_required_files(job_dir, app_name, settings, form["file"]):
-			if id == current_job_id:
-				# stdout and stderr for old jobs used to be kept in the database
-				if stdout == "": stdout = apps.get_stdout_content(id)
-				if stderr == "": stderr = apps.get_stderr_content(id)
-				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": settings, "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "files": apps.get_file_list(job_dir)})
-			else:
-				jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
-	cnx.close()
-	return jobs
+	# call the search_jobs_args function to retrieve the jobs
+	return search_jobs_args(current_job_id, number, owner, app_name, desc, statuses, date_field, date_from, date_to, file)
 
 def get_jobs_per_status(status):
 	"""
@@ -389,6 +463,7 @@ def get_alive_jobs_per_host(host_name):
 def delete_job(job_id):
 	"""
 	Deletes a job from the database and removes its associated log files.
+	If the job is part of a workflow, the same is done for all jobs in the workflow.
 
 	Args:
 		job_id (int): The unique identifier of the job to be deleted.
@@ -400,18 +475,22 @@ def delete_job(job_id):
 	Raises:
 		Any exceptions raised by the database connection, execution, or file operations will propagate.
 	"""
+	# get all the jobs in case this is a workflow job
+	job_ids = get_following_jobs(job_id)
 	# connect to the database
 	cnx, cursor = connect()
-	# delete the job
-	cursor.execute(f"DELETE FROM jobs WHERE id = ?", (job_id,))
-	cnx.commit()
-	# disconnect
-	cnx.close()
-	# also remove the log files
-	stdout = config.get_final_stdout_path(job_id)
-	if os.path.isfile(stdout): os.remove(stdout)
-	stderr = config.get_final_stderr_path(job_id)
-	if os.path.isfile(stderr): os.remove(stderr)
+	# delete all the jobs
+	for id in job_ids:
+		# delete the job
+		cursor.execute(f"DELETE FROM jobs WHERE id = ?", (id,))
+		cnx.commit()
+		# disconnect
+		cnx.close()
+		# also remove the log files
+		stdout = config.get_final_stdout_path(id)
+		if os.path.isfile(stdout): os.remove(stdout)
+		stderr = config.get_final_stderr_path(id)
+		if os.path.isfile(stderr): os.remove(stderr)
 
 def set_fake_creation_date(job_id, seconds_to_add = -86400):
 	"""

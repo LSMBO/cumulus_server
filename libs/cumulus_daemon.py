@@ -53,23 +53,34 @@ def is_process_running(job_id):
 	If the process is not found there, it attempts a remote check on the specified host.
 
 	Args:
-		job_id (str or int): The unique identifier for the job whose process status is to be checked.
+		job_id (int): The unique identifier for the job whose process status is to be checked.
 
 	Returns:
 		bool: True if the process is running, False otherwise.
 	"""
-	pid = utils.get_pid(job_id)
+	# prepare information to check the process
 	host_name = db.get_host(job_id)
-	# if the pid is still alive, it's RUNNING
-	is_alive = utils.is_alive(host_name, str(pid))
-	# logger.debug(f"Job {job_id} is alive? {is_alive}")
+	is_alive = False
+	# get all the jobs that are associated to this job_id (could be several if the job is part of a workflow)
+	for id in db.get_following_jobs(job_id):
+		pid = utils.get_pid(id)
+		# if the pid is still alive, it's RUNNING
+		is_alive = utils.is_alive(host_name, str(pid))
+		# logger.debug(f"Job {job_id} is alive? {is_alive}")
+		# no need to check the other jobs if one is alive
+		if is_alive: break
 	if is_alive: 
 		return True
 	else:
 		# check directly on the host if the pid is still alive (it may not be in the pid file yet)
 		logger.debug(f"Job {job_id} was not found in the pid file, sending a request to {host_name}")
 		host = utils.get_host(host_name)
-		return utils.remote_check(host, pid)
+		# return utils.remote_check(host, pid)
+		# check the pids of all the jobs that are associated to this job_id
+		for id in db.get_following_jobs(job_id):
+			pid = utils.get_pid(id)
+			if utils.remote_check(host, pid): return True
+		return False
 
 def check_running_jobs():
 	"""

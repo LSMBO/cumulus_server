@@ -312,6 +312,8 @@ def start():
 			format = log_format,
 			datefmt = log_date
 		)
+	# initialize the database
+	db.initialize_database()
 	# start the daemons once all functions are defined
 	threading.Thread(target=daemon.run, args=(), daemon=True).start()
 	if not IS_DEBUG: threading.Thread(target=daemon.clean, args=(), daemon=True).start()
