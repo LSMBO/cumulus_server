@@ -34,7 +34,7 @@ import libs.cumulus_config as config
 
 def test_load():
 	config.load("test/cumulus.conf")
-	assert len(config.CONFIG) == 16
+	assert len(config.CONFIG) == 19
 
 def test_get():
 	assert config.get("database.file.path") == "./test/cumulus.db"

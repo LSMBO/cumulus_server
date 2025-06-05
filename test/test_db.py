@@ -48,6 +48,15 @@ def test_db_connect():
     # close the database (the file will not be deleted)
     cnx.close()
 
+def test_initialize_database():
+    db.initialize_database()
+    cnx, cursor = db.connect()
+    cursor.execute("SELECT COUNT(*) FROM pragma_table_info('jobs')")
+    response = cursor.fetchone()
+    nb = response[0]
+    cnx.close()
+    assert nb == 15  # check that the table has 15 columns
+
 def test_create_job():
     # get settings as text
     settings = ""
@@ -69,6 +78,15 @@ def test_create_job():
     # create some other jobs for later tests
     for i in range(4):
         db.create_job(form)
+
+def test_get_associated_jobs():
+    # first create some jobs
+    settings = ""
+    with open("test/jobs/job1.settings", 'r') as xml: settings = xml.read().replace("\n", "")
+    job_id1 = 1
+    job_id2, _ = db.create_job({"username": "test.user", "app_name": "alphadia_1.10.1", "strategy": "first_available", "description": "", "settings": settings, "start_after_id": job_id1 })
+    job_id3, _ = db.create_job({"username": "test.user", "app_name": "sage_0.15.0-beta.1", "strategy": "first_available", "description": "", "settings": settings, "start_after_id": job_id2 })
+    assert db.get_associated_jobs(1) == [job_id1, job_id2, job_id3]
 
 def test_get_value():
     assert db.get_value(1, "strategy") == "first_available"
@@ -129,29 +147,30 @@ def test_get_job_dir():
 
 def test_check_job_existency():
     assert db.check_job_existency(1)
-    assert not db.check_job_existency(7)
+    assert not db.check_job_existency(9)
 
 def test_get_job_to_string():
-    assert db.get_job_to_string(1) == "Job 1, owner:test.user, app:diann_2.0, status:FAILED, host:my_test_host"
+    assert db.get_job_to_string(1) == "Workflow job 1, owner:test.user, app:diann_2.0, status:FAILED, host:my_test_host"
 
 def test_get_last_jobs():
     jobs = db.get_last_jobs(1)
-    assert len(jobs) == 5
+    # if pytest is called repeatedly, the next assertion may fail
+    assert len(jobs) == 7
     assert jobs[4]["id"] == 1
     assert jobs[4]["owner"] == "test.user"
     assert "strategy" not in jobs[1]
 
 def test_search_jobs():
     jobs = db.search_jobs({"current_job_id": 1, "owner": "test.user", "app": "", "description": "", "number": "", "FAILED": "on", "date": "start_date", "from": "", "to": "", "file": ""})
-    assert len(jobs) == 1
+    assert len(jobs) == 3
     assert jobs[0]["id"] == 1
 
 def test_get_jobs_per_status():
-    assert db.get_jobs_per_status("PENDING") == [2, 3, 4, 5]
+    assert db.get_jobs_per_status("PENDING") == [2, 3, 4, 5, 6, 7]
     assert db.get_jobs_per_status("FAILED") == [1]
 
 def test_get_alive_jobs_per_host():
-    assert db.get_alive_jobs_per_host("my_test_host") == (0, 0)
+    assert db.get_alive_jobs_per_host("my_test_host") == (2, 0)
     assert db.get_alive_jobs_per_host("") == (4, 0)
 
 def test_delete_job():

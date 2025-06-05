@@ -38,7 +38,7 @@ def test_get_all_hosts():
     assert len(utils.get_all_hosts()) == 3
 
 def test_get_host():
-    assert utils.get_host("my_second_host").cpu == "16"
+    assert utils.get_host("my_second_host").cpu == 16
     assert utils.get_host("my_fourth_host") == None
 
 def test_is_alive():
