@@ -356,7 +356,7 @@ def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", descript
 	cnx, cursor = connect()
 	# prepare the list of jobs to return
 	jobs = []
-	expected_jobs = number + len(job_ids) - 1  # we expect to retrieve at most this many jobs, including the jobs that are part of a workflow
+	expected_jobs = number + len(job_ids)  # we expect to retrieve at most this many jobs, including the jobs that are part of a workflow
 	# prepare a variable to hold the position of the job with id job_id
 	job_index = None
 	# prepare a variable to hold the lowest job_id
