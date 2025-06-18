@@ -57,6 +57,15 @@ def connect():
 	cursor = cnx.cursor()
 	return cnx, cursor
 
+def add_column(cnx, cursor, column_name, column_type):
+	# the database may already exist, but we want to ensure that the following columns are present
+	cursor.execute(f"SELECT COUNT(*) FROM pragma_table_info('jobs') WHERE name = '{column_name}'")
+	response = cursor.fetchone()
+	if response[0] == 0:
+		# add the start_after_id column if it does not exist
+		cursor.execute(f"ALTER TABLE jobs ADD COLUMN {column_name} {column_type}")
+		cnx.commit()
+
 def initialize_database():
 	"""
 	Initializes the database by connecting to it and ensuring the 'jobs' table exists.
@@ -70,6 +79,7 @@ def initialize_database():
 	# connect to the database, create it if it does not exist yet
 	cnx, cursor = connect()
 	# create the main table if it does not exist
+	# TODO add workflow_name TEXT to the list, it will help keeping track of which app in which workflow is running (also it will allow to know if a job is part of a workflow)
 	cursor.execute("""
 		CREATE TABLE IF NOT EXISTS jobs(
 			id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
@@ -86,16 +96,13 @@ def initialize_database():
 			stdout TEXT,
 			stderr TEXT,
 			job_dir TEXT,
-			start_after_id INTEGER)
+			start_after_id INTEGER,
+			workflow_name TEXT)
 	""")
 	cnx.commit()
 	# the database may already exist, but we want to ensure that the following columns are present
-	cursor.execute("SELECT COUNT(*) FROM pragma_table_info('jobs') WHERE name = 'start_after_id'")
-	response = cursor.fetchone()
-	if response[0] == 0:
-		# add the start_after_id column if it does not exist
-		cursor.execute("ALTER TABLE jobs ADD COLUMN start_after_id INTEGER")
-		cnx.commit()
+	add_column(cnx, cursor, "start_after_id", "INTEGER")
+	add_column(cnx, cursor, "workflow_name", "TEXT")
 	# close the connection
 	cnx.close()
 	logger.info("Database initialized successfully.")
@@ -108,6 +115,7 @@ def create_job(form):
 		form (dict): A dictionary containing job parameters. Expected keys include:
 			- "username": The owner of the job.
 			- "app_name": The name of the application to run.
+			- "workflow_name": (optional) The name of the workflow to run (null if it's a single app).
 			- "strategy": The execution strategy for the job.
 			- "description": A description of the job.
 			- "settings": A JSON string of job settings.
@@ -132,10 +140,11 @@ def create_job(form):
 	# host should be the ip address of the vm where it's going to be executed, it could be null if the first available vm is to be picked
 	owner = form["username"]
 	app_name = form["app_name"]
+	workflow_name = form["workflow_name"] if "workflow_name" in form else None
 	creation_date = int(time.time())
 	start_after_id = form["start_after_id"] if "start_after_id" in form else None
 	# settings are already passed as a stringified json
-	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", "", start_after_id))
+	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", "", start_after_id, workflow_name))
 	# return the id of the job
 	job_id = cursor.lastrowid
 	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
@@ -323,7 +332,35 @@ def get_job_to_string(job_id):
 	cnx.close()
 	return job
 
-def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", description = "%", statuses = [], date_field = "creation_date", date_from = 0, date_to = int(time.time()), file = ""):
+def get_merged_settings(job_id):
+	"""
+	Searches for the settings of all the jobs related to the given job
+	This is useful for workflows, we need to return the settings of the entire workflow, and not just one job
+	
+	Args:
+		job_id (int): The job ID to use as a reference for searching and retrieving related jobs.
+	
+	Returns:
+		list: a dictionary with the job_ids and the corresponding settings
+	
+	Notes:
+		if job_id does not corresponds to a workflow, the dictionary will only contain one entry
+	"""
+	# prepare the map
+	settings_set = {}
+	# get all the ids to search for
+	job_ids = get_associated_jobs(job_id)
+	# connect to the database
+	cnx, cursor = connect()
+	# search for all the settings
+	results = cursor.execute(f"SELECT id, settings from jobs WHERE id IN ({", ".join(["?"] * len(job_ids))}) ORDER BY id ASC", (job_ids))
+	for id, settings in results:
+		settings_set{id} = settings
+	# close the connection
+	cnx.close()
+	return settings_set
+
+def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", description = "%", statuses = [], date_field = "creation_date", date_from = 0, date_to = int(time.time()), file = ""):
 	"""
 	Search for jobs in the database based on various filtering criteria.
 
@@ -344,11 +381,9 @@ def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", descript
 
 	Notes:
 		- The function retrieves jobs matching the specified filters, handling workflows and job dependencies.
-		- If filtering by files, additional post-processing may be performed since file filtering is not handled in SQL.
-		- The function ensures that the job with the specified job_id and its related jobs (if any) are included in the results.
+		- If filtering by files, additional post-processing is performed since file filtering is not handled in SQL.
+		- The function ensures that the job with the specified current_job_id has full details.
 	"""
-	# get the list of job ids to retrieve
-	job_ids = get_associated_jobs(job_id)
 	# prepare parts of the SQL request
 	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
 	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
@@ -356,52 +391,36 @@ def search_jobs_args(job_id, number = 100, owner = "%", app_name = "%", descript
 	cnx, cursor = connect()
 	# prepare the list of jobs to return
 	jobs = []
-	expected_jobs = number + len(job_ids)  # we expect to retrieve at most this many jobs, including the jobs that are part of a workflow
 	# prepare a variable to hold the position of the job with id job_id
 	job_index = None
-	# prepare a variable to hold the lowest job_id
-	lowest_job_id = None
-	# search all the jobs with a limit, but because we filter on files and it can't be done in SQL, we may have to retrieve more jobs than the limit
-	keep_searching = True
-	while keep_searching:
-		# make a loop to search multiple times until the limit is reached or no more jobs are found
-		request_job_id =  f"AND id < {lowest_job_id}" if lowest_job_id is not None else ""
-		# first search all the jobs, except the one with id job_id, that fit the conditions and are not part of a workflow
-		results = cursor.execute(f"SELECT id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_job_id} {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
-		# if no jobs are found, break the loop
-		if cursor.arraysize > 0 and results is not None:
-			# otherwise, parse the results
-			for id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id in results:
-				# convert the settings from string to json
-				settings = json.loads(settings)
-				# filter by file here, so we can use a specific function for each app
-				if file == "" or apps.is_in_required_files(job_dir, app_name, settings, file):
-					if id == job_id:
-						# store the index of the job with id job_id
-						job_index = len(jobs)
-						# keep placeholders for the jobs corresponding to job_id and its following jobs (if workflow)
-						for i in range(len(job_ids)): jobs.append({})
-					elif start_after_id is None:
-						# if the job is not the one with id job_id, just add it to the list
-						# but if the job is part of a workflow, only add its first job
-						jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date})
-				#  update the lowest job_id if necessary
-				if lowest_job_id is None or id < lowest_job_id: lowest_job_id = id
-				# break the current loop if the list has achieved the limit (workflows should count as one job)
-				if len(jobs) >= expected_jobs or lowest_job_id == 1: break
-		else: keep_searching = False
-		if len(jobs) >= expected_jobs or lowest_job_id == 1: keep_searching = False
-	# then search the job with id job_id and its followers, and put them at the proper place in the list
-	if job_index != None:
-		results = cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id from jobs WHERE id IN ({", ".join(["?"] * len(job_ids))}) ORDER BY id ASC", (job_ids))
-		for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id in results:
-			# stdout and stderr for old jobs used to be kept in the database
-			if stdout == "": stdout = apps.get_stdout_content(id)
-			if stderr == "": stderr = apps.get_stderr_content(id)
-			jobs[job_index] = {"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": json.loads(settings), "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "files": apps.get_file_list(job_dir)}
-			job_index += 1
-	# disconnect from the database and return the list of jobs
+	# make the search
+	cursor.execute(f"SELECT id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_job_id} {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
+	# loop until we have the expected amount of jobs in the array
+	while len(jobs) < number:
+		records = cursor.fetchmany(number)
+		for id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id, workflow_name in records:
+			# convert the settings from string to json
+			settings = json.loads(settings)
+			# filter by file here, so we can use a specific function for each app
+			if file == "" or apps.is_in_required_files(job_dir, app_name, settings, file):
+				# the current job should be more detailed
+				if id == current_job_id:
+					# stdout and stderr for old jobs used to be kept in the database
+					if stdout == "": stdout = apps.get_stdout_content(id)
+					if stderr == "": stderr = apps.get_stderr_content(id)
+					# store as many information as possible, except for the settings
+					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
+					# store the index of the job, we will add the settings later
+					job_index = len(jobs)
+				# for other jobs, return what is required for the sidebar
+				else:
+					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date, "start_after_id": start_after_id, "workflow_name": workflow_name})
+			# do not continue if we have enough results
+			if(len(jobs) == number: break
 	cnx.close()
+	# search for the complete settings of the current job, it should be a map of [job_id, settings]
+	jobs[job_index]["settings"] = json.loads(get_merged_settings(current_job_id))
+	# return the final list of jobs
 	return jobs
 
 def get_last_jobs(job_id, number = 100):
@@ -415,7 +434,7 @@ def get_last_jobs(job_id, number = 100):
 	Returns:
 		list: A list of job records matching the given job ID, limited to the specified number.
 	"""
-	return search_jobs_args(job_id, number)
+	return list_jobs(job_id, number)
 
 def search_jobs(form):
 	# get the user search parameters
@@ -437,8 +456,8 @@ def search_jobs(form):
 	date_field = form["date"]
 	date_from = 0 if form["from"] == "" else time.mktime(datetime.strptime(form["from"], "%Y-%m-%d").timetuple())
 	date_to = int(time.time()) if form["to"] == "" else time.mktime(datetime.strptime(form["to"], "%Y-%m-%d").timetuple())
-	# call the search_jobs_args function to retrieve the jobs
-	return search_jobs_args(current_job_id, number, owner, app_name, desc, statuses, date_field, date_from, date_to, file)
+	# call the list_jobs function to retrieve the jobs
+	return list_jobs(current_job_id, number, owner, app_name, desc, statuses, date_field, date_from, date_to, file)
 
 def get_jobs_per_status(status):
 	"""
