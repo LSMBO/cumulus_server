@@ -20,5 +20,5 @@ converter.raw.to.mzml = /storage/share/ThermoRawFileParser1.4.5/ThermoRawFilePar
 converter.d.to.mzml = docker run -u `stat -c "%u:%g" /storage` -v /storage:/storage mfreitas/tdf2mzml tdf2mzml.py
 ntp_server = pool.ntp.org
 
-version = 1.1.1
+version = 1.1.2
 client.min.version = 1.1.0
