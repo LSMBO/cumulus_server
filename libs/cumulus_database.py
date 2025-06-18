@@ -355,7 +355,7 @@ def get_merged_settings(job_id):
 	# search for all the settings
 	results = cursor.execute(f"SELECT id, settings from jobs WHERE id IN ({", ".join(["?"] * len(job_ids))}) ORDER BY id ASC", (job_ids))
 	for id, settings in results:
-		settings_set{id} = settings
+		settings_set[id] = settings
 	# close the connection
 	cnx.close()
 	return settings_set
