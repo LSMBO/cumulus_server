@@ -416,7 +416,7 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 				else:
 					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date, "start_after_id": start_after_id, "workflow_name": workflow_name})
 			# do not continue if we have enough results
-			if(len(jobs) == number: break
+			if(len(jobs)) == number: break
 	cnx.close()
 	# search for the complete settings of the current job, it should be a map of [job_id, settings]
 	jobs[job_index]["settings"] = json.loads(get_merged_settings(current_job_id))
