@@ -4,13 +4,13 @@
 		<param name="precursor_tol_unit" value="ppm" visibility="disabled" />
 	</tool>
 	<tool id="diann_2.0.2">
-		<param name="fasta-file" from_tool="0" value="%database.fasta%" visibility="disabled" />
-		<param name="ms1-acc" from_tool="0" value="%precursor_tol.ppm%" visibility="disabled" />
-		<param name="ms2-acc" from_tool="0" value="%precursor_tol.ppm%" visibility="hidden" />
+		<param name="fasta-file" from_tool="0" value="database.fasta" visibility="disabled" />
+		<param name="ms1-acc" from_tool="0" value="precursor_tol.ppm" visibility="disabled" />
+		<param name="ms2-acc" from_tool="0" value="precursor_tol.ppm" visibility="hidden" />
 	</tool>
 	<tool id="diann_2.1.0">
-		<param name="fasta-file" from_tool="0" value="%database.fasta%" visibility="hidden" />
-		<param name="ms1-acc" from_tool="0" value="%precursor_tol.ppm%" visibility="hidden" />
-		<param name="ms2-acc" from_tool="0" value="%precursor_tol.ppm%" visibility="disabled" />
+		<param name="fasta-file" from_tool="0" value="database.fasta" visibility="hidden" />
+		<param name="ms1-acc" from_tool="0" value="precursor_tol.ppm" visibility="hidden" />
+		<param name="ms2-acc" from_tool="0" value="precursor_tol.ppm" visibility="disabled" />
 	</tool>
 </workflow>
