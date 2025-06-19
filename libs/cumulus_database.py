@@ -406,13 +406,13 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 			if file == "" or apps.is_in_required_files(job_dir, app_name, settings, file):
 				# the current job should be more detailed
 				if id == current_job_id:
+					# store the index of the job, we will add the settings later
+					job_index = len(jobs)
 					# stdout and stderr for old jobs used to be kept in the database
 					if stdout == "": stdout = apps.get_stdout_content(id)
 					if stderr == "": stderr = apps.get_stderr_content(id)
 					# store as many information as possible, except for the settings
 					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
-					# store the index of the job, we will add the settings later
-					job_index = len(jobs)
 				# for other jobs, return what is required for the sidebar
 				else:
 					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date, "start_after_id": start_after_id, "workflow_name": workflow_name})
@@ -420,7 +420,7 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 			if(len(jobs)) == number: break
 	cnx.close()
 	# search for the complete settings of the current job, it should be a map of [job_id, settings]
-	jobs[job_index]["settings"] = get_merged_settings(current_job_id)
+	if job_index is not None: jobs[job_index]["settings"] = get_merged_settings(current_job_id)
 	# return the final list of jobs
 	return jobs
 
