@@ -395,11 +395,13 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 	# prepare a variable to hold the position of the job with id job_id
 	job_index = None
 	# make the search
-	cursor.execute(f"SELECT id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
+	cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
 	# loop until we have the expected amount of jobs in the array
+	nb_jobs = 0
 	while len(jobs) < number:
 		records = cursor.fetchmany(number)
-		for id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id, workflow_name in records:
+		if len(records) == 0: break
+		for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id, workflow_name in records:
 			# convert the settings from string to json
 			settings = json.loads(settings)
 			# filter by file here, so we can use a specific function for each app
@@ -417,7 +419,10 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 				else:
 					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date, "start_after_id": start_after_id, "workflow_name": workflow_name})
 			# do not continue if we have enough results
-			if(len(jobs)) == number: break
+			if len(jobs) == number: break
+			# do not continue if no new jobs have been added (to avoid infinite loops)
+			if len(jobs) == nb_jobs: break
+			nb_jobs = len(jobs)
 	cnx.close()
 	# search for the complete settings of the current job, it should be a map of [job_id, settings]
 	if job_index is not None: jobs[job_index]["settings"] = get_merged_settings(current_job_id)
