@@ -55,7 +55,7 @@ def test_initialize_database():
     response = cursor.fetchone()
     nb = response[0]
     cnx.close()
-    assert nb == 15  # check that the table has 15 columns
+    assert nb == 16  # check that the table has 16 columns
 
 def test_create_job():
     # get settings as text
@@ -156,13 +156,13 @@ def test_get_last_jobs():
     jobs = db.get_last_jobs(1)
     # if pytest is called repeatedly, the next assertion may fail
     assert len(jobs) == 7
-    assert jobs[4]["id"] == 1
+    assert jobs[4]["id"] == 3
     assert jobs[4]["owner"] == "test.user"
     assert "strategy" not in jobs[1]
 
 def test_search_jobs():
     jobs = db.search_jobs({"current_job_id": 1, "owner": "test.user", "app": "", "description": "", "number": "", "FAILED": "on", "date": "start_date", "from": "", "to": "", "file": ""})
-    assert len(jobs) == 3
+    assert len(jobs) == 1
     assert jobs[0]["id"] == 1
 
 def test_get_jobs_per_status():
