@@ -65,6 +65,7 @@ def add_column(cnx, cursor, column_name, column_type):
 		# add the start_after_id column if it does not exist
 		cursor.execute(f"ALTER TABLE jobs ADD COLUMN {column_name} {column_type}")
 		cnx.commit()
+		logger.info(f"Column '{column_name}' has been added to the database.")
 
 def initialize_database():
 	"""
@@ -394,7 +395,7 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 	# prepare a variable to hold the position of the job with id job_id
 	job_index = None
 	# make the search
-	cursor.execute(f"SELECT id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_job_id} {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
+	cursor.execute(f"SELECT id, owner, app_name, status, settings, host, creation_date, end_date, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
 	# loop until we have the expected amount of jobs in the array
 	while len(jobs) < number:
 		records = cursor.fetchmany(number)
