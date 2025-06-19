@@ -356,7 +356,7 @@ def get_merged_settings(job_id):
 	# search for all the settings
 	results = cursor.execute(f"SELECT id, settings from jobs WHERE id IN ({", ".join(["?"] * len(job_ids))}) ORDER BY id ASC", (job_ids))
 	for id, settings in results:
-		settings_set[id] = settings
+		settings_set[id] = json.loads(settings)
 	# close the connection
 	cnx.close()
 	return settings_set
@@ -420,7 +420,7 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 			if(len(jobs)) == number: break
 	cnx.close()
 	# search for the complete settings of the current job, it should be a map of [job_id, settings]
-	jobs[job_index]["settings"] = json.loads(get_merged_settings(current_job_id))
+	jobs[job_index]["settings"] = get_merged_settings(current_job_id)
 	# return the final list of jobs
 	return jobs
 
