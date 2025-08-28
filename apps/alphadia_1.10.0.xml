@@ -1,4 +1,4 @@
-<tool id="alphadia_1.10.0" name="AlphaDIA" version="1.10.0" description="" command="/storage/share/alphadia-1.10.0/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="TODO" category="__work_in_progress__" hidden="true">
+<tool id="alphadia_1.10.0" name="AlphaDIA" version="1.10.0" description="" command="/cumulus/share/alphadia-1.10.0/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="TODO" category="__work_in_progress__" hidden="true">
 
     <section name="input" title="Input files" expanded="true">
         <conditional name="raw">

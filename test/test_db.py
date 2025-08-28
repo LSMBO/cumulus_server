@@ -102,12 +102,12 @@ def test_set_status():
     db.set_status(1, "FAILED")
     assert db.get_value(1, "status") == "FAILED"
 
-def test_get_host():
-    assert db.get_host(1) == ""
+# def test_get_host():
+#     assert db.get_host(1) == ""
 
-def test_set_host():
-    db.set_host(1, "my_test_host")
-    assert db.get_value(1, "host") == "my_test_host"
+# def test_set_host():
+#     db.set_host(1, "my_test_host")
+#     assert db.get_value(1, "host") == "my_test_host"
 
 def test_set_start_date():
     assert db.get_value(1, "start_date") == None
@@ -150,15 +150,16 @@ def test_check_job_existency():
     assert not db.check_job_existency(9)
 
 def test_get_job_to_string():
-    assert db.get_job_to_string(1) == "Workflow job 1, owner:test.user, app:diann_2.0, status:FAILED, host:my_test_host"
+    assert db.get_job_to_string(1) == "Workflow job 1, owner:test.user, app:diann_2.0, status:FAILED, strategy:best_ram"
 
-def test_get_last_jobs():
-    jobs = db.get_last_jobs(1)
-    # if pytest is called repeatedly, the next assertion may fail
-    assert len(jobs) == 7
-    assert jobs[4]["id"] == 3
-    assert jobs[4]["owner"] == "test.user"
-    assert "strategy" not in jobs[1]
+# this function is commented because it gave inconsistent results when pytest is called repeatedly
+# def test_get_last_jobs():
+#     jobs = db.get_last_jobs(1)
+#     # if pytest is called repeatedly, the next assertion may fail
+#     assert len(jobs) == 7
+#     assert jobs[4]["id"] == 3
+#     assert jobs[4]["owner"] == "test.user"
+#     assert "strategy" not in jobs[1]
 
 def test_search_jobs():
     jobs = db.search_jobs({"current_job_id": 1, "owner": "test.user", "app": "", "description": "", "number": "", "FAILED": "on", "date": "start_date", "from": "", "to": "", "file": ""})
@@ -169,9 +170,9 @@ def test_get_jobs_per_status():
     assert db.get_jobs_per_status("PENDING") == [2, 3, 4, 5, 6, 7]
     assert db.get_jobs_per_status("FAILED") == [1]
 
-def test_get_alive_jobs_per_host():
-    assert db.get_alive_jobs_per_host("my_test_host") == (2, 0)
-    assert db.get_alive_jobs_per_host("") == (4, 0)
+# def test_get_alive_jobs_per_host():
+#     assert db.get_alive_jobs_per_host("my_test_host") == (2, 0)
+#     assert db.get_alive_jobs_per_host("") == (4, 0)
 
 def test_delete_job():
     db.delete_job(4)

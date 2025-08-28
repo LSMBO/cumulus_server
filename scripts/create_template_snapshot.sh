@@ -1,4 +1,4 @@
-# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2025)
+# Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
 # 
 # [a.burel@unistra.fr]
 # 
@@ -30,33 +30,32 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-import libs.cumulus_config as config
 
-def test_load():
-	config.load("test/cumulus.conf")
-	assert len(config.CONFIG) == 30
+# This script allows the administrator to create a new snapshot of the template server.
+# The administrator can add new software or update dependencies on the template server, and then test it directly.
+# Once the template server is ready, this script will create a new snapshot of it, that can be used to create temporary servers for the next jobs.
+# The previous snapshot will be kept, the new one will be used by default. Any other snapshot will be deleted.
 
-def test_get():
-	assert config.get("database.file.path") == "./test/cumulus.db"
+#!/bin/bash
 
-def test_init():
-	config.init(False)
-	assert config.DATA_DIR == "./test/data"
+VOLUME="cumulus-template-volume"
+SNAPSHOT_NAME="cumulus-template-snapshot"
 
-def test_export():
-	config.load("./test/cumulus.conf")
-	assert config.export() == {
-		'input.folder': 'input', 
-		'output.folder': 'output', 
-		'temp.folder': 'temp', 
-		'data.max.age.in.days': '90', 
-		'controller.version': '0.5.0', 
-		'client.min.version': '0.5.0', 
-		'openstack.max.flavor': '7'
-	}
+# create a new snapshot with a temporary name
+# use --force because the volume cannot be detached from the server (it's the boot volume)
+openstack volume snapshot create --volume "$VOLUME" --force "$SNAPSHOT_NAME-new"
 
-# def test_get_final_stdout_path():
-# 	assert config.get_final_stdout_path(1) == "./test/logs/job_1.stdout"
+# delete the previous snapshot if it exists
+if openstack volume snapshot show "$SNAPSHOT_NAME-previous" >/dev/null 2>&1; then
+    openstack volume snapshot delete "$SNAPSHOT_NAME-previous"
+fi
 
-# def test_get_final_stderr_path():
-# 	assert config.get_final_stderr_path(1) == "./test/logs/job_1.stderr"
+# rename the current snapshot to previous if it exists
+if openstack volume snapshot show "$SNAPSHOT_NAME" >/dev/null 2>&1; then
+    openstack volume snapshot set --name "$SNAPSHOT_NAME-previous" "$SNAPSHOT_NAME"
+fi
+
+# rename the new snapshot to the current name
+openstack volume snapshot set --name "$SNAPSHOT_NAME" "$SNAPSHOT_NAME-new"
+
+echo "New snapshot $SNAPSHOT_NAME created successfully."

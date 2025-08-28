@@ -1,4 +1,4 @@
-<tool id="sage_0.15.0-alpha" name="Sage" version="0.15.0-alpha" description="" command="/storage/share/sage-v0.15.0-alpha/sage_db_splitting '%config-file%'" convert_config_to="json" end_tag="TODO" category="__work_in_progress__" hidden="true">
+<tool id="sage_0.15.0-alpha" name="Sage" version="0.15.0-alpha" description="" command="/cumulus/share/sage-v0.15.0-alpha/sage_db_splitting '%config-file%'" convert_config_to="json" end_tag="TODO" category="__work_in_progress__" hidden="true">
 
     <section name="files" title="Input files" expanded="true">
         <conditional name="raw">

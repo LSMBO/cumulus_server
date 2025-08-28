@@ -80,7 +80,6 @@ def initialize_database():
 	# connect to the database, create it if it does not exist yet
 	cnx, cursor = connect()
 	# create the main table if it does not exist
-	# TODO add workflow_name TEXT to the list, it will help keeping track of which app in which workflow is running (also it will allow to know if a job is part of a workflow)
 	cursor.execute("""
 		CREATE TABLE IF NOT EXISTS jobs(
 			id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
@@ -268,10 +267,6 @@ def get_associated_jobs(job_id):
 
 def set_status(job_id, status): set_value(job_id, "status", status)
 def get_status(job_id): return get_value(job_id, "status")
-def set_host(job_id, host):
-	# if the job represents a workflow, set the host to all other jobs
-	for id in get_associated_jobs(job_id): set_value(id, "host", host)
-def get_host(job_id): return get_value(job_id, "host")
 def set_start_date(job_id): set_value(job_id, "start_date", int(time.time()))
 def set_end_date(job_id):
 	# if the job represents a workflow, set the host to all other jobs
@@ -286,6 +281,7 @@ def set_strategy(job_id, strategy):
 	for id in get_associated_jobs(job_id): set_value(job_id, "strategy", strategy)
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
+def set_job_dir(job_id, job_dir): set_value(job_id, "job_dir", job_dir)
 
 def check_job_existency(job_id):
 	"""
@@ -324,11 +320,11 @@ def get_job_to_string(job_id):
 	# connect to the database
 	cnx, cursor = connect()
 	# search the job that corresponds to the id
-	cursor.execute("SELECT owner, app_name, status, host FROM jobs WHERE id = ?", (job_id,))
+	cursor.execute("SELECT owner, app_name, status, strategy FROM jobs WHERE id = ?", (job_id,))
 	job = ""
 	if cursor.arraysize > 0:
-		owner, app_name, status, host = cursor.fetchone()
-		job = f"{tag} {job_id}, owner:{owner}, app:{app_name}, status:{status}, host:{host}"
+		owner, app_name, status, strategy = cursor.fetchone()
+		job = f"{tag} {job_id}, owner:{owner}, app:{app_name}, status:{status}, strategy:{strategy}"
 	# disconnect and return the string
 	cnx.close()
 	return job
@@ -395,13 +391,15 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 	# prepare a variable to hold the position of the job with id job_id
 	job_index = None
 	# make the search
-	cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
+	# cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
+	cursor.execute(f"SELECT id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, job_dir, start_after_id, workflow_name FROM jobs WHERE owner LIKE ? AND app_name LIKE ? AND description LIKE ? {request_status} {request_date} ORDER BY id DESC LIMIT ?", (owner, app_name, description, number))
 	# loop until we have the expected amount of jobs in the array
 	nb_jobs = 0
 	while len(jobs) < number:
 		records = cursor.fetchmany(number)
 		if len(records) == 0: break
-		for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id, workflow_name in records:
+		# for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, stdout, stderr, job_dir, start_after_id, workflow_name in records:
+		for id, owner, app_name, status, strategy, description, settings, host, creation_date, start_date, end_date, job_dir, start_after_id, workflow_name in records:
 			# convert the settings from string to json
 			settings = json.loads(settings)
 			# filter by file here, so we can use a specific function for each app
@@ -411,10 +409,12 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 					# store the index of the job, we will add the settings later
 					job_index = len(jobs)
 					# stdout and stderr for old jobs used to be kept in the database
-					if stdout == "": stdout = apps.get_stdout_content(id)
-					if stderr == "": stderr = apps.get_stderr_content(id)
+					# if stdout == "": stdout = apps.get_stdout_content(id)
+					# if stderr == "": stderr = apps.get_stderr_content(id)
+					log = apps.get_log_file_content(id)
 					# store as many information as possible, except for the settings
-					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
+					# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
+					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "log": log, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
 				# for other jobs, return what is required for the sidebar
 				else:
 					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date, "start_after_id": start_after_id, "workflow_name": workflow_name})
@@ -487,39 +487,6 @@ def get_jobs_per_status(status):
 	# return a list of job ids
 	return jobs
 
-def get_alive_jobs_per_host(host_name):
-	"""
-	Retrieves the number of 'PENDING' and 'RUNNING' jobs for a specified host from the database.
-	Jobs that are part of a workflow are NOT joined together, meaning that each job is counted separately.
-
-	Args:
-		host_name (str): The name of the host for which to count alive jobs.
-
-	Returns:
-		tuple: A tuple (pending, running) where:
-			- pending (int): The number of jobs with status 'PENDING'.
-			- running (int): The number of jobs with status 'RUNNING'.
-
-	Raises:
-		Any exceptions raised by the database connection or query execution.
-	"""
-	# connect to the database
-	cnx, cursor = connect()
-	# search the jobs that fit the conditions
-	results = cursor.execute("SELECT id, status, start_after_id from jobs WHERE host = ? AND (status = 'RUNNING' or status = 'PENDING')", (host_name,))
-
-
-	# search the jobs that fit the conditions
-	results = cursor.execute("SELECT status from jobs WHERE host = ? AND (status = 'RUNNING' or status = 'PENDING')", (host_name,))
-	# count each type of job
-	pending = 0
-	running = 0
-	for status, in results:
-		if status == "PENDING": pending += 1
-		else: running += 1
-	cnx.close()
-	return pending, running
-
 def delete_job(job_id):
 	"""
 	Deletes a job from the database and removes its associated log files.
@@ -546,11 +513,6 @@ def delete_job(job_id):
 		cnx.commit()
 		# disconnect
 		cnx.close()
-		# also remove the log files
-		stdout = config.get_final_stdout_path(id)
-		if os.path.isfile(stdout): os.remove(stdout)
-		stderr = config.get_final_stderr_path(id)
-		if os.path.isfile(stderr): os.remove(stderr)
 
 def set_fake_creation_date(job_id, seconds_to_add = -86400):
 	"""
@@ -632,3 +594,21 @@ def is_file_in_use(file):
 	# disconnect
 	cnx.close()
 	return is_used
+
+def get_currently_running_strategies():
+	"""
+	Retrieve a list of job strategies from the database that are currently running.
+
+	Returns:
+		list: A list of strategies (str) that are currently associated with jobs in 'RUNNING' status.
+	"""
+	# connect to the database
+	cnx, cursor = connect()
+	# search the jobs that fit the conditions
+	results = cursor.execute("SELECT strategy from jobs WHERE status = 'RUNNING' ORDER BY id ASC")
+	# store the ids
+	strategies = []
+	for strategy, in results: strategies.append(strategy)
+	cnx.close()
+	# return a list of strategies
+	return strategies

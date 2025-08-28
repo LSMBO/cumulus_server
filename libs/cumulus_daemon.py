@@ -32,6 +32,7 @@
 
 import logging
 import os
+import threading
 import time
 
 import libs.cumulus_config as config
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 REFRESH_RATE = int(config.get("refresh.rate.in.seconds"))
 # MAX_AGE = int(config.get("data.max.age.in.days"))
+MZML_CONVERSION_RUNNING = False
 
 def is_process_running(job_id):
 	"""
@@ -59,28 +61,21 @@ def is_process_running(job_id):
 		bool: True if the process is running, False otherwise.
 	"""
 	# prepare information to check the process
-	host_name = db.get_host(job_id)
+	# host_name = db.get_host(job_id)
 	is_alive = False
 	# get all the jobs that are associated to this job_id (could be several if the job is part of a workflow)
 	for id in db.get_associated_jobs(job_id):
-		pid = utils.get_pid(id)
-		# if the pid is still alive, it's RUNNING
-		is_alive = utils.is_alive(host_name, str(pid))
-		# logger.debug(f"Job {job_id} is alive? {is_alive}")
-		# no need to check the other jobs if one is alive
-		if is_alive: break
-	if is_alive: 
-		return True
-	else:
-		# check directly on the host if the pid is still alive (it may not be in the pid file yet)
-		logger.debug(f"Job {job_id} was not found in the pid file, sending a request to {host_name}")
-		host = utils.get_host(host_name)
-		# return utils.remote_check(host, pid)
-		# check the pids of all the jobs that are associated to this job_id
-		for id in db.get_associated_jobs(job_id):
-			pid = utils.get_pid(id)
-			if utils.remote_check(host, pid): return True
-		return False
+		# two files are used to check if the job is still running:
+		alive_file = db.get_job_dir(id) + "/" + config.JOB_ALIVE_FILE # the alive file is created when the job starts
+		stop_file = db.get_job_dir(id) + "/" + config.JOB_STOP_FILE # the stop file is created when the job ends
+		# if the alive file exists, it must have been updated recently (less than 3 minutes ago) to consider that the job is still running
+		if os.path.exists(alive_file): is_alive = time.time() - os.path.getmtime(alive_file) < 180
+		# if the alive file does not exist, check if the stop file exists, in this case, the job has stopped
+		elif os.path.exists(stop_file): is_alive = False
+		# there should always be an alive file or a stop file, but if none of them exist, we consider that the job is not running
+		else: is_alive = False
+	# return the status directly
+	return is_alive
 
 def check_running_jobs():
 	"""
@@ -97,59 +92,21 @@ def check_running_jobs():
 	This function relies on external modules for database access, process checking, and application-specific job status evaluation.
 	"""
 	for job_id in db.get_jobs_per_status("RUNNING"):
-		# # get stdout
-		# stdout = apps.get_stdout_content(job_id)
-		# # get job_dir
-		# job_dir = db.get_job_dir(job_id)
 		# check that the process still exist
 		if not is_process_running(job_id):
-			# the pid may not be in the pid file yet, as it is reloaded every 60 seconds
-			# if not, the process has ended, record the end date
+			# destroy the worker VM in the background
+			thr = threading.Thread(target=utils.destroy_worker, args=(job_id))
+			thr.start()
+			# record the end date
 			db.set_end_date(job_id)
 			# ask the proper app module if the job is finished or failed
-			# if apps.is_finished(db.get_app_name(job_id), stdout): 
 			if apps.is_finished(job_id, db.get_app_name(job_id)): 
-				status = "DONE"
-				db.set_status(job_id, status)
+				db.set_status(job_id, "DONE")
 				logger.info(f"Correct ending of {db.get_job_to_string(job_id)}")
 			else:
-				status = "FAILED"
-				db.set_status(job_id, status)
+				db.set_status(job_id, "FAILED")
 				db.set_end_date(job_id)
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
-
-def find_host(job_id):
-	"""
-	Finds and returns an available host for a given job based on the specified scheduling strategy.
-
-	Args:
-		job_id (str or int): The identifier of the job for which a host is to be found.
-
-	Returns:
-		Host or None: The first available host object that matches the strategy and is not currently running any jobs.
-		Returns None if no suitable host is available at the moment.
-
-	Behavior:
-		- Retrieves the scheduling strategy for the job from the database.
-		- If no strategy is set, defaults to "first_available" and logs a warning.
-		- Gets a list of hosts matching the strategy.
-		- Returns the first host that is not running any jobs.
-		- Logs a debug message and returns None if no host is available.
-	"""
-	# select the host matching the strategy (best_cpu, best_ram, first_available, <host_name>)
-	strategy = db.get_strategy(job_id)
-	if strategy == "": 
-		logger.warning(f"No strategy is given for job {job_id}, use the first available host instead")
-		db.set_strategy(job_id, "first_available")
-	# get the list of hosts matching the strategy
-	hosts = utils.get_hosts_for_strategy(strategy)
-	# return the first host that is not running anything
-	for host in hosts:
-		_, running = db.get_alive_jobs_per_host(host.name)
-		if running == 0: return host
-	# if no host is available, return None
-	logger.debug(f"No host available for job {job_id} with strategy '{strategy}' at this moment, maybe later...")
-	return None
 
 def start_job(job_id, job_dir, app_name, settings, host):
 	"""
@@ -168,17 +125,17 @@ def start_job(job_id, job_dir, app_name, settings, host):
 		- Updates the job's host, status, and start date in the database.
 		- Logs information about the job execution process.
 	"""
-	# generate the script to run
-	# cmd_file = apps.generate_script(job_id, job_dir, app_name, settings, host.cpu)
-	cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
-	utils.write_file(cmd_file, content)
-	# execute the command
-	logger.info(f"Sending SSH request to start job {job_id} on host '{host.name}'")
-	utils.remote_script(host, cmd_file)
-	# update the job
-	db.set_host(job_id, host.name)
+	# directly set the host and the status to RUNNING in the database to avoid starting another job on the same host
 	db.set_status(job_id, "RUNNING")
 	db.set_start_date(job_id)
+	# create the worker based on the template worker
+	host = utils.create_worker() # TODO
+	# create the script to run the job
+	cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
+	utils.write_file(cmd_file, content)
+	# start the remote script to run the job
+	remote_cmd = f"{config.TEMP_DIR}/{config.JOB_START_FILE} {job_id} '{job_dir}'"
+	utils.remote_script(host, remote_cmd)
 	# log the command
 	logger.info(f"Starting {db.get_job_to_string(job_id)}")
 
@@ -206,14 +163,27 @@ def start_pending_jobs():
 		job_dir = db.get_job_dir(job_id)
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
+		host_file = f"{job_dir}/{config.HOST_FILE}"
+		# if the host file is present, get the host from this file and start the job directly
+		host = utils.get_host_from_file(host_file)
+		if host is not None:
+			start_job(job_id, job_dir, app_name, settings, host)
 		# check that all the files are present
-		if apps.are_all_files_transfered(job_dir, app_name, settings):
+		elif apps.are_all_files_transfered(job_dir, app_name, settings):
 			logger.info(f"Job {job_id} is ready to start")
-			# check that there is an available host matching the strategy
-			host = find_host(job_id)
-			# if all is ok, the job can start and its status can turn to RUNNING
-			if host is not None: start_job(job_id, job_dir, app_name, settings, host)
-			else: logger.warning(f"No host available for job {job_id}...")
+			# the strategy of the job must tell us which flavor to use
+			flavor = utils.check_flavor(job_id)
+			if flavor is None:
+				logger.warning(f"No host available for job {job_id} with flavor '{flavor}' at this moment")
+			else:
+				# create the new VM with this flavor
+				# run this in a thread, and call start_job once the host is created
+				# the status will remain PENDING until the host is created and the job started
+				thr = threading.Thread(target=utils.create_worker, args=(job_id, flavor))
+				thr.start()
+			# # if all is ok, the job can start and its status can turn to RUNNING
+			# if host is not None: start_job(job_id, job_dir, app_name, settings, host)
+			# else: logger.warning(f"No host available for job {job_id}...")
 		else:
 			logger.debug(f"Job {job_id} is NOT ready to start YET")
 
@@ -268,20 +238,53 @@ def clean():
 		max_age_in_seconds = int(config.get("data.max.age.in.days")) * 86400
 		for job_id, status, job_dir in db.get_ended_jobs_older_than(max_age_in_seconds):
 			db.set_status(job_id, "ARCHIVED_" + status)
-			utils.delete_job_folder(job_dir)
+			utils.delete_job_folder(job_dir, False, True)
 			logger.warning(f"Job {job_id} has been archived and its content has been deleted")
 		# list the folders in the job directory that are not linked to any job
 		for job_dir in utils.get_zombie_jobs():
 			logger.warning(f"Job folder {job_dir} is not linked to any real job and will be deleted")
-			utils.delete_job_folder_no_db(job_dir)
-		# delete log files that are not linked to any job
-		zombie_log_files = utils.get_zombie_log_files()
-		if len(zombie_log_files) > 0: logger.warning(f"{len(zombie_log_files)} log files are not linked to any real job and will be deleted")
-		for log_file in zombie_log_files:
-			os.remove(log_file)
+			utils.delete_folder(job_dir)
+		# # delete log files that are not linked to any job
+		# zombie_log_files = utils.get_zombie_log_files()
+		# if len(zombie_log_files) > 0: logger.warning(f"{len(zombie_log_files)} log files are not linked to any real job and will be deleted")
+		# for log_file in zombie_log_files:
+		# 	os.remove(log_file)
 		# list the shared files that are old and not used
 		for file in utils.get_unused_shared_files_older_than(max_age_in_seconds):
 			utils.delete_raw_file(file)
 			logger.warning(f"File {os.path.basename(file)} has been deleted due to old age")
 		# wait 24 hours between each cleaning
 		time.sleep(86400)
+
+def convert_raw_to_mzml():
+	"""
+	Converts raw data files to mzML format for pending jobs.
+	This function checks for pending jobs and converts their associated raw data files to mzML format if they haven't been converted yet.
+	It ensures that only one conversion process runs at a time using a global flag.
+	This function is not exactly a daemon, as it is intended to be called periodically from the main daemon loop.
+	But is has to be called in a separate thread to avoid blocking the main daemon loop.
+	"""
+	global MZML_CONVERSION_RUNNING
+	# if a conversion is already running, do nothing
+	if MZML_CONVERSION_RUNNING: return
+	# set a flag to indicate that the conversion is running
+	MZML_CONVERSION_RUNNING = True
+	# wait a little before starting the conversion
+	time.sleep(10)
+	# list all the pending jobs, oldest ones first
+	for job_id in db.get_jobs_per_status("PENDING"):
+		# get the list of raw files that need to be converted to mzML
+		job_dir = db.get_job_dir(job_id)
+		app_name = db.get_app_name(job_id)
+		settings = db.get_settings(job_id)
+		files_to_convert = apps.get_files(job_dir, app_name, settings, False, True)
+		# get the first file that needs to be converted, and is not being converted yet
+		for file in files_to_convert:
+			mzml_file = apps.get_mzml_file_path(file)
+			temp_file = f"{config.TEMP_DIR}/{os.path.basename(mzml_file)}"
+			# if there is one, and it does not exist yet, and is not being converted yet, we will convert it
+			if not os.path.exists(mzml_file) and not os.path.exists(temp_file):
+				utils.convert_to_mzml(file)
+	# reset the flag to indicate that the conversion is not running anymore
+	MZML_CONVERSION_RUNNING = False
+	

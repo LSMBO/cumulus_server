@@ -1,4 +1,4 @@
-<tool id="alphadia_1.10.1" name="AlphaDIA" version="1.10.1" description="" command="/storage/share/miniconda3/envs/alphadia/bin/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="=== Search Finished ===" hidden="true">
+<tool id="alphadia_1.10.1" name="AlphaDIA" version="1.10.1" description="" command="/cumulus/share/miniconda3/envs/alphadia/bin/alphadia --config '%config-file%' -o '%output_dir%'" convert_config_to="yaml" end_tag="=== Search Finished ===" hidden="true">
 
     <section name="input" title="Input files" expanded="true">
         <conditional name="raw">

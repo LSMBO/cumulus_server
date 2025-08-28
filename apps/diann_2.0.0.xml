@@ -1,4 +1,4 @@
-<tool id="diann_2.0" name="Dia-NN" version="2.0" description="" end_tag="Finished\n\n\nHow to cite:\n" command="/storage/share/diann-2.0/diann-linux --temp 'temp' --threads %nb_threads% --out '%output_dir%/report.parquet'" hidden="true">
+<tool id="diann_2.0" name="Dia-NN" version="2.0" description="" end_tag="Finished\n\n\nHow to cite:\n" command="/cumulus/share/diann-2.0/diann-linux --temp 'temp' --threads %nb_threads% --out '%output_dir%/report.parquet'" hidden="true">
     <section name="input" title="Input files" expanded="true" >
         <conditional name="raw">
             <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
@@ -30,7 +30,7 @@
             </select>
             <when value="fasta">
                 <filelist name="fasta-file" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" command="--lib '' --fasta-search --predictor --gen-spec-lib" repeated_command="--fasta '%value%'" help="Specify the FASTA file you want to use" />
-                <checkbox name="contaminants" label="Contaminants" value="false" command="--fasta /storage/share/camprotR_240512_cRAP_20190401_full_tags.fasta --cont-quant-exclude cRAP-" help="Auto-include common contaminants and exclude all respective peptides from quantification" />
+                <checkbox name="contaminants" label="Contaminants" value="false" command="--fasta /cumulus/share/camprotR_240512_cRAP_20190401_full_tags.fasta --cont-quant-exclude cRAP-" help="Auto-include common contaminants and exclude all respective peptides from quantification" />
                 <select name="protease" label="Protease" help="Enzyme used for the digest">
                     <option value="K*,R*" selected="true" command="--cut 'K*,R*'">Trypsin /P</option>
                     <option value="K*,R*,!*P" command="--cut 'K*,R*,!*P'">Trypsin</option>

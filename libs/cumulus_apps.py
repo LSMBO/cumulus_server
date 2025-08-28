@@ -43,6 +43,7 @@ import libs.cumulus_utils as utils
 
 logger = logging.getLogger(__name__)
 FINAL_FILE = config.get("final.file")
+INPUT_DIR = config.get("input.folder")
 OUTPUT_DIR = config.get("output.folder")
 ALLOWED_CONFIG_FORMATS = ['json', 'yaml']
 APPS = {}
@@ -139,8 +140,9 @@ def is_finished(job_id, app_name):
 		tag_location = ET.fromstring(APPS[app_name]).attrib.get("end_tag_location")
 		# if tag_location is None, use the default value
 		file_content = ""
-		if tag_location == None: file_content = get_stdout_content(job_id)
-		elif tag_location == "%stderr%": file_content = get_stderr_content(job_id)
+		# if tag_location == None: file_content = get_stdout_content(job_id)
+		# elif tag_location == "%stderr%": file_content = get_stderr_content(job_id)
+		if tag_location == None or tag_location == "%stderr%": file_content = get_log_file_content(job_id)
 		elif os.path.isfile(tag_location):
 			f = open(tag_location, "r")
 			file_content = f.read()
@@ -174,20 +176,6 @@ def get_file_path(job_dir, file_path, is_raw_input):
 	if is_raw_input == "true": return config.DATA_DIR + "/" + os.path.basename(file_path)
 	else: return f"{job_dir}/{os.path.basename(file_path)}"
 
-def get_mzml_file_path(file_path):
-	"""
-	Replaces the extension of the given file path with '.mzML' and returns the new path.
-	This is useful to know in advance what the file name will be after conversion to mzML.
-
-	Args:
-		file_path (str): The original file path.
-
-	Returns:
-		str: The file path with its extension replaced by '.mzML'.
-	"""
-	# replace the extension of the file by .mzML and return the path
-	return file_path.replace(os.path.splitext(file_path)[1], f".mzML")
-
 def is_mzml_file_already_converted(file_path):
 	"""
 	Checks if the mzML version of the given file already exists.
@@ -199,7 +187,7 @@ def is_mzml_file_already_converted(file_path):
 		bool: True if the corresponding .mzML file exists, False otherwise.
 	"""
 	# replace the extension of the file by .mzML and check if it exists
-	return os.path.isfile(get_mzml_file_path(file_path))
+	return os.path.isfile(utils.get_mzml_file_path(file_path))
 
 def get_filelist_content(job_dir, param, settings, consider_mzml_converted_files = False, only_files_to_convert_to_mzml = False):
 	"""
@@ -244,7 +232,7 @@ def get_filelist_content(job_dir, param, settings, consider_mzml_converted_files
 			else:
 				# list all the files, either with or without the mzML extension
 				if is_raw_input and convert_to_mzml and consider_mzml_converted_files:
-					files.append(get_mzml_file_path(file))
+					files.append(utils.get_mzml_file_path(file))
 				else:
 					files.append(file)
 	return files
@@ -591,7 +579,7 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 					value = file
 				add_config_to_settings(key, value, config_settings)
 
-def replace_variables(text, nb_cpu, output_dir):
+def replace_variables(text, nb_cpu, input_dir, output_dir):
 	"""
 	Replaces specific placeholder variables in the given text with provided values.
 
@@ -614,11 +602,12 @@ def replace_variables(text, nb_cpu, output_dir):
 	text = text.replace("'%nb_threads%'", "%nb_threads%")
 	text = text.replace("\"%nb_threads%\"", "%nb_threads%")
 	text = text.replace("%nb_threads%", f"{int(nb_cpu) - 1}")
+	text = text.replace("%input_dir%", input_dir)
 	text = text.replace("%output_dir%", output_dir)
 	#return the text
 	return text
 
-def write_config_file(config_file, config_settings, format, nb_cpu, output_dir):
+def write_config_file(config_file, config_settings, format, nb_cpu, input_dir, output_dir):
 	"""
 	Writes configuration settings to a file in the specified format after replacing variables.
 
@@ -641,7 +630,7 @@ def write_config_file(config_file, config_settings, format, nb_cpu, output_dir):
 	if format == "json": text = json.dumps(config_settings)
 	elif format == "yaml": text = yaml.dump(config_settings)
 	# replace variables in the text
-	text = replace_variables(text, nb_cpu, output_dir)
+	text = replace_variables(text, nb_cpu, input_dir, output_dir)
 	# write the content of the settings in the file
 	with open(config_file, "w") as f:
 		f.write(text)
@@ -685,7 +674,7 @@ def is_condition_fulfilled(condition, when, settings):
 	# elif condition.tag == "filelist": return
 	return False
 
-def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
+def get_command_line(app_name, job_dir, settings, nb_cpu, input_dir, output_dir):
 	"""
 	Generates the command line string for executing a specified application with given settings.
 
@@ -749,17 +738,17 @@ def get_command_line(app_name, job_dir, settings, nb_cpu, output_dir):
 		# get the file path of the config file
 		config_file = f"{job_dir}/.cumulus.settings.{config_format}"
 		# write the content of the settings in the file
-		write_config_file(config_file, config_settings, config_format, nb_cpu, output_dir)
+		write_config_file(config_file, config_settings, config_format, nb_cpu, input_dir, output_dir)
 		# replace the variable in the command line
 		command_line = command_line.replace("%config-file%", config_file)
 	# replace some final variables eventually (at the moment, the only variables allowed are: nb_threads and output_dir, value, value2)
-	command_line = replace_variables(command_line, nb_cpu, output_dir)
+	command_line = replace_variables(command_line, nb_cpu, input_dir, output_dir)
 	# return the full command line
 	return command_line
 
 def generate_script_content(job_id, job_dir, app_name, settings, host_cpu):
 	"""
-	Generates the content of a shell script to execute a job in a specified directory, handling input file conversion, 
+	Generates the content of a shell script to execute a job in a specified directory, 
 	output directory creation, and logging.
 
 	Args:
@@ -780,43 +769,13 @@ def generate_script_content(job_id, job_dir, app_name, settings, host_cpu):
 		- The script command line is generated based on the application, job directory, settings, and CPU.
 		- Output and error logs are redirected to specified log files.
 	"""
-	# the working directory is the job directory
-	content = f"cd '{job_dir}'\n"
-	# store the session id (not the pid anymore, sid are better for cancelling jobs)
-	content += "SID=$(ps -p $$ --no-headers -o sid)\n"
-	content += "echo $SID > .cumulus.pid\n"
 	# create a directory where the output files should be generated
+	input_dir = f"./{INPUT_DIR}"
 	output_dir = f"./{OUTPUT_DIR}"
-	content += f"mkdir '{output_dir}'\n"
-	# get the log files paths
-	stdout = config.get_final_stdout_path(job_id)
-	stderr = config.get_final_stderr_path(job_id)
-	# convert the input files eventually
-	# TODO if raw files are Bruker, use a different converter
-	converter_thermo = config.get("converter.raw.to.mzml")
-	converter_bruker = config.get("converter.d.to.mzml")
-	cmd = ""
-	# create the stdout and stderr files
-	cmd += f"touch {stdout}\n"
-	cmd += f"ln -s {stdout} .cumulus.stdout\n"
-	cmd += f"touch {stderr}\n"
-	cmd += f"ln -s {stderr} .cumulus.stderr\n"
-	# for file in get_all_files_to_convert_to_mzml(job_dir, app_name, settings):
-	for file in get_files(job_dir, app_name, settings, False, True):
-		# use the appropriate converter based on the file extension
-		if file.endswith(".d"): cmd += f"{converter_bruker} -i {file} -o {get_mzml_file_path(file)} 1>> {stdout} 2>> {stderr}\n"
-		elif file.endswith(".raw"): cmd += f"mono '{converter_thermo}' -i {file} 1>> {stdout} 2>> {stderr}\n"
-		# if the converter is not set, log an error
-		else: logger.error(f"No converter set for the file {file}, skipping it")
 	# generate the command line based on the xml file and the given settings
-	cmd += get_command_line(app_name, job_dir, settings, host_cpu, output_dir)
-	# redirect the output to the log directory
-	cmd += f" 1>> {stdout}"
-	cmd += f" 2>> {stderr}"
-	# finalize the content
-	content += cmd + "\n"
+	cmd = get_command_line(app_name, job_dir, settings, host_cpu, input_dir, output_dir)
 	# return file path and the content
-	return job_dir + "/.cumulus.cmd", content
+	return job_dir + "/.cumulus.cmd", cmd
 
 def is_file_required(job_dir, app_name, settings, file):
 	"""
@@ -862,7 +821,8 @@ def is_in_required_files(job_dir, app_name, settings, file_tag):
 	# return False in any other case
 	return False
 
-def get_log_file_content(job_id, is_stdout = True):
+# def get_log_file_content(job_id, is_stdout = True):
+def get_log_file_content(job_id):
 	"""
 	Retrieve the content of a job's log file (stdout or stderr).
 
@@ -876,7 +836,8 @@ def get_log_file_content(job_id, is_stdout = True):
 	"""
 	content = ""
 	# read log file
-	log_file = config.get_final_stdout_path(job_id) if is_stdout else config.get_final_stderr_path(job_id)
+	# log_file = utils.get_log_file_path(job_id, is_stdout)
+	log_file = utils.get_log_file_path(job_id)
 	if os.path.isfile(log_file):
 		f = open(log_file, "r")
 		content = f.read()
@@ -884,8 +845,8 @@ def get_log_file_content(job_id, is_stdout = True):
 	# return its content
 	return content
 
-def get_stdout_content(job_id): return get_log_file_content(job_id, True)
-def get_stderr_content(job_id): return get_log_file_content(job_id, False)
+# def get_stdout_content(job_id): return get_log_file_content(job_id, True)
+# def get_stderr_content(job_id): return get_log_file_content(job_id, False)
 
 def get_file_list(job_dir):
 	"""

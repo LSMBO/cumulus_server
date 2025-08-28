@@ -36,6 +36,7 @@ import os
 import paramiko
 import re
 import shutil
+import subprocess
 import time
 
 import libs.cumulus_config as config
@@ -67,8 +68,7 @@ class Host:
 		to_dict():
 			Returns a dictionary containing the host's name, CPU, RAM, and the number of running and pending jobs.
 	"""
-	# TODO maybe add a max number of jobs per host?
-	def __init__(self, name, address, port, user, rsa_key, cpu, ram):
+	def __init__(self, name, address, cpu, ram, volume):
 		"""
 		Initializes a new instance of the class with the specified parameters.
 
@@ -76,161 +76,59 @@ class Host:
 			name (str): The name of the instance.
 			address (str): The network address of the instance.
 			port (int): The port number to connect to.
-			user (str): The username for authentication.
-			rsa_key (str): The RSA key for secure access.
 			cpu (int): The number of CPU cores allocated.
 			ram (int): The amount of RAM allocated (in MB or GB).
 
 		"""
 		self.name = name
 		self.address = address
-		self.port = port
-		self.user = user
-		self.rsa_key = rsa_key
+		self.user = config.WORKER_USERNAME
+		self.port = config.WORKER_PORT
 		self.cpu = int(cpu)
 		self.ram = int(ram)
+		self.volume = volume
 
 	def __str__(self):
 		"""
 		Return a string representation of the object, displaying the name, address, port, user, CPU, and RAM attributes separated by tabs.
 		"""
 		return f"{self.name}\t{self.address}\t{self.port}\t{self.user}\t{self.cpu}\t{self.ram}"
-	
-	def to_dict(self):
-		"""
-		Converts the host object to a dictionary representation, including job statistics.
 
-		Returns:
-			dict: A dictionary containing the host's name, CPU, RAM, number of running jobs, and number of pending jobs.
-		"""
-		pendings, runnings = db.get_alive_jobs_per_host(self.name)
-		return {"name": self.name, "cpu": self.cpu, "ram": self.ram, "jobs_running": runnings, "jobs_pending": pendings}
-
-def get_all_hosts(reload_list = False):
+def get_host_from_file(host_file):
 	"""
-	Retrieves and returns a list of all host objects.
-
-	If the global HOSTS list is empty or if `reload_list` is True, the function reloads the host information
-	from a file specified in the configuration. It skips the header line in the file, parses each host entry,
-	and appends Host objects to the HOSTS list. It also ensures that the directory for storing process IDs exists.
+	Reads host information from a specified file and returns a Host object.
 
 	Args:
-		reload_list (bool): If True, forces reloading the host list from the file. Defaults to False.
+		host_file (str): The path to the file containing host information.
 
 	Returns:
-		list: A list of Host objects representing all available hosts.
+		Host: A Host object populated with data from the file, or None if the file does not exist.
 	"""
-	# the hosts are stored in a global array
-	if len(HOSTS) == 0 or reload_list:
-		# reload_list is True when a client asks for the list
-		HOSTS.clear()
-		# get the list of hosts from the file
-		f = open(config.get("hosts.file.path"), "r")
-		for host in f.read().strip("\n").split("\n"):
-			# skip the first line (header), this line only contains string and tabs
-			if re.search("^[a-zA-Z\\s\\t]+$", host) is not None: continue
-			name, address, user, port, rsa_key, cpu, ram = host.split("\t")
-			HOSTS.append(Host(name, address, port, user, rsa_key, cpu, ram))
+	if os.path.isfile(host_file):
+		host = Host(None, None, None, None, None)
+		f = open(host_file, "r")
+		for line in f.read().strip("\n").split("\n"):
+			if line.startswith("name:"): host.name = line.split("name:")[1].strip()
+			elif line.startswith("address:"): host.address = line.split("address:")[1].strip()
+			elif line.startswith("cpu:"): host.cpu = int(line.split("cpu:")[1].strip())
+			elif line.startswith("ram:"): host.ram = int(line.split("ram:")[1].strip())
+			elif line.startswith("volume:"): host.volume = line.split("volume:")[1].strip()
+		host.user = config.WORKER_USERNAME
+		host.port = config.WORKER_PORT
 		f.close()
-		# make sure the pids directory exists
-		if not os.path.isdir(config.PIDS_DIR): os.mkdir(config.PIDS_DIR)
-	# return the list
-	return HOSTS
+		return host
+	return None
 
-def get_highest_cpu():
-	"""
-	Returns the highest CPU value among all hosts.
+def get_host(job_id):
+	# get the job_dir
+	job_dir = db.get_job_dir(job_id)
+	# return the host from the file
+	return get_host_from_file(job_dir + "/" + config.HOST_FILE)
 
-	Iterates through all hosts retrieved by `get_all_hosts()` and determines the maximum CPU value.
-	Assumes each host object has a `cpu` attribute.
+def get_local_hostname():
+	return subprocess.run(['hostname']).stdout.decode('utf-8').strip()
 
-	This function is useful for determining the most powerful host available for job scheduling.
-
-	Returns:
-		int: The highest CPU value found among the hosts. Returns 0 if no hosts are found.
-	"""
-	# get the highest cpu from the hosts
-	highest_cpu = 0
-	for host in get_all_hosts():
-		if host.cpu > highest_cpu: highest_cpu = int(host.cpu)
-	return highest_cpu
-
-def get_highest_ram():
-	"""
-	Returns the highest RAM value among all hosts.
-
-	Iterates through all available hosts and determines the maximum RAM value.
-	Assumes each host object has a 'ram' attribute representing its RAM size.
-
-	This function is useful for identifying the host with the most memory available for job execution.
-
-	Returns:
-		int: The highest RAM value found among the hosts.
-	"""
-	# get the highest ram from the hosts
-	highest_ram = 0
-	for host in get_all_hosts():
-		if host.ram > highest_ram: highest_ram = int(host.ram)
-	return highest_ram
-
-def get_hosts_for_strategy(strategy):
-	"""
-	Returns a list of hosts based on the specified selection strategy.
-
-	Args:
-		strategy (str): The strategy to use for selecting hosts. Supported strategies are:
-			- "best_cpu": Selects hosts with the highest CPU.
-			- "best_ram": Selects hosts with the highest RAM.
-			- "first_available": Returns all available hosts.
-			- "host:<name>": Selects the host with the specified name.
-			- Any other value: Returns all hosts and logs a warning.
-
-	Returns:
-		list: A list of host objects matching the selection strategy.
-
-	Notes:
-		- The function disregards jobs currently running on the hosts.
-		- If the strategy is unknown, all hosts are returned and a warning is logged.
-	"""
-	# get the list of hosts for the given strategy, disregarding the jobs currently running
-	# if the strategy is not in the list, return all hosts
-	hosts = []
-	if strategy == "best_cpu":
-		cpu = get_highest_cpu()
-		for host in get_all_hosts():
-			if host.cpu == cpu: hosts.append(host)
-		return hosts
-	elif strategy == "best_ram":
-		ram = get_highest_ram()
-		for host in get_all_hosts():
-			if host.ram == ram: hosts.append(host)
-		return hosts
-	elif strategy == "first_available":
-		return get_all_hosts()
-	elif strategy.startswith("host:"):
-		# the strategy name may contain the name of an host
-		host_name = strategy.split(":")[1]
-		for host in get_all_hosts():
-			if host.name == host_name: hosts.append(host)
-		return hosts
-	else:
-		logger.warning(f"Unknown strategy '{strategy}', returning all hosts")
-		return get_all_hosts()
-
-def get_host(host_name):
-	"""
-	Retrieves a host object by its name from the list of all hosts.
-
-	Args:
-		host_name (str): The name of the host to retrieve.
-
-	Returns:
-		Host or None: The host object with the specified name if found, otherwise None.
-	"""
-	matches = list(filter(lambda host: host.name == host_name, get_all_hosts()))
-	return None if len(matches) == 0 else matches[0]
-
-def remote_script(host, file):
+def remote_script(host, script_with_args):
 	"""
 	Executes a remote script on a specified host using SSH.
 
@@ -239,6 +137,7 @@ def remote_script(host, file):
 	Args:
 		host: An object containing SSH connection details (address, port, user, rsa_key).
 		file: Path to the script file to be executed on the remote host.
+		script_with_args (str): The script file to execute, potentially with arguments and output redirections.
 
 	Notes:
 		- The function uses `paramiko` for SSH connections.
@@ -254,79 +153,9 @@ def remote_script(host, file):
 	# execute the script remotely (it will automatically create the pid file)
 	# use setsid --fork to make sure the process is detached from the terminal
 	# it will also make sure that all processes are killed if user cancels the job
-	ssh.exec_command(f"setsid --fork bash {file}")
+	ssh.exec_command(f"setsid --fork bash {script_with_args}")
 	# close the connection and return the pid
 	ssh.close()
-
-def remote_check(host, pid):
-	"""
-	Checks if a process with a given PID is alive on a remote host via SSH.
-
-	This function attempts to connect to a remote host using SSH and checks if a process
-	with the specified PID is running by executing the `ps` command remotely. It is intended
-	as a backup method when the default system for tracking alive PIDs is not working.
-
-	Args:
-		host: An object representing the remote host, expected to have attributes
-			`address` (str), `port` (int), `user` (str), and `rsa_key` (str, path to private key).
-		pid (int): The process ID to check on the remote host.
-
-	Returns:
-		bool: True if the process is alive on the remote host, False otherwise.
-	"""
-	# this function is now only called as a backup, when the default system is not working
-	# each host should have a process that puts all alive pids in a shared file
-	# this function is called if this file does not exist, or has not been updated for a while
-	# but if we are in this function, it probably means that something is not right on the remote host
-	if host is not None and pid is not None and pid > 0:
-		# connect to the host
-		key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
-		ssh = paramiko.SSHClient()
-		ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-		ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
-		# execute the script remotely
-		_, stdout, _ = ssh.exec_command(f"ps -p {pid} -o comm= ; echo $?")
-		# the process is alive if the command did not fail
-		stdout = stdout.read().decode('ascii').strip("\n")
-		# logger.debug(f"Remote check: ps -p {pid}: "+stdout)
-		is_alive = stdout.splitlines()[-1] == "0"
-		# close the connection after dealing with stdout
-		ssh.close()
-		return is_alive
-	return False
-
-def is_alive(host_name, pid):
-	"""
-	Checks if a process with the given PID is alive on the specified host.
-
-	This function verifies the existence and freshness (modified within the last 2 minutes)
-	of a PID file associated with the host. It then checks if the specified PID is listed
-	in the file. If the file is missing, outdated, or the PID is not found, a warning is logged.
-
-	Args:
-		host_name (str): The name of the host whose PID file should be checked.
-		pid (str): The process ID to look for in the PID file.
-
-	Returns:
-		bool: True if the PID is found in a recent PID file, False otherwise.
-	"""
-	# each VM should be storing their current pids in a shared file
-	pid_file = f"{config.PIDS_DIR}/{host_name}"
-	# check that this file exists and has been changed in the last 2 minutes
-	if os.path.isfile(pid_file) and time.time() - os.path.getmtime(pid_file) < 120:
-		# check that the pid is in the file
-		is_alive = False
-		f = open(pid_file, "r")
-		for p in f.read().strip("\n").split("\n"):
-			if p.lstrip() == pid:
-				is_alive = True
-				break
-		f.close()
-		return is_alive
-	else:
-		# the pid was not found, send a warning and return false
-		logger.warning(f"The PID file '{pid_file}' is either not found or not updated for too long, connecting to the host to check if the PID is alive")
-		return False
 
 def remote_cancel(host, pid):
 	"""
@@ -378,10 +207,10 @@ def create_job_directory(job_dir_name, form):
 	- .cumulus.pid: PID of the SSH session.
 	- .cumulus.rsync: Blank file sent after all files are transferred.
 	- .cumulus.settings: User settings in JSON format, useful for identifying the job.
-	- .cumulus.stdout: Link to the standard output of the script.
-	- .cumulus.stderr: Link to the standard error of the script.
+	- .cumulus.log: A merge of the standard output and standard error of the script.
 
 	Additionally, a 'temp' subdirectory is created for temporary files used by applications.
+	A 'input' subdirectory is also created for input files.
 
 	Args:
 		job_dir_name (str): Name of the job directory to create.
@@ -394,6 +223,9 @@ def create_job_directory(job_dir_name, form):
 	# create a temp folder that the apps may use eventually
 	temp_dir = f"{job_dir}/temp"
 	if not os.path.isfile(temp_dir): os.mkdir(temp_dir)
+	# create an input folder that the apps may use eventually
+	input_dir = f"{job_dir}/input"
+	if not os.path.isfile(input_dir): os.mkdir(input_dir)
 
 def get_size(file):
 	"""
@@ -458,62 +290,44 @@ def delete_raw_file(file):
 	except OSError as o:
 		logger.error(f"Can't delete raw file {file}: {o.strerror}")
 
-def delete_job_folder_no_db(job_dir):
+
+def delete_folder(folder):
 	"""
-	Deletes the specified job directory from the filesystem without interacting with the database.
-	It is used when the cleaning daemon determines that a job directory has to be removed, in this
-	case we want to keep the job in the database (with an specific status).
-	The difference with `delete_job_folder` is that this function cannot change the job's status in the database.
+	Deletes the specified folder and all its contents.
 
 	Args:
-		job_dir (str): The path to the job directory to be deleted.
-
-	Logs:
-		- Info: If the job directory is successfully deleted.
-		- Error: If the job directory cannot be deleted due to an OSError.
-
-	Exceptions:
-		Does not raise exceptions; errors are logged.
-	"""
-	try:
-		if os.path.isdir(job_dir): 
-			shutil.rmtree(job_dir)
-			logger.info(f"Job folder '{job_dir}' has been deleted")
-	except OSError as o:
-		logger.error(f"Can't delete job folder {job_dir}: {o.strerror}")
-
-def delete_job_folder(job_id, delete_job_in_database = False):
-	"""
-	Deletes the job folder associated with the given job ID and optionally removes the job from the database.
-
-	Args:
-		job_id (int or str): The unique identifier of the job whose folder is to be deleted.
-		delete_job_in_database (bool, optional): If True, also deletes the job entry from the database. Defaults to False.
+		folder (str): The path to the folder to be deleted.
 
 	Returns:
-		bool: True if the job folder (and optionally the database entry) was successfully deleted, False otherwise.
+		bool: True if the folder was successfully deleted, False otherwise.
 
 	Side Effects:
-		- Removes the job directory from the filesystem if it exists.
+		- Removes the folder from the filesystem if it exists.
 		- Logs information and errors.
-		- Updates the job status to "FAILED" in the database if an error occurs.
-		- Appends error messages to the job's stderr log.
 
 	Raises:
 		None. All exceptions are handled internally.
 	"""
 	try:
-		job_dir = db.get_job_dir(job_id)
-		if job_dir != "" and os.path.isdir(job_dir): 
-			shutil.rmtree(job_dir)
-			logger.info(f"Job folder '{job_dir}' has been deleted")
-		if delete_job_in_database: db.delete_job(job_id)
-		return True
+		if os.path.isdir(folder): 
+			shutil.rmtree(folder)
+			logger.info(f"Folder '{folder}' has been deleted")
 	except OSError as o:
-		db.set_status(job_id, "FAILED")
-		logger.error(f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
-		add_to_stderr(job_id, f"Can't delete job folder for {db.get_job_to_string(job_id)}: {o.strerror}")
-		return False
+		logger.error(f"Can't delete folder {folder}: {o.strerror}")
+
+def delete_job_folder(job_id, delete_job_in_database = False, only_delete_content = False):
+	job_dir = db.get_job_dir(job_id)
+	# do nothing if the job_dir does not exist
+	if job_dir == "" or not os.path.isdir(job_dir): return
+	# if archive_content is True, we will just delete the input and output folders within the job folder
+	if only_delete_content:
+		delete_folder(f"{job_dir}/{config.CONFIG["input.folder"]}")
+		delete_folder(f"{job_dir}/{config.CONFIG["output.folder"]}")
+	# otherwise we will delete the whole job folder
+	else:
+		delete_folder(job_dir)
+	# if delete_job_in_database is True, we will also delete the job from the database
+	if delete_job_in_database: db.delete_job(job_id)
 
 def get_pid_file(job_id): 
 	"""
@@ -566,12 +380,28 @@ def cancel_job(job_id):
 	for id in job_ids:
 		# get the pid and the host
 		pid = get_pid(id)
-		host_name = db.get_host(id)
 		# use ssh to kill the pid (may not be needed if the job is still pending)
-		remote_cancel(get_host(host_name), pid)
+		remote_cancel(get_host(job_id), pid)
 		# change the status
 		db.set_status(id, "CANCELLED")
 		db.set_end_date(id)
+
+# def get_log_file_path(job_id, is_stdout = True):
+def get_log_file_path(job_id):
+	"""
+	Constructs the file path for a job's log file (stdout or stderr).
+
+	Args:
+		job_id (str): The unique identifier of the job.
+		is_stdout (bool, optional): If True, returns the path for the standard output log file; 
+			if False, returns the path for the standard error log file. Defaults to True.
+
+	Returns:
+		str: The full path to the specified log file.
+	"""
+	# log_file_name = ".cumulus.stdout" if is_stdout else ".cumulus.stderr"
+	# return f"{db.get_job_dir(job_id)}/{log_file_name}"
+	return f"{db.get_job_dir(job_id)}/{config.JOB_LOG_FILE}"
 
 def add_to_stderr(job_id, text):
 	"""
@@ -584,9 +414,17 @@ def add_to_stderr(job_id, text):
 	Notes:
 		The message is prefixed with 'Cumulus:' and appended as a new line to the log file.
 	"""
-	with open(config.get_final_stderr_path(job_id), "a") as f:
-		f.write(f"\nCumulus: {text}")
-
+	# # write to the stderr file
+	# log_file = get_log_file_path(job_id, False)
+	# if os.path.isfile(log_file):
+	# 	with open(get_log_file_path(job_id, False), "a") as f:
+	# 		f.write(f"\nCumulus: {text}")
+	# write to the merged log file if it exists
+	# merged_log_file = get_log_file_path(job_id, None)
+	merged_log_file = get_log_file_path(job_id)
+	if os.path.isfile(merged_log_file):
+		with open(merged_log_file, "a") as f:
+			f.write(f"\n[STDERR] {text}")
 
 def get_file_age_in_seconds(file):
 	"""
@@ -657,31 +495,6 @@ def get_zombie_jobs():
 				if not db.check_job_existency(job_id): zombie_job_folders.append(config.JOB_DIR + "/" + job)
 	return zombie_job_folders
 
-def get_zombie_log_files():
-	"""
-	Scans the main log directory for log files that are not associated with any existing job in the database.
-
-	Returns:
-		list: A list of file paths to log files (matching 'job_<id>.stdout' or 'job_<id>.stderr') 
-			  that do not correspond to any job present in the database.
-
-	Notes:
-		- Relies on `config.LOG_DIR` for the log directory path.
-		- Uses `db.check_job_existency(job_id)` to verify if a job exists.
-		- Only files matching the log filename patterns are considered.
-	"""
-	# list the log files in the main log dir that are not used for jobs
-	zombie_log_files = []
-	for log in os.listdir(config.LOG_DIR):
-		if os.path.isfile(config.LOG_DIR + "/" + log):
-			# only consider files that look like logs
-			if re.search("job_\\d+\\.stdout", log) != None or re.search("job_\\d+\\.stderr", log) != None:
-				# extract the job id from the file name
-				job_id = int(log.split("_")[1].split(".")[0])
-				# check if the job id is in the database
-				if not db.check_job_existency(job_id): zombie_log_files.append(config.LOG_DIR + "/" + log)
-	return zombie_log_files
-
 def get_unused_shared_files_older_than(max_age_seconds):
 	"""
 	Returns a list of shared files and folders in the configured data directory that are not currently in use and are older than the specified maximum age.
@@ -727,3 +540,220 @@ def set_job_failed(job_id, error_message):
 		db.set_end_date(id)
 		add_to_stderr(id, error_message)
 	logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
+
+def get_job_current_directory(job_id):
+	"""
+	Retrieves the directory for a given job ID.
+	This function checks if the job directory contains a stop file, indicating that the job has been stopped.
+	If the stop file exists, it returns the job directory; otherwise, it returns the temporary job directory.
+	Args:
+		job_id (int): The unique identifier of the job.
+	Returns:
+		str: The path to the job directory if the stop file exists, otherwise the temporary job directory.
+	"""
+	# get the job directory from the database
+	return db.get_job_dir(job_id)
+
+def check_flavor(job_id):
+	"""
+	Checks if the specified flavor is in the list of authorized flavors.
+	If the flavor is not authorized, it returns the default flavor from the configuration.
+	The default flavor is the flavor with the lowest weight.
+
+	Args:
+		job_id (int): The id of the job to check.
+
+	Returns:
+		str: The name of the flavor, either the given one or the default one.
+	"""
+	flavor = db.get_strategy(job_id)
+	# check if the flavor is in the list of authorized flavors
+	if flavor not in config.FLAVORS:
+		logger.warning(f"The flavor '{flavor}' is not in the list of authorized flavors, using the default flavor instead")
+		flavor = min(config.FLAVORS, key=lambda flavor: config.FLAVORS[flavor]['weight'])
+	# verify that this flavor can be executed (based on the current cumulated weight of all running jobs)
+	if config.FLAVORS[flavor]['weight'] + get_current_flavor_cumulated_weight() > config.FLAVORS_MAX_WEIGHT:
+		logger.warning(f"The flavor '{flavor}' cannot be used right now, the maximum cumulated weight of all running jobs would be exceeded")
+		return None
+	return flavor
+
+def get_current_flavor_cumulated_weight():
+	"""
+	Calculates the cumulative weight of all flavors currently in use by running jobs.
+
+	Returns:
+		int: The total weight of all flavors used by jobs with status "RUNNING".
+	"""
+	total_weight = 0
+	for flavor in db.get_currently_running_strategies():
+		if flavor in config.FLAVORS:
+			total_weight += config.FLAVORS[flavor]['weight']
+	return total_weight
+
+def wait_for_volume(volume_name):
+	# wait for the volume to become available
+	is_available = False
+	while not is_available:
+		time.sleep(1) # wait for 1 second, it should be enough
+		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
+		if result.stdout.decode('utf-8').find('available') != -1: is_available = True
+
+def clone_volume(job_id):
+	volume_id = None
+	volume_name = f"volume_job_{job_id}"
+	result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name], stdout=subprocess.PIPE)
+	for line in result.stdout.decode('utf-8').splitlines():
+		if " id " in line:
+			line = line.strip().replace('|', '').strip() # remove the pipes
+			volume_id = line.split()[1]
+			# return volume_id, volume_name
+			break
+	# wait for the volume to become available
+	wait_for_volume(volume_name)
+	# return the volume id and name
+	return volume_id, volume_name
+
+def ssh_keyscan(ip_address):
+	try:
+		result = subprocess.run(['ssh-keyscan', '-T', '5', ip_address], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+		return result.stdout.strip()
+	except Exception as e:
+		return None
+
+def wait_for_server_ssh_access(ip_address):
+	# remove the ip address beforehand
+	subprocess.run(['ssh-keygen', '-R', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+	# wait for the server to return an answer
+	while True:
+		result = ssh_keyscan(ip_address)
+		if result and ip_address in result:
+			# add the ip address to the known hosts
+			with open(config.KNOWN_HOSTS_PATH, 'a') as f: f.write(result + '\n')
+			# break the loop
+			break
+		time.sleep(30)
+
+def create_virtual_machine(job_id, flavor, volume_id):
+	worker_name = f"worker_job_{job_id}"
+	ip_address = None
+	result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout=subprocess.PIPE)
+	for line in result.stdout.decode('utf-8').splitlines():
+		if " addresses " in line:
+			line = line.strip().replace('|', '').strip() # remove the pipes
+			ip_address = line.split()[1].split("=")[1]
+	# wait for the server to be accessible via ssh
+	wait_for_server_ssh_access(ip_address)
+	# return the worker name and ip address
+	return worker_name, ip_address
+
+def create_worker(job_id, flavor):
+	"""
+	Creates a new worker VM with the specified flavor.
+
+	Args:
+		flavor (str): The flavor to use for the new worker VM.
+
+	Returns:
+		Host: The Host object representing the newly created worker VM.
+	"""
+	# WARN: this function may take a while to complete (up to a few minutes)
+	# Maybe we should run it in background and notify the user when the VM is ready ?
+	# a specific status could be added to the job in the database (STARTING ?)
+	# No, instead write the host information in a file in the job directory, so we can access it later
+	# And also create an empty file called .cumulus.create? (remove it when done)
+	
+	logger.info(f"Creating a virtual machine with flavor '{flavor}' for job {job_id}")
+	job_dir = db.get_job_dir(job_id)
+	# clone the volume from the template
+	volume_id, volume_name = clone_volume(job_id)
+	# create a worker VM based on this volume
+	worker_name, ip_address = create_virtual_machine(job_id, flavor, volume_id)
+	# get the cpu and ram from the flavor
+	cpu = config.FLAVORS[flavor]['cpu']
+	ram = config.FLAVORS[flavor]['ram']
+	# create a host object to represent this worker
+	logger.info(f"Worker VM '{worker_name}' has been created for job {job_id}")
+	with open(f"{job_dir}/{config.HOST_FILE}", "w") as f:
+		f.write(f"name:{worker_name}\n")
+		f.write(f"address:{ip_address}\n")
+		f.write(f"cpu:{cpu}\n")
+		f.write(f"ram:{ram}\n")
+		f.write(f"volume:{volume_name}\n")
+
+def destroy_worker(job_id):
+	"""
+	Destroys the worker VM associated with the given job ID.
+
+	Args:
+		job_id (int): The unique identifier of the job whose worker VM is to be destroyed.
+
+	Returns:
+		bool: True if the worker VM was successfully destroyed, False otherwise.
+	"""
+	logger.info(f"Destroying the virtual machine for job {job_id}")
+	host = get_host(job_id)
+	if host is not None:
+		# delete the VM
+		subprocess.run([config.OPENSTACK, "server", "delete", "--wait", host.name])
+		# delete the volume
+		subprocess.run([config.OPENSTACK, "volume", "delete", host.volume])
+		logger.info(f"Worker VM '{host.name}' has been destroyed for job {job_id}")
+		return True
+	else:
+		logger.error(f"Cannot destroy the virtual machine for job {job_id}, host information not found")
+		return False
+
+def get_mzml_file_path(file_path, use_temp_dir = False):
+	"""
+	Replaces the extension of the given file path with '.mzML' and returns the new path.
+	This is useful to know in advance what the file name will be after conversion to mzML.
+
+	Args:
+		file_path (str): The original file path.
+		use_temp_dir (bool): If True, the returned path will be in the temporary directory. Defaults to False.
+
+	Returns:
+		str: The file path with its extension replaced by '.mzML'.
+	"""
+	# replace the extension of the file by .mzML and return the path
+	mzml_file_path = file_path.replace(os.path.splitext(file_path)[1], f".mzML")
+	# if use_temp_dir is True, return the path in the temp dir
+	if use_temp_dir:
+		mzml_file_path = f"{config.TEMP_DIR}/{os.path.basename(mzml_file_path)}"
+	# return the new file path
+	return mzml_file_path
+
+def convert_to_mzml(file):
+	# prepare the output and temp file names
+	temp_output_file = get_mzml_file_path(file, True)
+	final_output_file = get_mzml_file_path(file, False)
+	# call the appropriate converter command based on the file extension
+	if file.endswith(".d"): 
+		logger.info(f"Converting Bruker data {os.path.basename(file)} to mzML")
+		subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file])
+	elif file.endswith(".raw"): 
+		logger.info(f"Converting Thermo raw file {os.path.basename(file)} to mzML")
+		subprocess.run(["mono", config.get("converter.raw.to.mzml"), "-i", file, "-b", temp_output_file])
+	else:
+		logger.error(f"Cannot convert file '{file}' to mzML, unknown extension")
+	# move the file to the final location
+	if os.path.isfile(temp_output_file): shutil.move(temp_output_file, final_output_file)
+
+# def get_job_usage(job_id):
+# 	"""
+# 	Searches for the file JOB_USAGE_FILE in the job directory and returns its content as a string.
+
+# 	Args:
+# 		job_id (int): The unique identifier of the job.
+
+# 	Returns:
+# 		str: The content of the file, or an empty string if the file does not exist.
+# 	"""
+# 	job_dir = db.get_job_dir(job_id)
+# 	job_usage_file = f"{job_dir}/{config.JOB_USAGE_FILE}"
+# 	if os.path.isfile(job_usage_file):
+# 		f = open(job_usage_file, "r")
+# 		content = f.read()
+# 		f.close()
+# 		return content
+# 	else: return ""

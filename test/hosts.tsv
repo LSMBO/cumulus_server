@@ -1,4 +1,0 @@
-NAME	IP ADDRESS	USER	PORT	RSA FILE	NB CPU	RAM
-my_test_host	192.168.0.1	ubuntu	22	/home/ubuntu/.ssh/cumulus.pem	32	64
-my_second_host	192.168.0.2	ubuntu	22	/home/ubuntu/.ssh/cumulus.pem	16	32
-my_third_host	192.168.0.3	ubuntu	22	/home/ubuntu/.ssh/cumulus.pem	64	128

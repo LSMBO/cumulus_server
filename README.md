@@ -3,6 +3,7 @@
 This repository is for the server for Cumulus.
 
 Cumulus Server is a Flask REST API for Cumulus written in Python. It relies on Flask and Waitress to provide a REST API, that the clients can interrogate.
+A [script](./scripts/create_template_snapshot.sh) is provided to create the environment to run Cumulus server, but it's not advised to run it blindly. Use this script as guidelines and make sure to adjust the procedure to fit your own requirements.
 
 ## Apps
 
@@ -25,13 +26,10 @@ Jobs are stored in a SQLite database. The database is very simple and will be re
 
 ## Hosts
 
-The virtual machines that can be used by Cumulus are listed in the file "hosts.tsv". A default version of the file is [available here](cumulus.conf.default). This file contains one line per VM, with a name that will be displayed, an IP address, information to connect to this VM, and information about the ressources this VM offers.
+The virtual machines that will run the jobs are generated on the fly. They are based on a template VM where new apps can be installed and tested. Make sure to recreate a snapshot of the VM's volume everytime you add a new app. A [script](scripts/create_template_snapshot.sh) is available to do just that.
 
-A [script](add_new_host.py) has been written to facilitate the addition of a new VM. It takes several arguments (the information necessary to connect to the machine), and should connect to the machine, run the ["add_new_host.sh" script](add_new_host.sh) there, and gather some information that will be automatically added to the "hosts.tsv" file.
-
-**_NOTE_** that this script may not work if the machine is not already in the known_hosts file. You may have to connect manually first to make sure the connection will work.
-
-If you add new apps that require specific packages to work, you will have to update the "add_new_host.sh" script to make sure the packages will be installed. If you choose to install the packages manually on each VM, make sure that all VM have the packages installed.
+Cumulus will generate new VM based on that snapshot, with a specific flavor selected by the user. Each flavor has an associated weight, a maximum value is defined so we do not generate more VMs that what is allowed on the Cloud.
+The list of flavors is in the file "flavors.tsv". A default version of the file is [available here](flavors.tsv.default). This file contains one line per flavor, with the name of the flavor, a weight, the number of VCPU and the amount of RAM in gigabytes. A line also contains the maximal weight.
 
 ## Start the server
 
@@ -77,9 +75,10 @@ Cumulus is a three-part tool whose purpose is to run software on a Cloud, withou
 * [A separate agent](https://github.com/LSMBO/cumulus_rsync) who manages the transfer of the files from client to server. The agent is developped in Python and provides a Flask REST API for the client.
 
 Cumulus has been developped to work around the [SCIGNE Cloud at IPHC](https://scigne.fr/), it may require some modifications to work on other Clouds, depending on how the virtual machines are organized. The virtual machines currently in use for Cumulus are set up like this:
-* A controller with 4 VCPU, 8GB RAM, 40GB drive, this is where cumulus-server is running. This VM is the only one with a public IP address.
-* Four virtual machines with 16 to 64VCPU and 64 to 256GB RAM, this is where the jobs will be running. These VM can be accessed by the controller using SSH.
-* A 15TB storage unit, mounted as a NFS shared drive on every VM so the content is shared with the same path. This is where the data, the jobs and apps will be stored.
+* A controller server with 16 VCPU, 64GB RAM, 40GB drive, this is where cumulus-server is running. This VM is the only one with a public IP address.
+* A template server with 4 cpu, 8GB ram, mounted on a 500GB volume, this is where the apps and dependencies are installed.
+* A snapshot of the volume used for the template server, this snapshot will serve to clone the template server to run a new job.
+* A 10TB storage unit, mounted as a NFS shared drive on the template server so the content is shared with the same path. This is where the data and the jobs will be stored.
 
 The virtual machines on the Cloud are all running with Ubuntu 24.04, Cumulus has only been tested there so it's possible that some scripts may not work on a different Linux distribution.
 

@@ -1,0 +1,5 @@
+NAME	WEIGHT	CPU	RAM
+m1.4xlarge	1	32	64
+m1.8xlarge-16xmem	2	64	256
+m1.16xlarge-32xmem	4	128	512
+MAX_ACCUMULATED_WEIGHT = 7

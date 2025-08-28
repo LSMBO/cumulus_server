@@ -72,6 +72,9 @@ def start():
 	# create a pending job, it will be started when the files are all available, return the job id
 	job_id, job_dir = db.create_job(request.form)
 	utils.create_job_directory(job_dir, request.form)
+	# call the function to convert raw files to mzML, if needed
+	threading.Thread(target=daemon.convert_raw_to_mzml, args=()).start()
+	# return the job id and the job directory
 	logger.info(f"Create job {job_id}")
 	return jsonify(job_id, job_dir)
 
@@ -104,6 +107,23 @@ def search_jobs():
 	"""
 	logger.info("Search jobs")
 	return jsonify(db.search_jobs(request.form))
+
+# @app.route("/jobusage/<int:job_id>")
+# def job_usage(job_id):
+# 	"""
+# 	Retrieve the resource usage statistics for a specific job.
+
+# 	Args:
+# 		job_id (int): The identifier of the job for which to retrieve resource usage statistics.
+
+# 	Returns:
+# 		str: The content of the file listing the resource usage over time for the specified job. This
+# 				information is formattted as a TSV with the following columns:
+# 				- timestamp: The time at which the usage was recorded.
+# 				- cpu: The CPU usage percentage.
+# 				- ram: The RAM usage percentage.
+# 	"""
+# 	return utils.get_job_usage(job_id)
 
 @app.route("/cancel/<string:owner>/<int:job_id>")
 def cancel(owner, job_id):
@@ -159,7 +179,7 @@ def delete(owner, job_id):
 		# read the status file, only delete if the status is DONE, FAILED or ARCHIVED
 		status = db.get_status(job_id)
 		if status != "PENDING" and status != "RUNNING":
-			utils.delete_job_folder(job_id, True)
+			utils.delete_job_folder(job_id, True, False)
 			return f"Job {job_id} has been deleted"
 		else: return f"You cannot delete a running job"
 	else: return f"You cannot delete this job"
@@ -202,21 +222,18 @@ def get_results(owner, job_id, file_name):
 @app.route("/info")
 def info():
 	"""
-	Returns information about all hosts as a JSON response.
+	Returns information about the available flavors, as a JSON response.
 
-	Each host is represented as a dictionary containing:
-		- name: The name of the host.
-		- cpu: The number of CPUs available on the host.
+	Each flavor is represented by a name, to which is associated:
+		- cpu: The number of VCPUs available on the host.
 		- ram: The amount of RAM available on the host.
-		- jobs_running: The number of jobs currently running on the host.
-		- jobs_pending: The number of jobs pending on the host.
+		- weight: The weight of the host, so that allocated resources do not exceed what is physically available.
 
 	Returns:
-		flask.Response: A JSON response containing a list of host information dictionaries.
+		flask.Response: A JSON response containing the list of flavors as a dictionary.
 	"""
-	# return an array of dicts, one per host
-	# each dict contains its name, the number of cpu, the amount of ram and the numbers of jobs running and pending
-	return jsonify(list(map(lambda host: host.to_dict(), utils.get_all_hosts(True))))
+	# returns the list of flavors
+	return jsonify(config.FLAVORS)
 
 @app.route("/apps")
 def listapps():
@@ -234,12 +251,12 @@ def listapps():
 @app.route("/storage")
 def storage():
 	"""
-	Returns a JSON response containing the list of file names and their sizes in the /storage/data directory.
+	Returns a JSON response containing the list of file names and their sizes in the /cumulus/data directory.
 
 	Returns:
 		flask.Response: A JSON response with the raw file list as provided by utils.get_raw_file_list().
 	"""
-	# return the file names and sizes in /storage/data (as a string)
+	# return the file names and sizes in /cumulus/data (as a string)
 	return jsonify(utils.get_raw_file_list())
 
 @app.route("/diskusage")
@@ -312,6 +329,8 @@ def start():
 			format = log_format,
 			datefmt = log_date
 		)
+	# set the controller name
+	config.set_controller_name(utils.get_local_hostname())
 	# initialize the database
 	db.initialize_database()
 	# start the daemons once all functions are defined
