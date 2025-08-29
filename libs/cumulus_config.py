@@ -49,8 +49,6 @@ DATA_DIR = ""
 JOB_DIR = ""
 BIN_DIR = ""
 TEMP_DIR = ""
-WORKSPACE_DIR = ""
-WORKSPACES_DIR = ""
 
 OPENSTACK = ""
 WORKER_USERNAME = ""
@@ -163,13 +161,13 @@ def init(create_dirs = True):
 		OSError: If directory creation fails.
 	"""
 	# initialize the paths
-	global DATA_DIR, JOB_DIR, BIN_DIR, TEMP_DIR, WORKSPACE_DIR, WORKSPACES_DIR, OPENSTACK, WORKER_USERNAME, WORKER_PORT, SNAPSHOT_NAME, VOLUME_SIZE_GB, CERT_KEY_NAME, CLOUD_NETWORK, KNOWN_HOSTS_PATH
+	global DATA_DIR, JOB_DIR, BIN_DIR, TEMP_DIR, OPENSTACK, WORKER_USERNAME, WORKER_PORT, SNAPSHOT_NAME, VOLUME_SIZE_GB, CERT_KEY_NAME, CLOUD_NETWORK, KNOWN_HOSTS_PATH
 	DATA_DIR = get("storage.path") + get("storage.data.subpath")
 	JOB_DIR = get("storage.path") + get("storage.jobs.subpath")
 	BIN_DIR = get("storage.path") + get("storage.bin.subpath")
 	TEMP_DIR = get("storage.path") + get("storage.temp.subpath")
-	WORKSPACE_DIR = get("storage.path") + get("storage.workspace.subpath")
-	WORKSPACES_DIR = get("storage.path") + get("storage.workspaces.subpath")
+	# WORKSPACE_DIR = get("storage.path") + get("storage.workspace.subpath")
+	# WORKSPACES_DIR = get("storage.path") + get("storage.workspaces.subpath")
 	OPENSTACK = get("openstack.bin.path")
 	WORKER_USERNAME = get("openstack.worker.username")
 	WORKER_PORT = get("openstack.worker.port")
@@ -184,8 +182,8 @@ def init(create_dirs = True):
 		if not os.path.isdir(JOB_DIR): os.mkdir(JOB_DIR)
 		if not os.path.isdir(BIN_DIR): os.mkdir(BIN_DIR)
 		if not os.path.isdir(TEMP_DIR): os.mkdir(TEMP_DIR)
-		if not os.path.isdir(WORKSPACE_DIR): os.mkdir(WORKSPACE_DIR)
-		if not os.path.isdir(WORKSPACES_DIR): os.mkdir(WORKSPACES_DIR)
+		# if not os.path.isdir(WORKSPACE_DIR): os.mkdir(WORKSPACE_DIR)
+		# if not os.path.isdir(WORKSPACES_DIR): os.mkdir(WORKSPACES_DIR)
 
 def export():
 	"""
