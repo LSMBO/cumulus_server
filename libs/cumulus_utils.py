@@ -126,7 +126,7 @@ def get_host(job_id):
 	return get_host_from_file(job_dir + "/" + config.HOST_FILE)
 
 def get_local_hostname():
-	return subprocess.run(['hostname']).stdout.decode('utf-8').strip()
+	return subprocess.run(['hostname'], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
 
 def remote_script(host, script_with_args):
 	"""
