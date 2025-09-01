@@ -34,6 +34,7 @@ from flask import Flask
 from flask import jsonify
 from flask import request
 from flask import send_file
+import json
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -230,10 +231,12 @@ def info():
 		- weight: The weight of the host, so that allocated resources do not exceed what is physically available.
 
 	Returns:
-		flask.Response: A JSON response containing the list of flavors as a dictionary.
+		# flask.Response: A JSON response containing the list of flavors as a dictionary.
+		str: A JSON string containing the list of flavors as a dictionary, ordered as in the flavors file.
 	"""
 	# returns the list of flavors
-	return jsonify(config.FLAVORS)
+	# return jsonify(config.FLAVORS)
+	return json.dumps(config.FLAVORS)
 
 @app.route("/apps")
 def listapps():
