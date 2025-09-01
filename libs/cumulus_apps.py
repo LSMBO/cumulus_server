@@ -174,7 +174,8 @@ def get_file_path(job_dir, file_path, is_raw_input):
 		Raw/Fasta tags will be replaced by Shared/Local in the future.
 	"""
 	if is_raw_input == "true": return config.DATA_DIR + "/" + os.path.basename(file_path)
-	else: return f"{job_dir}/{os.path.basename(file_path)}"
+	# else: return f"{job_dir}/{os.path.basename(file_path)}"
+	else: return f"{job_dir}/{INPUT_DIR}/{os.path.basename(file_path)}"
 
 def is_mzml_file_already_converted(file_path):
 	"""
