@@ -357,7 +357,8 @@ def get_merged_settings(job_id):
 	cnx.close()
 	return settings_set
 
-def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", description = "%", statuses = [], date_field = "creation_date", date_from = 0, date_to = int(time.time()), file = ""):
+# def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", description = "%", statuses = [], date_field = "creation_date", date_from = 0, date_to = int(time.time()), file = ""):
+def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", description = "%", statuses = [], date_field = "creation_date", date_from = None, date_to = None, file = ""):
 	"""
 	Search for jobs in the database based on various filtering criteria.
 
@@ -383,7 +384,10 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 	"""
 	# prepare parts of the SQL request
 	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
-	request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
+	# request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
+	request_date = ""
+	if date_from is not None: request_date += f" AND {date_field} >= {date_from}"
+	if date_to is not None: request_date += f" AND {date_field} <= {date_to}"
 	# connect to the database
 	cnx, cursor = connect()
 	# prepare the list of jobs to return
