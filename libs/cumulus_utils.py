@@ -653,7 +653,7 @@ def create_virtual_machine(job_id, flavor, volume_id):
 	# return the worker name and ip address
 	return worker_name, ip_address
 
-def create_worker(job_id, flavor):
+def create_worker(job_id, job_dir, flavor):
 	"""
 	Creates a new worker VM with the specified flavor.
 
@@ -670,7 +670,7 @@ def create_worker(job_id, flavor):
 	# And also create an empty file called .cumulus.create? (remove it when done)
 	
 	logger.info(f"Creating a virtual machine with flavor '{flavor}' for job {job_id}")
-	job_dir = db.get_job_dir(job_id)
+	# job_dir = db.get_job_dir(job_id)
 	# clone the volume from the template
 	volume_id, volume_name = clone_volume(job_id)
 	# create a worker VM based on this volume

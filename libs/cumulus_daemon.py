@@ -108,9 +108,11 @@ def check_running_jobs():
 				db.set_end_date(job_id)
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
 
-def start_job(job_id, job_dir, app_name, settings, flavor):
+def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 	"""
 	Starts a job on a remote host by generating and executing a script, then updates the job status in the database.
+	Note: This function is intended to be run in a separate thread to avoid blocking the main daemon loop. That's why
+	it takes all the parameters instead of fetching them from the database (otherwise it may get a locked database error).
 
 	Args:
 		job_id (str): Unique identifier for the job.
@@ -125,11 +127,12 @@ def start_job(job_id, job_dir, app_name, settings, flavor):
 		- Updates the job's host, status, and start date in the database.
 		- Logs information about the job execution process.
 	"""
-	# directly set the host and the status to RUNNING in the database to avoid starting another job on the same host
-	db.set_status(job_id, "RUNNING")
-	db.set_start_date(job_id)
+	# # directly set the host and the status to RUNNING in the database to avoid starting another job on the same host
+	# db.set_status(job_id, "RUNNING")
+	# db.set_start_date(job_id)
+	# job_dir = db.get_job_dir(job_id)
 	# create the worker based on the template worker
-	utils.create_worker(job_id, flavor)
+	utils.create_worker(job_id, job_dir, flavor)
 	# get the host that was generated
 	host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
 	# create the script to run the job
@@ -138,8 +141,9 @@ def start_job(job_id, job_dir, app_name, settings, flavor):
 	# start the remote script to run the job
 	remote_cmd = f"{config.TEMP_DIR}/{config.JOB_START_FILE} {job_id} '{job_dir}'"
 	utils.remote_script(host, remote_cmd)
-	# log the command
-	logger.info(f"Starting {db.get_job_to_string(job_id)}")
+	# log the command owner, app_name, status, strategy
+	# logger.info(f"Starting {db.get_job_to_string(job_id)}")
+	logger.info(f"Starting {job_details}")
 
 def start_pending_jobs():
 	"""
@@ -179,12 +183,15 @@ def start_pending_jobs():
 			if flavor is None:
 				logger.warning(f"No host available for job {job_id} with flavor '{flavor}' at this moment")
 			else:
+				# directly set the host and the status to RUNNING in the database to avoid starting another job on the same host
+				db.set_status(job_id, "RUNNING")
+				db.set_start_date(job_id)
 				# create the new VM with this flavor
 				# run this in a thread, and call start_job once the host is created
 				# the status will remain PENDING until the host is created and the job started
 				# thr = threading.Thread(target=utils.create_worker, args=(job_id, flavor))
 				# thr.start()
-				threading.Thread(target=start_job, args=(job_id, job_dir, app_name, settings, flavor)).start()
+				threading.Thread(target=start_job, args=(job_id, job_dir, app_name, settings, flavor, db.get_job_to_string(job_id))).start()
 			# # if all is ok, the job can start and its status can turn to RUNNING
 			# if host is not None: start_job(job_id, job_dir, app_name, settings, host)
 			# else: logger.warning(f"No host available for job {job_id}...")
