@@ -184,7 +184,7 @@ def start_pending_jobs():
 				# the status will remain PENDING until the host is created and the job started
 				# thr = threading.Thread(target=utils.create_worker, args=(job_id, flavor))
 				# thr.start()
-				threading.Thread(target=utils.start_job, args=(job_id, job_dir, app_name, settings, flavor)).start()
+				threading.Thread(target=start_job, args=(job_id, job_dir, app_name, settings, flavor)).start()
 			# # if all is ok, the job can start and its status can turn to RUNNING
 			# if host is not None: start_job(job_id, job_dir, app_name, settings, host)
 			# else: logger.warning(f"No host available for job {job_id}...")
