@@ -151,7 +151,8 @@ def cancel(owner, job_id):
 		logger.info(f"Cancel job ${job_id}")
 		# read the status file, only cancel if the status is RUNNING
 		status = db.get_status(job_id)
-		if status == "PENDING" or status == "RUNNING": 
+		# if status == "PENDING" or status == "RUNNING": 
+		if status == "PENDING" or status == "PREPARING" or status == "RUNNING": 
 			utils.cancel_job(job_id)
 			return f"Job {job_id} has been cancelled"
 		else: return f"Job {job_id} cannot be cancelled, it is already stopped"
@@ -179,7 +180,8 @@ def delete(owner, job_id):
 		logger.info(f"Delete job ${job_id}")
 		# read the status file, only delete if the status is DONE, FAILED or ARCHIVED
 		status = db.get_status(job_id)
-		if status != "PENDING" and status != "RUNNING":
+		# if status != "PENDING" and status != "RUNNING":
+		if status != "PENDING" and status != "PREPARING" and status != "RUNNING":
 			utils.delete_job_folder(job_id, True, False)
 			return f"Job {job_id} has been deleted"
 		else: return f"You cannot delete a running job"

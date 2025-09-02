@@ -91,20 +91,24 @@ def check_running_jobs():
 
 	This function relies on external modules for database access, process checking, and application-specific job status evaluation.
 	"""
-	for job_id in db.get_jobs_per_status("RUNNING"):
+	for job_id in db.get_jobs_per_status("PREPARING"):
 		# if the host could not be created, the job has failed
 		job_dir = db.get_job_dir(job_id)
 		host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
 		# abort if the host could not be created
-		if host is not None and host.error is not None:
+		if host is None or host.error is not None:
 			db.set_status(job_id, "FAILED")
 			db.set_end_date(job_id)
 			logger.error(f"Cannot create the host for job {job_id}, error was: {host.error}, aborting")
+		elif host is not None and host.error is None:
+			# the host has been created, the job can start
+			db.set_status(job_id, "RUNNING")
+			db.set_start_date(job_id)
+	for job_id in db.get_jobs_per_status("RUNNING"):
 		# check that the process still exist
-		elif not is_process_running(job_id):
+		if not is_process_running(job_id):
 			# destroy the worker VM in the background
-			thr = threading.Thread(target=utils.destroy_worker, args=(job_id))
-			thr.start()
+			threading.Thread(target=utils.destroy_worker, args=(job_id)).start()
 			# record the end date
 			db.set_end_date(job_id)
 			# ask the proper app module if the job is finished or failed
@@ -194,8 +198,8 @@ def start_pending_jobs():
 				logger.warning(f"No host available for job {job_id} with flavor '{flavor}' at this moment")
 			else:
 				# directly set the host and the status to RUNNING in the database to avoid starting another job on the same host
-				db.set_status(job_id, "RUNNING")
-				db.set_start_date(job_id)
+				db.set_status(job_id, "PREPARING")
+				# db.set_start_date(job_id)
 				# create the new VM with this flavor
 				# run this in a thread, and call start_job once the host is created
 				# the status will remain PENDING until the host is created and the job started
@@ -219,13 +223,13 @@ def run():
 		- Start any pending jobs, prioritizing the oldest ones.
 		- Sleep for a defined refresh rate before repeating the process.
 
-	Possible job statuses include: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED.
+	Possible job statuses include: PENDING, PREPARING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED.
 	"""
 	# load the config file
 	config.init()
 	# wait a little before starting the daemon
 	time.sleep(10)
-	# possible statuses: PENDING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED
+	# possible statuses: PENDING, PREPARING, RUNNING, DONE, FAILED, CANCELLED, ARCHIVED_DONE, ARCHIVED_FAILED, ARCHIVED_CANCELLED
 	while True:
 		# reload the app list if needed (allows to update the app list without restarting the daemon)
 		if apps.is_there_app_update(): apps.get_app_list()

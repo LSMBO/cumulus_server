@@ -32,7 +32,6 @@
 
 import json
 import logging
-import os
 import sqlite3
 import time
 from datetime import datetime
@@ -53,7 +52,7 @@ def connect():
 		tuple: A tuple containing the SQLite connection object and the cursor object.
 	"""
 	# connect to the database, create it if it does not exist yet
-	cnx = sqlite3.connect(config.get("database.file.path"), isolation_level = None)
+	cnx = sqlite3.connect(config.get("database.file.path"), isolation_level = None, timeout = 30, check_same_thread = False)
 	cursor = cnx.cursor()
 	return cnx, cursor
 
@@ -458,6 +457,7 @@ def search_jobs(form):
 	# prepare the part of the request for the status
 	statuses = []
 	if "pending" in form: statuses.append("status = 'PENDING'")
+	if "preparing" in form: statuses.append("status = 'PREPARING'")
 	if "running" in form: statuses.append("status = 'RUNNING'")
 	if "done" in form: statuses.append("status = 'DONE'")
 	if "failed" in form: statuses.append("status = 'FAILED'")
@@ -564,7 +564,8 @@ def get_ended_jobs_older_than(max_age_seconds):
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
-	results = cursor.execute("SELECT id, status, job_dir FROM jobs WHERE unixepoch() - creation_date > ? AND status NOT LIKE 'ARCHIVE_%' AND status != 'PENDING' AND status != 'RUNNING'", (max_age_seconds,))
+	# results = cursor.execute("SELECT id, status, job_dir FROM jobs WHERE unixepoch() - creation_date > ? AND status NOT LIKE 'ARCHIVE_%' AND status != 'PENDING' AND status != 'RUNNING'", (max_age_seconds,))
+	results = cursor.execute("SELECT id, status, job_dir FROM jobs WHERE unixepoch() - creation_date > ? AND status NOT LIKE 'ARCHIVE_%' AND status != 'PENDING' AND status != 'PREPARING' AND status != 'RUNNING'", (max_age_seconds,))
 	# store the ids
 	jobs = []
 	# for job_id, job_dir in results: jobs.append({"job_id": job_id, "job_dir": job_dir})
@@ -589,7 +590,8 @@ def is_file_in_use(file):
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that are RUNNING or PENDING
-	results = cursor.execute("SELECT app_name, settings, job_dir from jobs WHERE status = 'RUNNING' or status = 'PENDING'")
+	# results = cursor.execute("SELECT app_name, settings, job_dir from jobs WHERE status = 'RUNNING' or status = 'PENDING'")
+	results = cursor.execute("SELECT app_name, settings, job_dir from jobs WHERE status = 'RUNNING' or status = 'PREPARING' or status = 'PENDING'")
 	# parse the results
 	is_used = False
 	for app_name, settings, job_dir in results:
@@ -610,7 +612,8 @@ def get_currently_running_strategies():
 	# connect to the database
 	cnx, cursor = connect()
 	# search the jobs that fit the conditions
-	results = cursor.execute("SELECT strategy from jobs WHERE status = 'RUNNING' ORDER BY id ASC")
+	# results = cursor.execute("SELECT strategy from jobs WHERE status = 'RUNNING' ORDER BY id ASC")
+	results = cursor.execute("SELECT strategy from jobs WHERE status = 'RUNNING' OR status = 'PREPARING' ORDER BY id ASC")
 	# store the ids
 	strategies = []
 	for strategy, in results: strategies.append(strategy)
