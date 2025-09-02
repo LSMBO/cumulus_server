@@ -278,7 +278,8 @@ def get_app_name(job_id): return get_value(job_id, "app_name")
 def get_strategy(job_id): return get_value(job_id, "strategy")
 def set_strategy(job_id, strategy):
 	# if the job represents a workflow, set the strategy to all other jobs
-	for id in get_associated_jobs(job_id): set_value(job_id, "strategy", strategy)
+	# for id in get_associated_jobs(job_id): set_value(job_id, "strategy", strategy)
+	for id in get_associated_jobs(job_id): set_value(id, "strategy", strategy)
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 def set_job_dir(job_id, job_dir): set_value(job_id, "job_dir", job_dir)
@@ -386,8 +387,8 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 	request_status = "" if len(statuses) == 0 or len(statuses) == 6 else "AND (" + " OR ".join(statuses) + ")"
 	# request_date = f"AND {date_field} BETWEEN {date_from} AND {date_to}"
 	request_date = ""
-	if date_from is not None: request_date += f" AND {date_field} >= {date_from}"
-	if date_to is not None: request_date += f" AND {date_field} <= {date_to}"
+	if date_from is not None and date_from != "": request_date += f" AND {date_field} >= {date_from}"
+	if date_to is not None and date_to != "": request_date += f" AND {date_field} <= {date_to}"
 	# connect to the database
 	cnx, cursor = connect()
 	# prepare the list of jobs to return
@@ -515,8 +516,8 @@ def delete_job(job_id):
 		# delete the job
 		cursor.execute(f"DELETE FROM jobs WHERE id = ?", (id,))
 		cnx.commit()
-		# disconnect
-		cnx.close()
+	# disconnect
+	cnx.close()
 
 def set_fake_creation_date(job_id, seconds_to_add = -86400):
 	"""
