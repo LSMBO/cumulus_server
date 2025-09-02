@@ -598,6 +598,13 @@ def wait_for_volume(volume_name):
 		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
 		if result.stdout.decode('utf-8').find('available') != -1: is_available = True
 
+# def is_volume_present(volume_name):
+# 	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
+# 	for line in result.stdout.decode('utf-8').splitlines():
+# 		if "No volume with a name or ID" in line:
+# 			return False
+# 	return True
+
 def clone_volume(job_id):
 	volume_id = None
 	volume_name = f"volume_job_{job_id}"

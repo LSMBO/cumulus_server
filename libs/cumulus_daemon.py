@@ -108,7 +108,7 @@ def check_running_jobs():
 				db.set_end_date(job_id)
 				logger.warning(f"Failure of {db.get_job_to_string(job_id)}")
 
-def start_job(job_id, job_dir, app_name, settings, host):
+def start_job(job_id, job_dir, app_name, settings, flavor):
 	"""
 	Starts a job on a remote host by generating and executing a script, then updates the job status in the database.
 
@@ -129,7 +129,9 @@ def start_job(job_id, job_dir, app_name, settings, host):
 	db.set_status(job_id, "RUNNING")
 	db.set_start_date(job_id)
 	# create the worker based on the template worker
-	host = utils.create_worker() # TODO
+	utils.create_worker(job_id, flavor)
+	# get the host that was generated
+	host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
 	# create the script to run the job
 	cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
 	utils.write_file(cmd_file, content)
@@ -163,13 +165,14 @@ def start_pending_jobs():
 		job_dir = db.get_job_dir(job_id)
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
-		host_file = f"{job_dir}/{config.HOST_FILE}"
-		# if the host file is present, get the host from this file and start the job directly
-		host = utils.get_host_from_file(host_file)
-		if host is not None:
-			start_job(job_id, job_dir, app_name, settings, host)
+		# host_file = f"{job_dir}/{config.HOST_FILE}"
+		## if the host file is present, get the host from this file and start the job directly
+		# host = utils.get_host_from_file(host_file)
+		## if host is not None and not utils.is_volume_present(host.volume):
+		# 	start_job(job_id, job_dir, app_name, settings, host)
 		# check that all the files are present
-		elif apps.are_all_files_transfered(job_dir, app_name, settings):
+		# elif apps.are_all_files_transfered(job_dir, app_name, settings):
+		if apps.are_all_files_transfered(job_dir, app_name, settings):
 			logger.info(f"Job {job_id} is ready to start")
 			# the strategy of the job must tell us which flavor to use
 			flavor = utils.check_flavor(job_id)
@@ -179,8 +182,9 @@ def start_pending_jobs():
 				# create the new VM with this flavor
 				# run this in a thread, and call start_job once the host is created
 				# the status will remain PENDING until the host is created and the job started
-				thr = threading.Thread(target=utils.create_worker, args=(job_id, flavor))
-				thr.start()
+				# thr = threading.Thread(target=utils.create_worker, args=(job_id, flavor))
+				# thr.start()
+				threading.Thread(target=utils.start_job, args=(job_id, job_dir, app_name, settings, flavor)).start()
 			# # if all is ok, the job can start and its status can turn to RUNNING
 			# if host is not None: start_job(job_id, job_dir, app_name, settings, host)
 			# else: logger.warning(f"No host available for job {job_id}...")
