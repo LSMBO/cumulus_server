@@ -87,6 +87,7 @@ class Host:
 		self.cpu = int(cpu)
 		self.ram = int(ram)
 		self.volume = volume
+		self.error = None
 
 	def __str__(self):
 		"""
@@ -113,6 +114,7 @@ def get_host_from_file(host_file):
 			elif line.startswith("cpu:"): host.cpu = int(line.split("cpu:")[1].strip())
 			elif line.startswith("ram:"): host.ram = int(line.split("ram:")[1].strip())
 			elif line.startswith("volume:"): host.volume = line.split("volume:")[1].strip()
+			elif line.startswith("error:"): host.error = line.split("error:")[1].strip()
 		host.user = config.WORKER_USERNAME
 		host.port = config.WORKER_PORT
 		f.close()
@@ -598,12 +600,19 @@ def wait_for_volume(volume_name):
 		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
 		if result.stdout.decode('utf-8').find('available') != -1: is_available = True
 
-# def is_volume_present(volume_name):
-# 	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
-# 	for line in result.stdout.decode('utf-8').splitlines():
-# 		if "No volume with a name or ID" in line:
-# 			return False
-# 	return True
+def is_volume_present(volume_name):
+	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
+	for line in result.stdout.decode('utf-8').splitlines():
+		if "No volume with a name or ID" in line:
+			return False
+	return True
+
+def is_server_present(server_name):
+	result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stdout=subprocess.PIPE)
+	for line in result.stdout.decode('utf-8').splitlines():
+		if "No Server found for" in line:
+			return False
+	return True
 
 def clone_volume(job_id):
 	volume_id = None
@@ -615,6 +624,9 @@ def clone_volume(job_id):
 			volume_id = line.split()[1]
 			# return volume_id, volume_name
 			break
+	# check that the volume was created
+	if not is_volume_present(volume_name): 
+		return None, None
 	# wait for the volume to become available
 	wait_for_volume(volume_name)
 	# return the volume id and name
@@ -648,10 +660,25 @@ def create_virtual_machine(job_id, flavor, volume_id):
 		if " addresses " in line:
 			line = line.strip().replace('|', '').strip() # remove the pipes
 			ip_address = line.split()[1].split("=")[1]
+	# check that the server was created
+	if not is_server_present(worker_name): 
+		return None, None
 	# wait for the server to be accessible via ssh
 	wait_for_server_ssh_access(ip_address)
 	# return the worker name and ip address
 	return worker_name, ip_address
+
+def write_host_file(job_dir, worker_name, ip_address, cpu, ram, volume_name, error):
+	if error is not None:
+		with open(f"{job_dir}/{config.HOST_FILE}", "w") as f:
+			f.write(f"error:{error}\n")
+		return
+	with open(f"{job_dir}/{config.HOST_FILE}", "w") as f:
+		f.write(f"name:{worker_name}\n")
+		f.write(f"address:{ip_address}\n")
+		f.write(f"cpu:{cpu}\n")
+		f.write(f"ram:{ram}\n")
+		f.write(f"volume:{volume_name}\n")
 
 def create_worker(job_id, job_dir, flavor):
 	"""
@@ -673,19 +700,32 @@ def create_worker(job_id, job_dir, flavor):
 	# job_dir = db.get_job_dir(job_id)
 	# clone the volume from the template
 	volume_id, volume_name = clone_volume(job_id)
+	# abord if the volume could not be created
+	if volume_id is None or volume_name is None:
+		logger.error(f"Cannot create the volume for job {job_id}, aborting")
+		write_host_file(job_dir, None, None, None, None, None, "Cannot create the volume")
+		return
 	# create a worker VM based on this volume
 	worker_name, ip_address = create_virtual_machine(job_id, flavor, volume_id)
+	# abord if the vm could not be created
+	if worker_name is None or ip_address is None:
+		logger.error(f"Cannot create the virtual machine for job {job_id}, aborting")
+		write_host_file(job_dir, None, None, None, None, None, "Cannot create the virtual machine")
+		# delete the volume
+		subprocess.run([config.OPENSTACK, "volume", "delete", volume_name])
+		return
 	# get the cpu and ram from the flavor
 	cpu = config.FLAVORS[flavor]['cpu']
 	ram = config.FLAVORS[flavor]['ram']
 	# create a host object to represent this worker
 	logger.info(f"Worker VM '{worker_name}' has been created for job {job_id}")
-	with open(f"{job_dir}/{config.HOST_FILE}", "w") as f:
-		f.write(f"name:{worker_name}\n")
-		f.write(f"address:{ip_address}\n")
-		f.write(f"cpu:{cpu}\n")
-		f.write(f"ram:{ram}\n")
-		f.write(f"volume:{volume_name}\n")
+	# with open(f"{job_dir}/{config.HOST_FILE}", "w") as f:
+	# 	f.write(f"name:{worker_name}\n")
+	# 	f.write(f"address:{ip_address}\n")
+	# 	f.write(f"cpu:{cpu}\n")
+	# 	f.write(f"ram:{ram}\n")
+	# 	f.write(f"volume:{volume_name}\n")
+	write_host_file(job_dir, worker_name, ip_address, cpu, ram, volume_name, None)
 
 def destroy_worker(job_id):
 	"""

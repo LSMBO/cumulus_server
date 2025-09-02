@@ -92,8 +92,16 @@ def check_running_jobs():
 	This function relies on external modules for database access, process checking, and application-specific job status evaluation.
 	"""
 	for job_id in db.get_jobs_per_status("RUNNING"):
+		# if the host could not be created, the job has failed
+		job_dir = db.get_job_dir(job_id)
+		host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
+		# abort if the host could not be created
+		if host is not None and host.error is not None:
+			db.set_status(job_id, "FAILED")
+			db.set_end_date(job_id)
+			logger.error(f"Cannot create the host for job {job_id}, error was: {host.error}, aborting")
 		# check that the process still exist
-		if not is_process_running(job_id):
+		elif not is_process_running(job_id):
 			# destroy the worker VM in the background
 			thr = threading.Thread(target=utils.destroy_worker, args=(job_id))
 			thr.start()
@@ -135,15 +143,17 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 	utils.create_worker(job_id, job_dir, flavor)
 	# get the host that was generated
 	host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
-	# create the script to run the job
-	cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
-	utils.write_file(cmd_file, content)
-	# start the remote script to run the job
-	remote_cmd = f"{config.TEMP_DIR}/{config.JOB_START_FILE} {job_id} '{job_dir}'"
-	utils.remote_script(host, remote_cmd)
-	# log the command owner, app_name, status, strategy
-	# logger.info(f"Starting {db.get_job_to_string(job_id)}")
-	logger.info(f"Starting {job_details}")
+	# abort if the host could not be created
+	if host is not None or host.error is None:
+		# create the script to run the job
+		cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
+		utils.write_file(cmd_file, content)
+		# start the remote script to run the job
+		remote_cmd = f"{config.TEMP_DIR}/{config.JOB_START_FILE} {job_id} '{job_dir}'"
+		utils.remote_script(host, remote_cmd)
+		# log the command owner, app_name, status, strategy
+		# logger.info(f"Starting {db.get_job_to_string(job_id)}")
+		logger.info(f"Starting {job_details}")
 
 def start_pending_jobs():
 	"""
