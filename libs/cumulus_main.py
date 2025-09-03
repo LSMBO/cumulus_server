@@ -146,6 +146,7 @@ def cancel(owner, job_id):
 		- Only jobs with status "PENDING" or "RUNNING" can be cancelled.
 		- There is a TODO for implementing stronger security checks.
 	"""
+	logger.debug(f"Request to cancel job {job_id} by {owner}")
 	# TODO there should be some real security here to avoid cancelling stuff too easily
 	if db.is_owner(job_id, owner):
 		logger.info(f"Cancel job ${job_id}")

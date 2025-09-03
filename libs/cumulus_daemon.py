@@ -94,13 +94,21 @@ def check_running_jobs():
 	for job_id in db.get_jobs_per_status("PREPARING"):
 		# if the host could not be created, the job has failed
 		job_dir = db.get_job_dir(job_id)
+		# if the host is not yet created, do nothing and wait for the next check
+		host_file = f"{job_dir}/{config.HOST_FILE}"
+		if not os.path.exists(host_file): continue
+		# get the host that was generated
 		host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
 		# abort if the host could not be created
-		if host is None or host.error is not None:
+		if host is None:
+			db.set_status(job_id, "FAILED")
+			db.set_end_date(job_id)
+			logger.error(f"Cannot create the host for job {job_id}, aborting")
+		elif host.error is not None:
 			db.set_status(job_id, "FAILED")
 			db.set_end_date(job_id)
 			logger.error(f"Cannot create the host for job {job_id}, error was: {host.error}, aborting")
-		elif host is not None and host.error is None:
+		else:
 			# the host has been created, the job can start
 			db.set_status(job_id, "RUNNING")
 			db.set_start_date(job_id)
