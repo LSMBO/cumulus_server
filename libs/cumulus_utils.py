@@ -68,25 +68,29 @@ class Host:
 		to_dict():
 			Returns a dictionary containing the host's name, CPU, RAM, and the number of running and pending jobs.
 	"""
-	def __init__(self, name, address, cpu, ram, volume):
+	#def __init__(self, name, address, cpu, ram, volume):
+	def __init__(self):
 		"""
 		Initializes a new instance of the class with the specified parameters.
 
-		Args:
+		Notes: the host contains these information
 			name (str): The name of the instance.
 			address (str): The network address of the instance.
+			user (str): The username to log into the host
 			port (int): The port number to connect to.
 			cpu (int): The number of CPU cores allocated.
 			ram (int): The amount of RAM allocated (in MB or GB).
+			volume (str): The name or ID of the volume on which the host is created
+			error (str): A message if there is an error during the creation of the volume or host (None otherwise)
 
 		"""
-		self.name = name
-		self.address = address
+		self.name = None
+		self.address = None
 		self.user = config.WORKER_USERNAME
 		self.port = config.WORKER_PORT
-		self.cpu = int(cpu)
-		self.ram = int(ram)
-		self.volume = volume
+		self.cpu = None
+		self.ram = None
+		self.volume = None
 		self.error = None
 
 	def __str__(self):
@@ -106,7 +110,7 @@ def get_host_from_file(host_file):
 		Host: A Host object populated with data from the file, or None if the file does not exist.
 	"""
 	if os.path.isfile(host_file):
-		host = Host(None, None, None, None, None)
+		host = Host()
 		f = open(host_file, "r")
 		for line in f.read().strip("\n").split("\n"):
 			if line.startswith("name:"): host.name = line.split("name:")[1].strip()
