@@ -662,7 +662,7 @@ def ssh_keyscan(ip_address):
 	except Exception as e:
 		return None
 
-def wait_for_server_ssh_access(ip_address):
+def wait_for_server_ssh_access(job_id, ip_address):
 	# remove the ip address beforehand
 	subprocess.run(['ssh-keygen', '-R', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
 	# wait for the server to return an answer
@@ -674,9 +674,9 @@ def wait_for_server_ssh_access(ip_address):
 			# break the loop
 			break
 		# wait for 30 seconds before trying again
-		add_to_stdalt(None, f"Waiting for the virtual machine to be accessible via SSH...")
+		add_to_stdalt(job_id, f"Waiting for the virtual machine to be accessible via SSH...")
 		time.sleep(30)
-	add_to_stdalt(None, f"The virtual machine is now accessible via SSH")
+	add_to_stdalt(job_id, f"The virtual machine is now accessible via SSH")
 
 def create_virtual_machine(job_id, flavor, volume_id):
 	worker_name = f"worker_job_{job_id}"
@@ -692,7 +692,7 @@ def create_virtual_machine(job_id, flavor, volume_id):
 		return None, None
 	add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
 	# wait for the server to be accessible via ssh
-	wait_for_server_ssh_access(ip_address)
+	wait_for_server_ssh_access(job_id, ip_address)
 	# return the worker name and ip address
 	return worker_name, ip_address
 
