@@ -420,10 +420,21 @@ def add_to_log(job_id, prefix, text):
 		prefix (str): The prefix to prepend to the log message (e.g., "STDERR").
 		text (str): The message to append to the stderr log.
 	"""
-	merged_log_file = get_log_file_path(job_id)
-	if os.path.isfile(merged_log_file):
-		with open(merged_log_file, "a") as f:
-			f.write(f"\n[{prefix}] {text}")
+	# merged_log_file = get_log_file_path(job_id)
+	# if os.path.isfile(merged_log_file):
+	# 	with open(merged_log_file, "a") as f:
+	# 		f.write(f"\n[{prefix}] {text}")
+	new_line = f"[{prefix}] {text}"
+	# open the file in append mode and write the new line
+	with open(get_log_file_path(job_id), "ab+") as f:
+		# make sure there is a newline before writing the new line
+		f.seek(0, 2)
+		if f.tell() > 0:
+			f.seek(-1, 2)
+			if f.read(1) != b'\n': f.write(b'\n')
+		# write the new line
+		f.write(new_line.encode('utf-8'))
+		f.write(b'\n')
 
 def add_to_stdout(job_id, text):
 	add_to_log(job_id, "STDOUT", text)

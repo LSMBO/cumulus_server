@@ -46,12 +46,11 @@ JOB_FOLDER=$2
 # the first step is to create an alive file to let the controller know that the job has started
 touch $JOB_FOLDER/.cumulus.alive
 
-# create empty log files
-# touch $JOB_FOLDER/.cumulus.stdout
-# touch $JOB_FOLDER/.cumulus.stderr
+# make sure the log file exist
 touch $JOB_FOLDER/.cumulus.log
 
 # copy the job folder to a local folder, do it in background in case it's a large folder
+echo "[SERVER] Preparing environment" > $logpipe
 cp -r $JOB_FOLDER ~/job &
 COPY_JOB_PID=$!
 while kill -0 $COPY_JOB_PID 2>/dev/null; do
@@ -63,8 +62,6 @@ done
 mkdir -p ~/job/output
 # make the output folder the current working directory (just in case the job creates files in the current working directory)
 cd ~/job/output
-# # prepare a usage file
-# echo "Time	CPU%	RAM%" > $JOB_FOLDER/.cumulus.usage
 
 # Create a named pipe for centralized logging
 logpipe="merged_pipe"
@@ -81,10 +78,9 @@ prefix_lines() {
     done
 }
 
+echo "[SERVER] Execute the script" > $logpipe
 # execute the job in the background and make sure the stdout and stderr are recorded in the job folder
-# source .cumulus.cmd > ~/job/.cumulus.stdout 2> ~/job/.cumulus.stderr &
 # we use tee to capture the stdout and stderr, and also send it to the logpipe so it is recorded in the merged log file
-# source .cumulus.cmd > >(tee ~/job/.cumulus.stdout > "$logpipe") 2> >(tee ~/job/.cumulus.stderr >&2 > "$logpipe") &
 source .cumulus.cmd > >(prefix_lines STDOUT > "$logpipe") 2> >(prefix_lines STDERR > "$logpipe") &
 # store the PID in a file
 PID=$!
@@ -93,8 +89,6 @@ echo $PID > $JOB_FOLDER/.cumulus.pid
 # while the pid is running, transfer the logs to the $JOB_FOLDER/ folder every 30 seconds
 while kill -0 $PID 2>/dev/null; do
     sleep 30
-    # cp ~/job/.cumulus.stdout $JOB_FOLDER/.cumulus.stdout
-    # cp ~/job/.cumulus.stderr $JOB_FOLDER/.cumulus.stderr
     cp ~/job/.cumulus.log $JOB_FOLDER/.cumulus.log
     touch $JOB_FOLDER/.cumulus.alive
     # record the CPU and RAM usage, it can be used later to plot the usage of the job
@@ -104,16 +98,13 @@ while kill -0 $PID 2>/dev/null; do
     # echo "$dt	$cpu	$mem" >> $JOB_FOLDER/.cumulus.usage
     echo "[INFO] $dt;CPU:$cpu%;RAM:$mem%" > $logpipe
 done
+echo "[SERVER] End of the script" > $logpipe
 
-# when the job finishes, transfer the finalized logs to the $JOB_FOLDER
-# cp ~/job/.cumulus.stdout $JOB_FOLDER/.cumulus.stdout
-# cp ~/job/.cumulus.stderr $JOB_FOLDER/.cumulus.stderr
-cp ~/job/.cumulus.log $JOB_FOLDER/.cumulus.log
-# also delete the PID file
+# delete the PID file
 rm $JOB_FOLDER/.cumulus.pid
 
 # copy the content of job/output/ to the job folder, in background so we can keep the alive file updated while copying
-# cp -r /cumulus/workspace/output/* $JOB_FOLDER/
+echo "[SERVER] Transferring the output to the job directory" > $logpipe
 cp -r ~/job/output $JOB_FOLDER/ &
 COPY_PID=$!
 # while the copy is running, update the alive file every 10 seconds
@@ -121,6 +112,10 @@ while kill -0 $COPY_PID 2>/dev/null; do
     sleep 15
     touch $JOB_FOLDER/.cumulus.alive
 done
+echo "[SERVER] All the files have been transferred" > $logpipe
+
+# when the job finishes, transfer the finalized logs to the $JOB_FOLDER
+cp ~/job/.cumulus.log $JOB_FOLDER/.cumulus.log
 
 # Give logger a moment to flush and clean up
 sleep 1
