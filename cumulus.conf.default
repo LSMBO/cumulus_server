@@ -16,6 +16,7 @@ openstack.volume.size.gb = 500
 openstack.cert.key.name = cumulus
 openstack.cloud.network = openstack-cloud-project
 openstack.known.hosts.path = /home/ubuntu/.ssh/known_hosts
+openstack.cert.key.path = /home/ubuntu/.ssh/cumulus.pem
 
 # the ntp server to synchronize the time
 # this is used to ensure that the time on the server and the workers are the same

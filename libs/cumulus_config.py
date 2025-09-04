@@ -58,6 +58,7 @@ VOLUME_SIZE_GB = ""
 CERT_KEY_NAME = ""
 CLOUD_NETWORK = ""
 KNOWN_HOSTS_PATH = ""
+CERT_KEY_PATH = ""
 
 # predefined flavors and their weight
 FLAVORS_MAX_WEIGHT = 1
@@ -161,7 +162,7 @@ def init(create_dirs = True):
 		OSError: If directory creation fails.
 	"""
 	# initialize the paths
-	global DATA_DIR, JOB_DIR, BIN_DIR, TEMP_DIR, OPENSTACK, WORKER_USERNAME, WORKER_PORT, SNAPSHOT_NAME, VOLUME_SIZE_GB, CERT_KEY_NAME, CLOUD_NETWORK, KNOWN_HOSTS_PATH
+	global DATA_DIR, JOB_DIR, BIN_DIR, TEMP_DIR, OPENSTACK, WORKER_USERNAME, WORKER_PORT, SNAPSHOT_NAME, VOLUME_SIZE_GB, CERT_KEY_NAME, CLOUD_NETWORK, KNOWN_HOSTS_PATH, CERT_KEY_PATH
 	DATA_DIR = get("storage.path") + get("storage.data.subpath")
 	JOB_DIR = get("storage.path") + get("storage.jobs.subpath")
 	BIN_DIR = get("storage.path") + get("storage.bin.subpath")
@@ -176,6 +177,7 @@ def init(create_dirs = True):
 	CERT_KEY_NAME = get("openstack.cert.key.name")
 	CLOUD_NETWORK = get("openstack.cloud.network")
 	KNOWN_HOSTS_PATH = get("openstack.known.hosts.path")
+	CERT_KEY_PATH = get("openstack.cert.key.path")
 	# create the directories if needed
 	if create_dirs:
 		if not os.path.isdir(DATA_DIR): os.mkdir(DATA_DIR)

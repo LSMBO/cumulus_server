@@ -116,7 +116,7 @@ def check_running_jobs():
 		# check that the process still exist
 		if not is_process_running(job_id):
 			# destroy the worker VM in the background
-			threading.Thread(target=utils.destroy_worker, args=(job_id)).start()
+			threading.Thread(target=utils.destroy_worker, args=(job_id,)).start()
 			# record the end date
 			db.set_end_date(job_id)
 			# ask the proper app module if the job is finished or failed
@@ -161,6 +161,7 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 		cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
 		utils.write_file(cmd_file, content)
 		# start the remote script to run the job
+		utils.add_to_stdalt(job_id, f"Remotely execute the job {job_id} on the virtual machine")
 		remote_cmd = f"{config.TEMP_DIR}/{config.JOB_START_FILE} {job_id} '{job_dir}'"
 		utils.remote_script(host, remote_cmd)
 		# log the command owner, app_name, status, strategy

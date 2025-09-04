@@ -151,7 +151,8 @@ def remote_script(host, script_with_args):
 		- The SSH connection is closed after the command is executed.
 	"""
 	# connect to the host
-	key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+	# key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+	key = paramiko.RSAKey.from_private_key_file(config.CERT_KEY_PATH)
 	ssh = paramiko.SSHClient()
 	# TODO use a safer way (get/set_local_hosts)
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -181,7 +182,8 @@ def remote_cancel(host, pid):
 	"""
 	if host is not None and pid is not None and pid > 0:
 		# connect to the host
-		key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+		# key = paramiko.RSAKey.from_private_key_file(host.rsa_key)
+		key = paramiko.RSAKey.from_private_key_file(config.CERT_KEY_PATH)
 		ssh = paramiko.SSHClient()
 		ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 		ssh.connect(host.address, port = host.port, username = host.user, pkey = key)
@@ -409,28 +411,32 @@ def get_log_file_path(job_id):
 	# return f"{db.get_job_dir(job_id)}/{log_file_name}"
 	return f"{db.get_job_dir(job_id)}/{config.JOB_LOG_FILE}"
 
-def add_to_stderr(job_id, text):
+def add_to_log(job_id, prefix, text):
 	"""
-	Appends a formatted message to the standard error log file for a given job.
+	Appends a formatted message to the merged log file for a given job.
 
 	Args:
 		job_id (int): The identifier of the job whose stderr log should be updated.
+		prefix (str): The prefix to prepend to the log message (e.g., "STDERR").
 		text (str): The message to append to the stderr log.
-
-	Notes:
-		The message is prefixed with 'Cumulus:' and appended as a new line to the log file.
 	"""
-	# # write to the stderr file
-	# log_file = get_log_file_path(job_id, False)
-	# if os.path.isfile(log_file):
-	# 	with open(get_log_file_path(job_id, False), "a") as f:
-	# 		f.write(f"\nCumulus: {text}")
-	# write to the merged log file if it exists
-	# merged_log_file = get_log_file_path(job_id, None)
 	merged_log_file = get_log_file_path(job_id)
 	if os.path.isfile(merged_log_file):
 		with open(merged_log_file, "a") as f:
-			f.write(f"\n[STDERR] {text}")
+			f.write(f"\n[{prefix}] {text}")
+
+def add_to_stdout(job_id, text):
+	add_to_log(job_id, "STDOUT", text)
+
+def add_to_stderr(job_id, text):
+	# merged_log_file = get_log_file_path(job_id)
+	# if os.path.isfile(merged_log_file):
+	# 	with open(merged_log_file, "a") as f:
+	# 		f.write(f"\n[STDERR] {text}")
+	add_to_log(job_id, "STDERR", text)
+
+def add_to_stdalt(job_id, text):
+	add_to_log(job_id, "SERVER", text)
 
 def get_file_age_in_seconds(file):
 	"""
@@ -621,6 +627,7 @@ def is_server_present(server_name):
 def clone_volume(job_id):
 	volume_id = None
 	volume_name = f"volume_job_{job_id}"
+	add_to_stdalt(job_id, "Creating the volume for the virtual machine...")
 	result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name], stdout=subprocess.PIPE)
 	for line in result.stdout.decode('utf-8').splitlines():
 		if " id " in line:
@@ -634,6 +641,7 @@ def clone_volume(job_id):
 	# wait for the volume to become available
 	wait_for_volume(volume_name)
 	# return the volume id and name
+	add_to_stdalt(job_id, "The volume has been successfully created")
 	return volume_id, volume_name
 
 def ssh_keyscan(ip_address):
@@ -654,11 +662,15 @@ def wait_for_server_ssh_access(ip_address):
 			with open(config.KNOWN_HOSTS_PATH, 'a') as f: f.write(result + '\n')
 			# break the loop
 			break
+		# wait for 30 seconds before trying again
+		add_to_stdalt(None, f"Waiting for the virtual machine to be accessible via SSH...")
 		time.sleep(30)
+	add_to_stdalt(None, f"The virtual machine is now accessible via SSH")
 
 def create_virtual_machine(job_id, flavor, volume_id):
 	worker_name = f"worker_job_{job_id}"
 	ip_address = None
+	add_to_stdalt(job_id, "Creating the virtual machine...")
 	result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout=subprocess.PIPE)
 	for line in result.stdout.decode('utf-8').splitlines():
 		if " addresses " in line:
@@ -667,6 +679,7 @@ def create_virtual_machine(job_id, flavor, volume_id):
 	# check that the server was created
 	if not is_server_present(worker_name): 
 		return None, None
+	add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
 	# wait for the server to be accessible via ssh
 	wait_for_server_ssh_access(ip_address)
 	# return the worker name and ip address
@@ -699,6 +712,8 @@ def create_worker(job_id, job_dir, flavor):
 	# a specific status could be added to the job in the database (STARTING ?)
 	# No, instead write the host information in a file in the job directory, so we can access it later
 	# And also create an empty file called .cumulus.create? (remove it when done)
+
+	# TODO add many logs with add_to_stdalt(job_id, "text")
 	
 	logger.info(f"Creating a virtual machine with flavor '{flavor}' for job {job_id}")
 	# job_dir = db.get_job_dir(job_id)
@@ -707,6 +722,7 @@ def create_worker(job_id, job_dir, flavor):
 	# abord if the volume could not be created
 	if volume_id is None or volume_name is None:
 		logger.error(f"Cannot create the volume for job {job_id}, aborting")
+		add_to_stdalt(job_id, f"Cannot create the volume for job {job_id}, aborting")
 		write_host_file(job_dir, None, None, None, None, None, "Cannot create the volume")
 		return
 	# create a worker VM based on this volume
@@ -714,6 +730,7 @@ def create_worker(job_id, job_dir, flavor):
 	# abord if the vm could not be created
 	if worker_name is None or ip_address is None:
 		logger.error(f"Cannot create the virtual machine for job {job_id}, aborting")
+		add_to_stdalt(job_id, f"Cannot create the virtual machine for job {job_id}, aborting")
 		write_host_file(job_dir, None, None, None, None, None, "Cannot create the virtual machine")
 		# delete the volume
 		subprocess.run([config.OPENSTACK, "volume", "delete", volume_name])
@@ -723,12 +740,6 @@ def create_worker(job_id, job_dir, flavor):
 	ram = config.FLAVORS[flavor]['ram']
 	# create a host object to represent this worker
 	logger.info(f"Worker VM '{worker_name}' has been created for job {job_id}")
-	# with open(f"{job_dir}/{config.HOST_FILE}", "w") as f:
-	# 	f.write(f"name:{worker_name}\n")
-	# 	f.write(f"address:{ip_address}\n")
-	# 	f.write(f"cpu:{cpu}\n")
-	# 	f.write(f"ram:{ram}\n")
-	# 	f.write(f"volume:{volume_name}\n")
 	write_host_file(job_dir, worker_name, ip_address, cpu, ram, volume_name, None)
 
 def destroy_worker(job_id):
