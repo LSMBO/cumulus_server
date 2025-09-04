@@ -65,11 +65,21 @@ def is_process_running(job_id):
 	is_alive = False
 	# get all the jobs that are associated to this job_id (could be several if the job is part of a workflow)
 	for id in db.get_associated_jobs(job_id):
+		logger.debug(f"Checking if the process for job {id} is still running")
 		# two files are used to check if the job is still running:
 		alive_file = db.get_job_dir(id) + "/" + config.JOB_ALIVE_FILE # the alive file is created when the job starts
+		logger.debug(f"Searching for alive file {alive_file}: exists={os.path.exists(alive_file)}")
 		stop_file = db.get_job_dir(id) + "/" + config.JOB_STOP_FILE # the stop file is created when the job ends
+		logger.debug(f"Searching for stop file {stop_file}: exists={os.path.exists(stop_file)}")
 		# if the alive file exists, it must have been updated recently (less than 3 minutes ago) to consider that the job is still running
-		if os.path.exists(alive_file): is_alive = time.time() - os.path.getmtime(alive_file) < 180
+		# if os.path.exists(alive_file): is_alive = time.time() - os.path.getmtime(alive_file) < 180
+		if os.path.exists(alive_file): 
+			# is_alive = time.time() - os.path.getmtime(alive_file) < 180
+			previous_time = db.get_last_modified(id)
+			current_time = os.path.getmtime(alive_file)
+			logger.debug(f"Alive file {alive_file} was last modified at {previous_time}, current modification time is {current_time}")
+			is_alive = current_time > previous_time
+			if is_alive: db.set_last_modified(id, int(current_time))
 		# if the alive file does not exist, check if the stop file exists, in this case, the job has stopped
 		elif os.path.exists(stop_file): is_alive = False
 		# there should always be an alive file or a stop file, but if none of them exist, we consider that the job is not running

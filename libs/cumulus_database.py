@@ -96,12 +96,14 @@ def initialize_database():
 			stderr TEXT,
 			job_dir TEXT,
 			start_after_id INTEGER,
-			workflow_name TEXT)
+			workflow_name TEXT,
+			last_modified INTEGER)
 	""")
 	cnx.commit()
 	# the database may already exist, but we want to ensure that the following columns are present
 	add_column(cnx, cursor, "start_after_id", "INTEGER")
 	add_column(cnx, cursor, "workflow_name", "TEXT")
+	add_column(cnx, cursor, "last_modified", "INTEGER")
 	# close the connection
 	cnx.close()
 	logger.info("Database initialized successfully.")
@@ -143,7 +145,7 @@ def create_job(form):
 	creation_date = int(time.time())
 	start_after_id = form["start_after_id"] if "start_after_id" in form else None
 	# settings are already passed as a stringified json
-	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", "", start_after_id, workflow_name))
+	cursor.execute(f"INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (None, owner, app_name, form["strategy"], form["description"], form["settings"], "PENDING", "", creation_date, None, None, "", "", "", start_after_id, workflow_name, 0))
 	# return the id of the job
 	job_id = cursor.lastrowid
 	# define the job directory "job_<num>_<user>_<app>_<timestamp>"
@@ -282,6 +284,8 @@ def set_strategy(job_id, strategy):
 def is_owner(job_id, owner): return get_value(job_id, "owner") == owner
 def get_job_dir(job_id): return get_value(job_id, "job_dir")
 def set_job_dir(job_id, job_dir): set_value(job_id, "job_dir", job_dir)
+def get_last_modified(job_id): return get_value(job_id, "last_modified")
+def set_last_modified(job_id, timestamp): set_value(job_id, "last_modified", timestamp)
 
 def check_job_existency(job_id):
 	"""
