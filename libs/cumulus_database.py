@@ -231,6 +231,7 @@ def get_workflow_parent_id(job_id):
 		if cursor.arraysize == 0: break # the job should exist, but if it does not, we stop here
 		results = cursor.fetchone()
 		if results == None or results[0] == None: break # if the job has no parent, we stop here (real stop condition)
+		if results == "" or results[0] == "": break # if the job has no parent, we stop here (real stop condition)
 		parent_job_id = results[0]
 	cnx.close()
 	return parent_job_id
