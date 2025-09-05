@@ -83,7 +83,10 @@ def is_process_running(job_id):
 		# if the alive file does not exist, check if the stop file exists, in this case, the job has stopped
 		elif os.path.exists(stop_file): is_alive = False
 		# there should always be an alive file or a stop file, but if none of them exist, we consider that the job is not running
-		else: is_alive = False
+		# else: is_alive = False
+		# if there is no alive file and no stop file, it's probably because the job is not running yet
+		# TODO if the job has crashed before running, this could lead to a job remaining in RUNNING status forever
+		else: is_alive = True
 	# return the status directly
 	return is_alive
 

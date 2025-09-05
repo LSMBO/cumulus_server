@@ -160,7 +160,10 @@ def remote_script(host, script_with_args):
 	# execute the script remotely (it will automatically create the pid file)
 	# use setsid --fork to make sure the process is detached from the terminal
 	# it will also make sure that all processes are killed if user cancels the job
-	ssh.exec_command(f"setsid --fork bash {script_with_args}")
+	logger.info(f"Executing remotely this command: {script_with_args}")
+	_, stdout, stderr = ssh.exec_command(f"setsid --fork bash {script_with_args}")
+	logger.debug(f"STDOUT: {stdout.read().decode('utf-8')}")
+	logger.debug(f"STDERR: {stderr.read().decode('utf-8')}")
 	# close the connection and return the pid
 	ssh.close()
 
