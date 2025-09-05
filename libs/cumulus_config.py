@@ -158,11 +158,14 @@ def init(create_dirs = True):
 		- Sets global variables.
 		- Optionally creates the directories on the filesystem if they are missing.
 
+	Notes:
+		The directory listed in "storage.path" must be shared with NFS, and mounted on the template VM
+
 	Raises:
 		OSError: If directory creation fails.
 	"""
 	# initialize the paths
-	global DATA_DIR, JOB_DIR, BIN_DIR, TEMP_DIR, OPENSTACK, WORKER_USERNAME, WORKER_PORT, SNAPSHOT_NAME, VOLUME_SIZE_GB, CERT_KEY_NAME, CLOUD_NETWORK, KNOWN_HOSTS_PATH, CERT_KEY_PATH
+	global DATA_DIR, JOB_DIR, BIN_DIR, TEMP_DIR, OPENSTACK, WORKER_USERNAME, WORKER_PORT, SNAPSHOT_NAME, VOLUME_SIZE_GB, CERT_KEY_NAME, CLOUD_NETWORK, KNOWN_HOSTS_PATH, CERT_KEY_PATH, JOB_START_FILE
 	DATA_DIR = get("storage.path") + get("storage.data.subpath")
 	JOB_DIR = get("storage.path") + get("storage.jobs.subpath")
 	BIN_DIR = get("storage.path") + get("storage.bin.subpath")
@@ -178,6 +181,7 @@ def init(create_dirs = True):
 	CLOUD_NETWORK = get("openstack.cloud.network")
 	KNOWN_HOSTS_PATH = get("openstack.known.hosts.path")
 	CERT_KEY_PATH = get("openstack.cert.key.path")
+	JOB_START_FILE = BIN_DIR + "/scripts/start_job.sh"
 	# create the directories if needed
 	if create_dirs:
 		if not os.path.isdir(DATA_DIR): os.mkdir(DATA_DIR)

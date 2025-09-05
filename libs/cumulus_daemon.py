@@ -175,7 +175,7 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 		utils.write_file(cmd_file, content)
 		# start the remote script to run the job
 		utils.add_to_stdalt(job_id, f"Remotely execute the job {job_id} on the virtual machine")
-		remote_cmd = f"{config.TEMP_DIR}/{config.JOB_START_FILE} {job_id} '{job_dir}'"
+		remote_cmd = f"{config.JOB_START_FILE} {job_id} '{job_dir}'"
 		utils.remote_script(host, remote_cmd)
 		# log the command owner, app_name, status, strategy
 		# logger.info(f"Starting {db.get_job_to_string(job_id)}")
