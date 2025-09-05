@@ -679,6 +679,8 @@ def wait_for_server_ssh_access(job_id, ip_address):
 		# wait for 30 seconds before trying again
 		add_to_stdalt(job_id, f"Waiting for the virtual machine to be accessible via SSH...")
 		time.sleep(30)
+	# wait just a little more to make sure we are allowed to log in
+	time.sleep(5)
 	add_to_stdalt(job_id, f"The virtual machine is now accessible via SSH")
 
 def create_virtual_machine(job_id, flavor, volume_id):
