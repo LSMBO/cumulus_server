@@ -420,7 +420,7 @@ def get_param_command_line(param, settings, job_dir):
 				for file in current_files: 
 					file = get_file_path(job_dir, file, is_raw_input)
 					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-					if is_raw_input == "false": file = os.path.basename(file)
+					# if is_raw_input == "false": file = os.path.basename(file)
 					cmd.append(replace_in_command(repeated_command, "%value%", file))
 	# if cmd contains None, log the content of cmd
 	if None in cmd: logger.error(f"Error in get_param_command_line for key {key}")
@@ -571,12 +571,12 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 					for file in settings[key]:
 						file = get_file_path(job_dir, file, is_raw_input)
 						if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-						if is_raw_input == "false": file = os.path.basename(file)
+						# if is_raw_input == "false": file = os.path.basename(file)
 						value.append(file)
 				else:
 					file = get_file_path(job_dir, settings[key], is_raw_input)
 					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-					if is_raw_input == "false": file = os.path.basename(file)
+					# if is_raw_input == "false": file = os.path.basename(file)
 					value = file
 				add_config_to_settings(key, value, config_settings)
 

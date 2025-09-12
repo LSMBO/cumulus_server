@@ -18,7 +18,7 @@
             </when>
         </conditional>
         <filelist name="database.fasta" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" help="Specify the FASTA file you want to use" />
-        <string name="output_directory" label="Output" value="%output_dir%" visibility="hidden" help="" />
+        <string name="output_directory" label="Output" value="." visibility="hidden" help="" />
     </section>
 
     <section name="database" title="Database" expanded="true">
