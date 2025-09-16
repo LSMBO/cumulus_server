@@ -890,7 +890,7 @@ def get_output_file_list(job_dir):
 	"""
 	# this function will only return files, empty folders will be disregarded
 	filelist = []
-	root_path = job_dir + "/" + output.folder + "/"
+	root_path = job_dir + "/" + OUTPUT_DIR + "/"
 	if os.path.isdir(root_path):
 		# list all files including sub-directories
 		for root, _, files in os.walk(root_path):
