@@ -758,28 +758,60 @@ def create_worker(job_id, job_dir, flavor):
 	logger.info(f"Worker VM '{worker_name}' has been created for job {job_id}")
 	write_host_file(job_dir, worker_name, ip_address, cpu, ram, volume_name, None)
 
+# def destroy_worker(job_id):
+	# """
+	# Destroys the worker VM associated with the given job ID.
+
+	# Args:
+		# job_id (int): The unique identifier of the job whose worker VM is to be destroyed.
+
+	# Returns:
+		# bool: True if the worker VM was successfully destroyed, False otherwise.
+	# """
+	# logger.info(f"Destroying the virtual machine for job {job_id}")
+	# host = get_host(job_id)
+	# if host is not None:
+		# # delete the VM
+		# subprocess.run([config.OPENSTACK, "server", "delete", "--wait", host.name])
+		# # delete the volume
+		# subprocess.run([config.OPENSTACK, "volume", "delete", host.volume])
+		# logger.info(f"Worker VM '{host.name}' has been destroyed for job {job_id}")
+		# return True
+	# else:
+		# logger.error(f"Cannot destroy the virtual machine for job {job_id}, host information not found")
+		# return False
+
 def destroy_worker(job_id):
 	"""
 	Destroys the worker VM associated with the given job ID.
+	If the job is part of a workflow, the same is done for all jobs in the workflow.
+	This function should be called in a thread
 
 	Args:
 		job_id (int): The unique identifier of the job whose worker VM is to be destroyed.
 
 	Returns:
-		bool: True if the worker VM was successfully destroyed, False otherwise.
+		bool: True if the worker VM (and its related VMs) was successfully destroyed, False otherwise.
 	"""
 	logger.info(f"Destroying the virtual machine for job {job_id}")
-	host = get_host(job_id)
-	if host is not None:
-		# delete the VM
-		subprocess.run([config.OPENSTACK, "server", "delete", "--wait", host.name])
-		# delete the volume
-		subprocess.run([config.OPENSTACK, "volume", "delete", host.volume])
-		logger.info(f"Worker VM '{host.name}' has been destroyed for job {job_id}")
-		return True
-	else:
-		logger.error(f"Cannot destroy the virtual machine for job {job_id}, host information not found")
-		return False
+	# get all the jobs in case this is a workflow job
+	job_ids = db.get_associated_jobs(job_id)
+	# cancel all the corresponding jobs
+	all_workers_destroyed = False
+	for id in job_ids:
+		host = get_host(job_id)
+		# destroy the session
+		if host is not None:
+			# delete the VM
+			subprocess.run([config.OPENSTACK, "server", "delete", "--wait", host.name])
+			# delete the volume
+			subprocess.run([config.OPENSTACK, "volume", "delete", host.volume])
+			logger.info(f"Worker VM '{host.name}' has been destroyed for job {job_id}")
+			all_workers_destroyed = True
+		else:
+			logger.error(f"Cannot destroy the virtual machine for job {job_id}, host information not found")
+			all_workers_destroyed = False
+	return all_workers_destroyed
 
 def get_mzml_file_path(file_path, use_temp_dir = False):
 	"""
