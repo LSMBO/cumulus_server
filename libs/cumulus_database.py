@@ -626,3 +626,17 @@ def get_currently_running_strategies():
 	cnx.close()
 	# return a list of strategies
 	return strategies
+
+def pause_preparing_jobs():
+	"""
+	This function is called only when the main process is stopped.
+	The jobs that are currently running should be safe, but the jobs who are in PREPARING status will be impacted.
+	To avoid that, we put them in PAUSED status, so we can restart them automatically at the next start of the main process.
+	"""
+	# connect to the database
+	cnx, cursor = connect()
+	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
+	cursor.execute(f"UPDATE jobs SET status = 'PAUSED' WHERE status = 'PREPARING'")
+	cnx.commit()
+	# disconnect
+	cnx.close()

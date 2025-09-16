@@ -152,9 +152,8 @@ def cancel(owner, job_id):
 		logger.info(f"Cancel job ${job_id}")
 		# read the status file, only cancel if the status is RUNNING
 		status = db.get_status(job_id)
-		# if status == "PENDING" or status == "RUNNING": 
 		if status == "PENDING" or status == "PREPARING" or status == "RUNNING": 
-			# utils.cancel_job(job_id)
+			utils.cancel_job(job_id)
 			threading.Thread(target=utils.destroy_worker, args=(job_id,)).start()
 			return f"Job {job_id} has been cancelled"
 		else: return f"Job {job_id} cannot be cancelled, it is already stopped"
@@ -346,3 +345,11 @@ def start():
 	if not IS_DEBUG: threading.Thread(target=daemon.clean, args=(), daemon=True).start()
 	# start waitress WSGI server
 	serve(app, host = config.get("local.host"), port = config.get("local.port"))
+	# immediately restart the paused jobs, if any
+
+def handle_shutdown(signum, frame):
+	logger.info(f"Received shutdown signal ({signum})... Cleaning up.")
+	# pause all jobs that are in PREPARING status
+	db.pause_preparing_jobs()
+	# exit the program
+	sys.exit(0)

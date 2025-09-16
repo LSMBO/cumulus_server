@@ -641,21 +641,30 @@ def is_server_present(server_name):
 def clone_volume(job_id):
 	volume_id = None
 	volume_name = f"volume_job_{job_id}"
-	add_to_stdalt(job_id, "Creating the volume for the virtual machine...")
-	result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name], stdout=subprocess.PIPE)
-	for line in result.stdout.decode('utf-8').splitlines():
-		if " id " in line:
-			line = line.strip().replace('|', '').strip() # remove the pipes
-			volume_id = line.split()[1]
-			# return volume_id, volume_name
-			break
-	# check that the volume was created
-	if not is_volume_present(volume_name): 
-		return None, None
-	# wait for the volume to become available
-	wait_for_volume(volume_name)
+	# check that the volume does not already exist
+	if is_volume_present(volume_name): 
+		logger.warn(f"Volume {volume_name} already exists, reusing it")
+		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
+		for line in result.stdout.decode('utf-8').splitlines():
+			if " id " in line:
+				volume_id = line.split()[1]
+				break
+	else:
+		add_to_stdalt(job_id, "Creating the volume for the virtual machine...")
+		result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name], stdout=subprocess.PIPE)
+		for line in result.stdout.decode('utf-8').splitlines():
+			if " id " in line:
+				line = line.strip().replace('|', '').strip() # remove the pipes
+				volume_id = line.split()[1]
+				# return volume_id, volume_name
+				break
+		# check that the volume was created
+		if not is_volume_present(volume_name): 
+			return None, None
+		# wait for the volume to become available
+		wait_for_volume(volume_name)
+		add_to_stdalt(job_id, "The volume has been successfully created")
 	# return the volume id and name
-	add_to_stdalt(job_id, "The volume has been successfully created")
 	return volume_id, volume_name
 
 def ssh_keyscan(ip_address):
@@ -686,16 +695,25 @@ def wait_for_server_ssh_access(job_id, ip_address):
 def create_virtual_machine(job_id, flavor, volume_id):
 	worker_name = f"worker_job_{job_id}"
 	ip_address = None
-	add_to_stdalt(job_id, "Creating the virtual machine...")
-	result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout=subprocess.PIPE)
-	for line in result.stdout.decode('utf-8').splitlines():
-		if " addresses " in line:
-			line = line.strip().replace('|', '').strip() # remove the pipes
-			ip_address = line.split()[1].split("=")[1]
-	# check that the server was created
-	if not is_server_present(worker_name): 
-		return None, None
-	add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
+	# check that the server does not already exist
+	if is_server_present(worker_name): 
+		logger.warn(f"Virtual machine {worker_name} already exists, reusing it")
+		result = subprocess.run([config.OPENSTACK, "server", "show", worker_name], stdout=subprocess.PIPE)
+		for line in result.stdout.decode('utf-8').splitlines():
+			if "addresses" in line:
+				ip_address = line.split()[3].split("=")[1]
+				break
+	else:
+		add_to_stdalt(job_id, "Creating the virtual machine...")
+		result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout=subprocess.PIPE)
+		for line in result.stdout.decode('utf-8').splitlines():
+			if " addresses " in line:
+				line = line.strip().replace('|', '').strip() # remove the pipes
+				ip_address = line.split()[1].split("=")[1]
+		# check that the server was created
+		if not is_server_present(worker_name): 
+			return None, None
+		add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
 	# wait for the server to be accessible via ssh
 	wait_for_server_ssh_access(job_id, ip_address)
 	# return the worker name and ip address
@@ -723,14 +741,6 @@ def create_worker(job_id, job_dir, flavor):
 	Returns:
 		Host: The Host object representing the newly created worker VM.
 	"""
-	# WARN: this function may take a while to complete (up to a few minutes)
-	# Maybe we should run it in background and notify the user when the VM is ready ?
-	# a specific status could be added to the job in the database (STARTING ?)
-	# No, instead write the host information in a file in the job directory, so we can access it later
-	# And also create an empty file called .cumulus.create? (remove it when done)
-
-	# TODO add many logs with add_to_stdalt(job_id, "text")
-	
 	logger.info(f"Creating a virtual machine with flavor '{flavor}' for job {job_id}")
 	# job_dir = db.get_job_dir(job_id)
 	# clone the volume from the template

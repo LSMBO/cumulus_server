@@ -117,6 +117,8 @@ def check_running_jobs():
 			db.set_status(job_id, "FAILED")
 			db.set_end_date(job_id)
 			logger.error(f"Cannot create the host for job {job_id}, aborting")
+			# if the file is not created yet, it may be because the server was stopped during this phase
+			# in that case, we should recall start_job
 		elif host.error is not None:
 			db.set_status(job_id, "FAILED")
 			db.set_end_date(job_id)
@@ -160,10 +162,6 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 		- Updates the job's host, status, and start date in the database.
 		- Logs information about the job execution process.
 	"""
-	# # directly set the host and the status to RUNNING in the database to avoid starting another job on the same host
-	# db.set_status(job_id, "RUNNING")
-	# db.set_start_date(job_id)
-	# job_dir = db.get_job_dir(job_id)
 	# create the worker based on the template worker
 	utils.create_worker(job_id, job_dir, flavor)
 	# get the host that was generated
@@ -206,13 +204,7 @@ def start_pending_jobs():
 		job_dir = db.get_job_dir(job_id)
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
-		# host_file = f"{job_dir}/{config.HOST_FILE}"
-		## if the host file is present, get the host from this file and start the job directly
-		# host = utils.get_host_from_file(host_file)
-		## if host is not None and not utils.is_volume_present(host.volume):
-		# 	start_job(job_id, job_dir, app_name, settings, host)
 		# check that all the files are present
-		# elif apps.are_all_files_transfered(job_dir, app_name, settings):
 		if apps.are_all_files_transfered(job_dir, app_name, settings):
 			logger.info(f"Job {job_id} is ready to start")
 			# the strategy of the job must tell us which flavor to use
@@ -222,18 +214,24 @@ def start_pending_jobs():
 			else:
 				# directly set the host and the status to RUNNING in the database to avoid starting another job on the same host
 				db.set_status(job_id, "PREPARING")
-				# db.set_start_date(job_id)
 				# create the new VM with this flavor
 				# run this in a thread, and call start_job once the host is created
 				# the status will remain PENDING until the host is created and the job started
-				# thr = threading.Thread(target=utils.create_worker, args=(job_id, flavor))
-				# thr.start()
 				threading.Thread(target=start_job, args=(job_id, job_dir, app_name, settings, flavor, db.get_job_to_string(job_id))).start()
-			# # if all is ok, the job can start and its status can turn to RUNNING
-			# if host is not None: start_job(job_id, job_dir, app_name, settings, host)
-			# else: logger.warning(f"No host available for job {job_id}...")
 		else:
 			logger.debug(f"Job {job_id} is NOT ready to start YET")
+
+def restart_paused_jobs():
+	# Special case for PAUSED jobs, only happen when restarting the server
+	# The PAUSED status should only exist between a shutdown and a restart
+	for job_id in db.get_jobs_per_status("PENDING"):
+		# in this case, we consider that everything is already prepared
+		db.set_status(job_id, "PREPARING")
+		job_dir = db.get_job_dir(job_id)
+		app_name = db.get_app_name(job_id)
+		settings = db.get_settings(job_id)
+		flavor = utils.check_flavor(job_id)
+		threading.Thread(target=start_job, args=(job_id, job_dir, app_name, settings, flavor, db.get_job_to_string(job_id))).start()
 
 def run():
 	"""
