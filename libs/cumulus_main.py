@@ -154,7 +154,8 @@ def cancel(owner, job_id):
 		status = db.get_status(job_id)
 		# if status == "PENDING" or status == "RUNNING": 
 		if status == "PENDING" or status == "PREPARING" or status == "RUNNING": 
-			utils.cancel_job(job_id)
+			# utils.cancel_job(job_id)
+			threading.Thread(target=utils.destroy_worker, args=(job_id,)).start()
 			return f"Job {job_id} has been cancelled"
 		else: return f"Job {job_id} cannot be cancelled, it is already stopped"
 	else: return f"You cannot cancel this job"
@@ -184,6 +185,7 @@ def delete(owner, job_id):
 		# if status != "PENDING" and status != "RUNNING":
 		if status != "PENDING" and status != "PREPARING" and status != "RUNNING":
 			utils.delete_job_folder(job_id, True, False)
+			# the worker(s) should have been destroyed already
 			return f"Job {job_id} has been deleted"
 		else: return f"You cannot delete a running job"
 	else: return f"You cannot delete this job"
