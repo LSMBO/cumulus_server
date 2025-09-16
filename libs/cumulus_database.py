@@ -423,7 +423,8 @@ def list_jobs(current_job_id, number = 100, owner = "%", app_name = "%", descrip
 					log = apps.get_log_file_content(id)
 					# store as many information as possible, except for the settings
 					# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "stdout": stdout, "stderr": stderr, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
-					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "log": log, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
+					# jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "log": log, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_file_list(job_dir)})
+					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "strategy": strategy, "description": description, "settings": "", "host": host, "creation_date": creation_date, "start_date": start_date, "end_date": end_date, "log": log, "start_after_id": start_after_id, "workflow_name": workflow_name, "files": apps.get_output_file_list(job_dir)})
 				# for other jobs, return what is required for the sidebar
 				else:
 					jobs.append({"id": id, "owner": owner, "app_name": app_name, "status": status, "host": host, "creation_date": creation_date, "end_date": end_date, "start_after_id": start_after_id, "workflow_name": workflow_name})

@@ -876,3 +876,30 @@ def get_file_list(job_dir):
 					filelist.append((file, utils.get_size(root_path + "/" + file)))
 	# the user will select the files they want to retrieve
 	return filelist
+
+def get_output_file_list(job_dir):
+	"""
+	Recursively retrieves a list of files from the output folder of the specified job directory.
+	Folders are not returned, they will be retrieved from the files pathes that are returned.
+
+	Args:
+		job_dir (str): The path to the root job directory.
+
+	Returns:
+		list of tuple: A list of tuples, each containing the relative file path (str) and its size (int, in bytes).
+	"""
+	# this function will only return files, empty folders will be disregarded
+	filelist = []
+	root_path = job_dir + "/" + output.folder + "/"
+	if os.path.isdir(root_path):
+		# list all files including sub-directories
+		for root, _, files in os.walk(root_path):
+			# make sure that the file pathes are relative to the root of the job folder
+			rel_path = root.replace(root_path, "")
+			for f in files:
+				# return an array of tuples (name|size)
+				file = f if rel_path == "" else rel_path + "/" + f
+				# logger.debug(f"get_output_file_list->add({file})")
+				filelist.append((file, utils.get_size(root_path + "/" + file)))
+	# the user will select the files they want to retrieve
+	return filelist
