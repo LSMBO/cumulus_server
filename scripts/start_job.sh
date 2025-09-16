@@ -82,8 +82,10 @@ while kill -0 $PID 2>/dev/null; do
     touch $JOB_FOLDER/.cumulus.alive
     # record the CPU and RAM usage, it can be used later to plot the usage of the job
     dt=$(date '+%Y-%m-%d %H:%M:%S %Z')
-    cpu=$(ps -p "$PID" -o %cpu=)
-    mem=$(ps -p "$PID" -o %mem=)
+    #cpu=$(ps -p "$PID" -o %cpu=)
+    # mem=$(ps -p "$PID" -o %mem=)
+		cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8}')
+		mem=$(free | awk '/Mem/{printf "%.2f\n", $3/$2 * 100.0}')
     # echo "$dt	$cpu	$mem" >> $JOB_FOLDER/.cumulus.usage
     echo "[INFO] $dt;CPU:$cpu%;RAM:$mem%" >> $LOG_FILE
 done
