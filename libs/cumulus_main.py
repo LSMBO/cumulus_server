@@ -346,6 +346,7 @@ def start():
 	# start waitress WSGI server
 	serve(app, host = config.get("local.host"), port = config.get("local.port"))
 	# immediately restart the paused jobs, if any
+	daemon.restart_paused_jobs()
 
 def handle_shutdown(signum, frame):
 	logger.info(f"Received shutdown signal ({signum})... Cleaning up.")

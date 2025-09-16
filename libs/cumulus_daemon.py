@@ -224,9 +224,11 @@ def start_pending_jobs():
 def restart_paused_jobs():
 	# Special case for PAUSED jobs, only happen when restarting the server
 	# The PAUSED status should only exist between a shutdown and a restart
-	for job_id in db.get_jobs_per_status("PENDING"):
-		# in this case, we consider that everything is already prepared
+	for job_id in db.get_jobs_per_status("PAUSED"):
+		# restarting this job immediately
+		logger.info(f"Restarting job {job_id}")
 		db.set_status(job_id, "PREPARING")
+		# in this case, we consider that everything is already prepared
 		job_dir = db.get_job_dir(job_id)
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
