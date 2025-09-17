@@ -96,11 +96,6 @@ rm $JOB_FOLDER/.cumulus.pid
 
 # copy the content of job/output/ to the job folder, in background so we can keep the alive file updated while copying
 echo "[SERVER] Transferring the output to the job directory" >> $LOG_FILE
-echo "Content of $TEMP_JOB_DIR/output before the transfer:" >> $LOG_FILE
-ls $TEMP_JOB_DIR/output >> $LOG_FILE
-echo "Content of $JOB_FOLDER before the transfer:" >> $LOG_FILE
-ls $JOB_FOLDER >> $LOG_FILE
-echo "rsync -a $TEMP_JOB_DIR/output $JOB_FOLDER" >> $LOG_FILE
 rsync -a $TEMP_JOB_DIR/output $JOB_FOLDER/ &
 COPY_PID=$!
 # while the copy is running, update the alive file every 10 seconds
