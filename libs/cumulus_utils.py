@@ -682,6 +682,7 @@ def wait_for_server_ssh_access(job_id, ip_address):
 	# remove the ip address beforehand
 	subprocess.run(['ssh-keygen', '-R', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
 	# wait for the server to return an answer
+	i = 0
 	while True:
 		result = ssh_keyscan(ip_address)
 		if result and ip_address in result:
@@ -689,9 +690,12 @@ def wait_for_server_ssh_access(job_id, ip_address):
 			with open(config.KNOWN_HOSTS_PATH, 'a') as f: f.write(result + '\n')
 			# break the loop
 			break
-		# wait for 30 seconds before trying again
-		add_to_stdalt(job_id, f"Waiting for the virtual machine to be accessible via SSH...")
-		time.sleep(30)
+		# wait for 20 seconds before trying again (but only log it once per minute)
+		if i == 0:
+			add_to_stdalt(job_id, f"Waiting for the virtual machine to be accessible via SSH...")
+			i = 3
+		time.sleep(20)
+		i -= 1
 	# wait just a little more to make sure we are allowed to log in
 	time.sleep(5)
 	add_to_stdalt(job_id, f"The virtual machine is now accessible via SSH")
