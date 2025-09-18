@@ -1,4 +1,4 @@
-<tool id="diann_2.0.2" name="Dia-NN" version="2.0.2" description="" end_tag="Finished\n\n\nHow to cite:\n" command="~/share/diann-2.0.2/diann-linux --temp '~/job/temp' --threads %nb_threads% --out 'report.parquet'" >
+<tool id="diann_2.0.2" name="Dia-NN" version="2.0.2" description="" end_tag="Finished\n\n\nHow to cite:\n" command="~/share/diann-2.0.2/diann-linux --temp '../temp' --threads %nb_threads% --out 'report.parquet'" >
     <section name="input" title="Input files" expanded="true" >
         <conditional name="raw">
             <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">

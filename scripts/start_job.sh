@@ -62,8 +62,10 @@ while kill -0 $COPY_JOB_PID 2>/dev/null; do
     touch $JOB_FOLDER/.cumulus.alive
 done
 
+# make sure the temp folder exists
+mkdir $TEMP_JOB_DIR/temp
 # make sure the output folder exists
-mkdir -p $TEMP_JOB_DIR/output
+mkdir $TEMP_JOB_DIR/output
 # make the output folder the current working directory (just in case the job creates files in the current working directory)
 cd $TEMP_JOB_DIR/output
 
