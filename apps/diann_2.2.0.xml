@@ -1,0 +1,113 @@
+<tool id="diann_2.2.0" name="Dia-NN" version="2.2.0 Academia" url="https://github.com/vdemichev/DiaNN" description="A universal automated software suite for DIA proteomics data analysis" end_tag="Finished\n\n\nHow to cite:\n" command="~/share/diann-2.2.0/diann-linux --temp '../temp' --threads %nb_threads% --out 'report.parquet'" category="__work_in_progress__">
+    <section name="input" title="Input files" expanded="true" >
+        <conditional name="raw">
+            <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
+                <option value="dia-pasef" selected="true">diaPASEF .d files</option>
+                <option value="slice-pasef" command="--tims-scan">slicePASEF .d files</option>
+                <option value="thermo-raw">Thermo .raw files</option>
+                <option value="mzml">mzML files</option>
+            </select>
+            <when value="dia-pasef">
+                <filelist name="dia-pasef-list" label="Select diaPASEF analyses" format="d" is_raw_input="true" multiple="true" is_folder="true" value="" repeated_command="--f '%value%'" help=".d folders will be expected" />
+            </when>
+            <when value="slice-pasef">
+                <filelist name="slice-pasef-list" label="Select slicePASEF analyses" format="d" is_raw_input="true" multiple="true" is_folder="true" value="" repeated_command="--f '%value%'" help=".d folders will be expected" />
+            </when>
+            <when value="thermo-raw">
+                <filelist name="thermo-raw-list" label="Select RAW files" format="raw" is_raw_input="true" convert_to_mzml="false" multiple="true" is_folder="false" value="" repeated_command="--f '%value%'" help=".raw files will be expected" />
+            </when>
+            <when value="mzml">
+                <filelist name="mzml-list" label="Select mzML files" format="mzML" is_raw_input="true" multiple="true" is_folder="false" value="" repeated_command="--f '%value%'" help=".mzML files will be expected" />
+            </when>
+        </conditional>
+    </section>
+    <section name="library" title="Spectral library" expanded="true" >
+        <conditional name="library">
+            <select name="format" label="Select library format" help="Specify the type of library you want to use">
+                <option value="fasta" selected="true">Library-free</option>
+                <option value="speclib">Spectral library</option>
+            </select>
+            <when value="fasta">
+                <filelist name="fasta-file" label="Select FASTA file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" command="--lib '' --fasta-search --predictor --gen-spec-lib" repeated_command="--fasta '%value%'" help="Specify the FASTA file you want to use" />
+                <checkbox name="contaminants" label="Contaminants" value="false" command="--fasta ~/share/camprotR_240512_cRAP_20190401_full_tags.fasta --cont-quant-exclude cRAP-" help="Auto-include common contaminants and exclude all respective peptides from quantification" />
+                <select name="protease" label="Protease" help="Enzyme used for the digest">
+                    <option value="K*,R*" selected="true" command="--cut 'K*,R*'">Trypsin /P</option>
+                    <option value="K*,R*,!*P" command="--cut 'K*,R*,!*P'">Trypsin</option>
+                    <option value="K*" command="--cut 'K*'">Lys-C</option>
+                    <option value="F*,Y*,W*,M*,L*,!*P" command="--cut 'F*,Y*,W*,M*,L*,!*P'">Chymotrypsin</option>
+                    <option value="*D" command="--cut '*D'">AspN</option>
+                    <option value="E*" command="--cut 'E*'">GluC</option>
+                </select>
+                <number name="mc" label="Missed cleavages" value="1" min="0" max="5" command="--missed-cleavages %value%" help="Maximum number of missed cleavages allowed" />
+                <checkbox name="met-excision" label="N-term M excision" value="true" command="--met-excision" help="Enable N-terminal methionine excision" />
+                <range name="peptide-length" label="Peptide length range" value="7" value2="30" min="5" max="100" command="--min-pep-len %value% --max-pep-len %value2%" help="Set the minimum and maximum peptide length" />
+                <range name="precursor-charge" label="Precursor charge range" value="1" value2="4" min="1" max="10" command="--min-pr-charge %value% --max-pr-charge %value2%" help="Set the minimum and maximum precursor charge" />
+                <range name="precursor-mz" label="Precursor m/z range" value="300" value2="1800" min="0" max="2000" command="--min-pr-mz %value% --max-pr-mz %value2%" help="Set the minimum and maximum precursor m/z" />
+                <range name="fragment-mz" label="Fragment ion m/z range" value="200" value2="1800" min="0" max="2000" command="--min-fr-mz %value% --max-fr-mz %value2%" help="Set the minimum and maximum fragment m/z" />
+                <checkbox name="protein-inference" label="Protein inference" value="true" command_if_unchecked="--no-prot-inf" help="Enable protein inference (using a maximum parcimony algorithm)" />
+                <select name="proteotypicity" label="Proteotypicity" help="Specify implicit protein grouping applicable to the experiment">
+                    <option value="isoforms" command="--pg-level 0">Isoforms IDs</option>
+                    <option value="protein" selected="true" command="--pg-level 1">Protein names (from FASTA)</option>
+                    <option value="species" command="--pg-level 2 --species-genes">Genes (species-specific)</option>
+                    <option value="genes" command="">Genes</option>
+                </select>
+            </when>
+            <when value="speclib">
+                <filelist name="speclib-path" label="Spectra library file" format="speclib" is_raw_input="false" multiple="false" is_folder="false" value="" command="--lib '%value%'" help="Specify the spectral library" />
+            </when>
+        </conditional>
+    </section>
+    <section name="algorithm" title="Algorithm" expanded="true" >
+        <number name="max-var-mod" label="Maximum number of variable modifications" value="0" min="0" max="5" command="--var-mods %value%" help="" />
+        <checkbox name="ptm-carba" label="C carbamidomethylation" value="true" command="--unimod4" help="Enable cysteine carbamidomethylation as a fixed modification" />
+        <checkbox name="ptm-ox" label="Ox (M)" value="false" command="--var-mod UniMod:35,15.994915,M" help="Enable methionine oxidation as a variable modification" />
+        <checkbox name="ptm-ac" label="AC(N-term)" value="false" command="--var-mod UniMod:1,42.010565,*n" help="Enable protein N-terminal acetylation as a variable modification / score sites" />
+        <checkbox name="ptm-phospho" label="Phospho" value="false" command="--var-mod UniMod:21,79.966331,STY" help="Enable S, T, Y phosphorylation as a variable modification / score sites" />
+        <checkbox name="ptm-kgg" label="K-GG" value="false" command="--var-mod UniMod:121,114.042927,K --no-cut-after-mod UniMod:121" help="Enable -GG adducts on lysines (left after tryptic digest of an attached ubiquitin) as a variable modification / score sites" />
+        <number name="ms1-acc" label="MS1 accuracy" value="0.0" min="0" max="100" command="--mass-acc-ms1 %value%" help="MS1 mass accuracy (ppm) - Use '0.0' for automatic inference for the first run in the experiment. Any other value will turn off automatic inference for MS2 mass accuracy" />
+        <number name="ms2-acc" label="MS2 accuracy" value="0.0" min="0" max="100" command="--mass-acc %value%" help="MS2 mass accuracy (ppm) - Use '0.0' for automatic inference for the first run in the experiment" />
+        <number name="scan-window" label="Scan window" value="0" min="0" max="1000" command="--window %value%" help="Radius (in scans) of the retention time window that is used to scan extracted chromatograms of precursor ions; this parameter allows to override its automatic inference (which is performed for the first run in the experiment)" />
+        <checkbox name="unrelated-runs" label="Unrelated runs" value="false" command="--individual-mass-acc --individual-windows" help="Different runs will be treated as unrelated, i.e. mass accuracy (when automatic) will be determined separately, as well as the retention time scan window" />
+        <checkbox name="mbr" label="MBR" value="true" command="--reanalyse" help="Match between runs: create a spectra library from DIA data and reanalyse using this library" />
+        <select name="scoring" label="Scoring" help="Peptidoform and proteoform modes are meant to achieve confidence in amino acid sequence correctness at the peptide and protein levels, respectively">
+            <option value="generic" command="">Generic</option>
+            <option value="peptidoforms" selected="true" command="--peptidoforms">Peptidoforms</option>
+            <option value="proteoforms" command="--proteoforms">proteoforms</option>
+        </select>
+        <select name="machine-learning" label="Machine learning" help="Single-pass mode is recommended in almost all cases">
+            <option value="linear" command="--no-nn">Linear classifiers</option>
+            <option value="nns-f" command="--fast-ml">NNs (fast)</option>
+            <option value="nns-cs" selected="true" command="">NNs (cross-validated)</option>
+        </select>
+        <select name="quantification-strategy" label="Quantification strategy" help="Quantification algorithms optimized for...">
+            <option value="legacy" command="--direct-quant">Legacy (direct)</option>
+            <option value="quantums-accuracy" command="--high-acc">QuantUMS (high accuracy)</option>
+            <option value="quantums-precision" selected="true" command="">QuantUMS (high precision)</option>
+        </select>
+        <select name="cross-run-norm" label="Cross-run normalisation" help="Which normalisation strategy to use? (normalised quantities are reported along with the raw quantities)">
+            <option value="global" command="--global-norm">Global</option>
+            <option value="rt" selected="true" command="">RT-dependent</option>
+            <option value="signal" command="--sig-norm">RT &amp; signal-dep. (experimental)</option>
+            <option value="off" command="--no-norm">Off</option>
+        </select>
+        <select name="library-generation" label="Library generation" help="Strategy for library generation from DIA data">
+            <option value="ids-profiling" command="--id-profiling">IDs profiling</option>
+            <option value="rt-profiling" selected="true" command="--rt-profiling">IDs, RT &amp; IM profiling</option>
+            <option value="smart-profiling" command="--smart-profiling">Smart profiling</option>
+            <option value="full-profiling" command="">Full profiling</option>
+        </select>
+        <select name="speed-ram" label="Speed &amp; RAM usage" help="Speed and memory usage optimisations; low-RAM has minimal effect on ID numbers but significantly reduces memory usage; high speed modes will typically result in lower ID numbers - they are only recommended when library-free analysis of challenging samples takes too long">
+            <option value="optimal" selected="true" command="">Optimal results</option>
+            <option value="low ram" command="--min-corr 1.0 --corr-diff 1.0 --time-corr-only">Low RAM usage</option>
+            <option value="high speed" command="--min-corr 2.0 --corr-diff 1.0 --time-corr-only">Low RAM &amp; high speed</option>
+            <option value="ultra fast" command="--min-corr 2.0 --corr-diff 1.0 --time-corr-only --extracted-ms1">Ultra-fast</option>
+        </select>
+    </section>
+    <section name="output" title="Output" expanded="true" >
+        <checkbox name="matrices" value="true" label="Quantities matrices" command="--matrices" help="Generate precursor/protein x samples quantification matrices at a fixed FDR cutoff" />
+        <checkbox name="xic" value="false" label="XICs" command="--xic" help="Generate XICs for visualisation, makes analysis a bit slower" />
+        <checkbox name="prosit" value="false" label="Generate Prosit input" command="--prosit" help="In silico digest the FASTA file and save the list of precursors in a format compatible with Prosit. Warning, enabling Prosit export forces C(cam) as a fixed modification" />
+        <number name="fdr" value="1.0" label="Precursor FDR (%)" command="--qvalue %value%" help="False discovery rate level at which the output files will be filtered" />
+        <number name="loglevel" label="Log level" value="1" command="--verbose %value%" help="Specify how detailed the information reported during the analysis should be" min="0" max="5" />
+    </section>
+</tool>
