@@ -51,10 +51,19 @@ mkdir $TEMP_JOB_DIR
 
 # set a log file in the temp job dir
 LOG_FILE=$TEMP_JOB_DIR/.cumulus.log
+# make sure the log file exists and is empty
+> $LOG_FILE
+
+log_message() {
+		local dt
+		dt=$(date '+%Y-%m-%d %H:%M:%S %Z')
+		echo "[SERVER] $dt - $1" >> $LOG_FILE
+}
 
 # copy the job folder to a local folder, do it in background in case it's a large folder
 # we use "rsync -a" instead of "cp -r" because the TEMP_JOB_DIR already exist
-echo "[SERVER] Preparing environment" > $LOG_FILE
+# echo "[SERVER] Preparing environment" > $LOG_FILE
+log_message "Preparing environment"
 rsync -a $JOB_FOLDER $TEMP_JOB_DIR &
 COPY_JOB_PID=$!
 while kill -0 $COPY_JOB_PID 2>/dev/null; do
@@ -70,7 +79,8 @@ mkdir $TEMP_JOB_DIR/output
 cd $TEMP_JOB_DIR/output
 
 # execute the job in the background and record STDOUT and STDERR in the same file
-echo "[SERVER] Execute the script" >> $LOG_FILE
+# echo "[SERVER] Execute the script" >> $LOG_FILE
+log_message "Execute the script"
 chmod +x $TEMP_JOB_DIR/.cumulus.cmd
 # we use stdbuf to make sure the two streams are buffered and we prepend STDERR with a tag so we can recognize it in the GUI
 stdbuf -oL -eL $TEMP_JOB_DIR/.cumulus.cmd 2> >(stdbuf -oL sed 's/^/[STDERR] /') | awk '{ print; fflush() }' >> "$LOG_FILE" & PID=$!
@@ -91,13 +101,15 @@ while kill -0 $PID 2>/dev/null; do
     # echo "$dt	$cpu	$mem" >> $JOB_FOLDER/.cumulus.usage
     echo "[INFO] $dt;CPU:$cpu%;RAM:$mem%" >> $LOG_FILE
 done
-echo "[SERVER] End of the script" >> $LOG_FILE
+# echo "[SERVER] End of the script" >> $LOG_FILE
+log_message "End of the script"
 
 # delete the PID file
 rm $JOB_FOLDER/.cumulus.pid
 
 # copy the content of job/output/ to the job folder, in background so we can keep the alive file updated while copying
-echo "[SERVER] Transferring the output to the job directory" >> $LOG_FILE
+# echo "[SERVER] Transferring the output to the job directory" >> $LOG_FILE
+log_message "Transferring the output to the job directory"
 rsync -a $TEMP_JOB_DIR/output $JOB_FOLDER/ &
 COPY_PID=$!
 # while the copy is running, update the alive file every 10 seconds
@@ -105,7 +117,8 @@ while kill -0 $COPY_PID 2>/dev/null; do
     sleep 15
     touch $JOB_FOLDER/.cumulus.alive
 done
-echo "[SERVER] All the files have been transferred" >> $LOG_FILE
+# echo "[SERVER] All the files have been transferred" >> $LOG_FILE
+log_message "All the files have been transferred"
 
 # when the job finishes, transfer the finalized log file to the $JOB_FOLDER
 cp $LOG_FILE $JOB_FOLDER/.cumulus.log

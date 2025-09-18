@@ -414,7 +414,7 @@ def get_log_file_path(job_id):
 	# return f"{db.get_job_dir(job_id)}/{log_file_name}"
 	return f"{db.get_job_dir(job_id)}/{config.JOB_LOG_FILE}"
 
-def add_to_log(job_id, prefix, text):
+def add_to_log(job_id, prefix, text, add_timestamp = False):
 	"""
 	Appends a formatted message to the merged log file for a given job.
 
@@ -427,7 +427,12 @@ def add_to_log(job_id, prefix, text):
 	# if os.path.isfile(merged_log_file):
 	# 	with open(merged_log_file, "a") as f:
 	# 		f.write(f"\n[{prefix}] {text}")
-	new_line = f"[{prefix}] {text}"
+	if add_timestamp:
+		# date must be like: 2025-09-18 08:57:45 UTC
+		dt = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " UTC"
+		new_line = f"[{prefix}] {dt} - {text}"
+	else:
+		new_line = f"[{prefix}] {text}"
 	# open the file in append mode and write the new line
 	with open(get_log_file_path(job_id), "ab+") as f:
 		# make sure there is a newline before writing the new line
@@ -443,14 +448,10 @@ def add_to_stdout(job_id, text):
 	add_to_log(job_id, "STDOUT", text)
 
 def add_to_stderr(job_id, text):
-	# merged_log_file = get_log_file_path(job_id)
-	# if os.path.isfile(merged_log_file):
-	# 	with open(merged_log_file, "a") as f:
-	# 		f.write(f"\n[STDERR] {text}")
 	add_to_log(job_id, "STDERR", text)
 
 def add_to_stdalt(job_id, text):
-	add_to_log(job_id, "SERVER", text)
+	add_to_log(job_id, "SERVER", text, True)
 
 def get_file_age_in_seconds(file):
 	"""
@@ -692,13 +693,13 @@ def wait_for_server_ssh_access(job_id, ip_address):
 			break
 		# wait for 20 seconds before trying again (but only log it once per minute)
 		if i == 0:
-			add_to_stdalt(job_id, f"Waiting for the virtual machine to be accessible via SSH...")
+			add_to_stdalt(job_id, f"Waiting for the virtual machine to be available...")
 			i = 3
 		time.sleep(20)
 		i -= 1
 	# wait just a little more to make sure we are allowed to log in
 	time.sleep(5)
-	add_to_stdalt(job_id, f"The virtual machine is now accessible via SSH")
+	add_to_stdalt(job_id, f"The virtual machine is available")
 
 def create_virtual_machine(job_id, flavor, volume_id):
 	worker_name = f"worker_job_{job_id}"
