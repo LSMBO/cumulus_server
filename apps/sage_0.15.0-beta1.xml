@@ -1,4 +1,4 @@
-<tool id="sage_0.15.0-beta.1" name="Sage" version="0.15.0-beta.1" url="https://github.com/lazear/sage" description="Proteomics search and quantification so fast that it feels like magic" command="~/share/sage-v0.15.0-beta.1-x86_64-unknown-linux-gnu/sage '%config-file%'" convert_config_to="json" end_tag=" finished in " end_tag_location="%stderr%">
+<tool id="sage_0.15.0-beta.1" name="Sage" version="0.15.0-beta.1" url="https://github.com/lazear/sage" description="Proteomics search and quantification so fast that it feels like magic" command="~/share/sage/sage-v0.15.0-beta.1-x86_64-unknown-linux-gnu/sage '%config-file%'" convert_config_to="json" end_tag=" finished in " end_tag_location="%stderr%">
 
     <section name="files" title="Input files" expanded="true">
         <conditional name="raw">
