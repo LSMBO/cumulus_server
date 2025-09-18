@@ -1,4 +1,4 @@
-<tool id="diann_2.2.0" name="Dia-NN" version="2.2.0 Academia" url="https://github.com/vdemichev/DiaNN" description="A universal automated software suite for DIA proteomics data analysis" end_tag="Finished\n\n\nHow to cite:\n" command="~/share/diann-2.2.0/diann-linux --temp '../temp' --threads %nb_threads% --out 'report.parquet'" category="__work_in_progress__">
+<tool id="diann_2.2.0" name="Dia-NN" version="2.2.0 Academia" url="https://github.com/vdemichev/DiaNN" description="A universal automated software suite for DIA proteomics data analysis" end_tag="Finished\n\n\nHow to cite:\n" command="~/share/diann-2.2.0/diann-linux --temp '../temp' --threads %nb_threads% --out 'report.parquet'">
     <section name="input" title="Input files" expanded="true" >
         <conditional name="raw">
             <select name="raw-type" label="Select input file type" help="Specify the type of input file you want to use">
