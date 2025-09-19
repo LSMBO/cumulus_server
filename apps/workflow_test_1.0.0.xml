@@ -8,7 +8,7 @@
 		<param name="ms1-acc" from_tool="0" value="precursor_tol.ppm" visibility="disabled" />
 		<param name="ms2-acc" from_tool="0" value="precursor_tol.ppm" visibility="hidden" />
 	</tool>
-	<tool id="diann_2.1.0">
+	<tool id="diann_2.2.0">
 		<param name="fasta-file" from_tool="0" value="database.fasta" visibility="hidden" />
 		<param name="ms1-acc" from_tool="0" value="precursor_tol.ppm" visibility="hidden" />
 		<param name="ms2-acc" from_tool="0" value="precursor_tol.ppm" visibility="disabled" />
