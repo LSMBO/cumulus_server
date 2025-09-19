@@ -5,12 +5,12 @@
 	</tool>
 	<tool id="ms2rescore_3.1.5">
 		<param name="ms2rescore.psm_file" from_tool="0" value="%job_dir_0%/output/results.sage.tsv" visibility="hidden" /> <!-- when using from_tool="n", load variables such as %job_dir% for the n-th job in this workflow -->
-		<param name="ms2rescore.spectrum_path" value="%data_dir%" visibility="hidden" />
+		<param name="ms2rescore.spectrum_path" value="%input_dir%" visibility="hidden" />
 		<param name="ms2rescore.write_flashlfq" value="true" visibility="hidden" />
 	</tool>
-	<tool id="flashlfq_2.0.0">
+	<tool id="flashlfq_2.1.4">
 		<param name="psm-file" from_tool="1" value="%job_dir_1%/output/results.ms2rescore.flashlfq.tsv" visibility="disabled" />
-		<param name="spectra_dir" value="%data_dir%" visibility="hidden" />
+		<param name="spectra_dir" value="%input_dir%" visibility="hidden" />
 		<param name="ppm" from_tool="0" value="precursor_tol.ppm" visibility="hidden" /> <!-- this value should be the same as precursor_tol_unit.ppm in Sage. Either set the value on the fly on client side, or hide this one to update the value when starting the job -->
 	</tool>
 </workflow>

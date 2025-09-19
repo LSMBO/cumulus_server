@@ -162,6 +162,8 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 		- Updates the job's host, status, and start date in the database.
 		- Logs information about the job execution process.
 	"""
+	# create symbolic links of the raw files into the input folder
+	apps.link_shared_files(job_dir, app_name, settings)
 	# create the worker based on the template worker
 	utils.create_worker(job_id, job_dir, flavor)
 	# get the host that was generated

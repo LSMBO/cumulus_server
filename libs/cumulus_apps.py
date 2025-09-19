@@ -33,6 +33,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -305,6 +306,14 @@ def are_all_files_transfered(job_dir, app_name, settings):
 		logger.debug(f"{job_dir}/{FINAL_FILE} is not there yet")
 		return False
 
+def link_shared_files(job_dir, app_name, settings):
+	logger.info("Linking data to the job directory")
+	dest_path = Path(f"{job_dir}/{INPUT_DIR}").resolve()
+	for file in get_files(job_dir, app_name, settings):
+		file_path = Path(file).resolve()
+		link_name = dest_path / file_path.name
+		if not link_name.exists(): link_name.symlink_to(file_path)
+
 def replace_in_command(command, tag, value):
 	"""
 	Replaces a specified tag in a command string with a given value.
@@ -410,7 +419,7 @@ def get_param_command_line(param, settings, job_dir):
 		# this param can be either a single file/folder or a list of file/folder
 		if key in settings:
 			# add the command if there is one
-			is_raw_input = param.get("is_raw_input")
+			# is_raw_input = param.get("is_raw_input")
 			if command != None: cmd.append(replace_in_command(command, "%value%", settings[key]))
 			# it's also possible to have one command per file, even when it only allows one file
 			repeated_command = param.get("repeated_command")
@@ -418,9 +427,9 @@ def get_param_command_line(param, settings, job_dir):
 				# current_files = param.get("multiple") == "true" ? current_files = settings[key] : [settings[key]]
 				current_files = settings[key] if param.get("multiple") == "true" else [settings[key]]
 				for file in current_files: 
-					file = get_file_path(job_dir, file, is_raw_input)
+					# file = get_file_path(job_dir, file, is_raw_input)
+					file = get_file_path(job_dir, file, False) # all files should be in the job/input folder, raw files should have a symlink there
 					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-					# if is_raw_input == "false": file = os.path.basename(file)
 					cmd.append(replace_in_command(repeated_command, "%value%", file))
 	# if cmd contains None, log the content of cmd
 	if None in cmd: logger.error(f"Error in get_param_command_line for key {key}")
@@ -565,18 +574,18 @@ def get_param_config_value(config_settings, format, job_dir, param, settings):
 				add_config_to_settings(key, value, config_settings)
 		elif param.tag == "filelist":
 			if key in settings:
-				is_raw_input = param.get("is_raw_input")
+				# is_raw_input = param.get("is_raw_input")
 				if param.get("multiple") == "true":
 					value = []
 					for file in settings[key]:
-						file = get_file_path(job_dir, file, is_raw_input)
+						# file = get_file_path(job_dir, file, is_raw_input)
+						file = get_file_path(job_dir, file, False) # all files should be in the job/input folder, raw files should have a symlink there
 						if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-						# if is_raw_input == "false": file = os.path.basename(file)
 						value.append(file)
 				else:
-					file = get_file_path(job_dir, settings[key], is_raw_input)
+					# file = get_file_path(job_dir, settings[key], is_raw_input)
+					file = get_file_path(job_dir, settings[key], False) # all files should be in the job/input folder, raw files should have a symlink there
 					if param.get("convert_to_mzml") != None and param.get("convert_to_mzml") == "true": file = file.replace(os.path.splitext(file)[1], f".mzML")
-					# if is_raw_input == "false": file = os.path.basename(file)
 					value = file
 				add_config_to_settings(key, value, config_settings)
 
