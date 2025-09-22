@@ -486,8 +486,8 @@ def add_config_to_settings(key, value, config_settings):
 	for i in range(len(full_path) - 1):
 		if full_path[i] not in current: current[full_path[i]] = {}
 		current = current[full_path[i]]
-	# add the value to the dict, the last part of the path is the key
-	current[full_path[-1]] = value
+	# add the value to the dict, the last part of the path is the key (unless if the key is "_", this allows the creation of parents without children)
+	if full_path[-1] != "_": current[full_path[-1]] = value
 	# print(config_settings)
 
 def get_param_config_value(config_settings, format, job_dir, param, settings):
