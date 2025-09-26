@@ -458,7 +458,7 @@ def search_jobs(form):
 	owner = "%" if form["owner"] == "" else "%" + form["owner"] + "%"
 	app_name = "%" if form["app"] == "" or form["app"] == "all" else "%" + form["app"] + "%"
 	desc = "%" if form["description"] == "" else "%" + form["description"] + "%"
-	number = 100 if form["number"] == "" else form["number"]
+	number = 100 if form["number"] == "" else int(form["number"])
 	file = form["file"]
 	# prepare the part of the request for the status
 	statuses = []
