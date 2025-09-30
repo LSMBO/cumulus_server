@@ -44,5 +44,5 @@ database.file.path = cumulus.db
 final.file = .cumulus.rsync
 
 # the version of the Cumulus server and the minimum version of the client that can connect to it
-version = 2.0.0
-client.min.version = 2.0.0
+version = 2.1.0
+client.min.version = 2.1.0

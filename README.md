@@ -13,7 +13,8 @@ The XML files will contain information about the app, its name, version, a descr
 
 Apps currently available are:
 * [Dia-NN](https://github.com/vdemichev/DiaNN/) v2.0.2
-* [AlphaDIA](https://github.com/MannLabs/alphadia) v1.10.1
+* [Dia-NN](https://github.com/vdemichev/DiaNN/) v2.2.0
+* [MS²Rescore](https://github.com/CompOmics/ms2rescore) v3.1.5
 * [Sage](https://github.com/lazear/sage) v0.15.0-beta1
 
 To add a new app, or a new version of an app, you need to write the corresponding XML file, put it in the "apps" subdirectory, and make sure the executable is working on each VM of the Cloud.

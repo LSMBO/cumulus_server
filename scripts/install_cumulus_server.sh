@@ -37,6 +37,7 @@
 # - the user uses a certificate without password for authentication, so using sudo works without password
 
 #IMPORTANT: this script has NOT been tested yet, consider it more like a guide to install a Cumulus server
+# TODO don't forget the firewall and the ntp server
 
 # arguments (TODO put all the arguments in a config file?)
 openstack_config_file=$1 # Path for the openstack configuration file, ie. /home/user/.config/openstack/clouds.yaml
@@ -55,7 +56,8 @@ apt-get update
 sudo apt --yes install python3-venv
 
 # install openstack client
-mkdir /usr/local/openstack_client
+sudo mkdir /usr/local/openstack_client
+sudo chown $hostname:$hostname /usr/local/openstack_client
 cd /usr/local/openstack_client
 python3 -m venv .venv
 source .venv/bin/activate
@@ -69,9 +71,9 @@ cp $openstack_config_file ~/.config/openstack/clouds.yaml
 # export OS_CLIENT_CONFIG_FILE=/usr/local/openstack_client/clouds.yaml
 
 # create the whole environment for Cumulus
-# mkdir /cumulus
-# sudo chown -R $user:$user /cumulus
-sudo install -d -m 0755 -o $user -g $user /cumulus # create the main directory, owner is the user
+# sudo install -d -m 0755 -o $user -g $user /cumulus # create the main directory, owner is the user
+mkdir /cumulus
+sudo chown -R $user:$user /cumulus
 mkdir /cumulus/bin # this folder will contain the scripts
 mkdir /cumulus/data # this folder will be used to mount the data volume
 mkdir /cumulus/temp # this folder will be used when converting files and to store temporary data
