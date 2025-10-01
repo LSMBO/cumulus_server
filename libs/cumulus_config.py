@@ -170,8 +170,6 @@ def init(create_dirs = True):
 	JOB_DIR = get("storage.path") + get("storage.jobs.subpath")
 	BIN_DIR = get("storage.path") + get("storage.bin.subpath")
 	TEMP_DIR = get("storage.path") + get("storage.temp.subpath")
-	# WORKSPACE_DIR = get("storage.path") + get("storage.workspace.subpath")
-	# WORKSPACES_DIR = get("storage.path") + get("storage.workspaces.subpath")
 	OPENSTACK = get("openstack.bin.path")
 	WORKER_USERNAME = get("openstack.worker.username")
 	WORKER_PORT = get("openstack.worker.port")
@@ -188,8 +186,6 @@ def init(create_dirs = True):
 		if not os.path.isdir(JOB_DIR): os.mkdir(JOB_DIR)
 		if not os.path.isdir(BIN_DIR): os.mkdir(BIN_DIR)
 		if not os.path.isdir(TEMP_DIR): os.mkdir(TEMP_DIR)
-		# if not os.path.isdir(WORKSPACE_DIR): os.mkdir(WORKSPACE_DIR)
-		# if not os.path.isdir(WORKSPACES_DIR): os.mkdir(WORKSPACES_DIR)
 
 def export():
 	"""

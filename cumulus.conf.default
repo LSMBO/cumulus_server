@@ -4,7 +4,7 @@ refresh.rate.in.seconds = 30
 data.max.age.in.days = 90
 
 # converters for different file formats
-converter.raw.to.mzml = /cumulus/share/ThermoRawFileParser1.4.5/ThermoRawFileParser.exe
+converter.raw.to.mzml = /home/ubuntu/ThermoRawFileParser1.4.5/ThermoRawFileParser.exe
 converter.d.to.mzml = docker run -u `stat -c "%u:%g" /cumulus` -v /cumulus:/cumulus mfreitas/tdf2mzml tdf2mzml.py
 
 # openstack config
@@ -17,12 +17,6 @@ openstack.cert.key.name = cumulus
 openstack.cloud.network = openstack-cloud-project
 openstack.known.hosts.path = /home/ubuntu/.ssh/known_hosts
 openstack.cert.key.path = /home/ubuntu/.ssh/cumulus.pem
-
-# the ntp server to synchronize the time
-# this is used to ensure that the time on the server and the workers are the same
-ntp_server = pool.ntp.org
-
-# everything below this line should not be changed
 
 # server network configuration
 local.host = 0.0.0.0
@@ -38,7 +32,6 @@ input.folder = input
 output.folder = output
 temp.folder = temp
 
-#hosts.file.path = hosts.tsv
 flavors.file.path = flavors.tsv.default
 database.file.path = cumulus.db
 final.file = .cumulus.rsync
