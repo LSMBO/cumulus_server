@@ -631,7 +631,7 @@ def is_volume_present(volume_name):
 		# if "No volume with a name or ID" in line:
 			# return False
 	# return True
-	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True).stderr
+	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
 	return result.find('No volume with a name or ID') == -1
 
 def is_server_present(server_name):
@@ -640,7 +640,7 @@ def is_server_present(server_name):
 		# if "No Server found for" in line:
 			# return False
 	# return True
-	result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True).stderr
+	result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
 	return not "No Server found for" in result
 
 def clone_volume(job_id):
