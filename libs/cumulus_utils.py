@@ -632,6 +632,7 @@ def is_volume_present(volume_name):
 			# return False
 	# return True
 	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
+	logger.debug(f"openstack volume show {volume_name} returned: {result}")
 	return result.find('No volume with a name or ID') == -1
 
 def is_server_present(server_name):
@@ -641,6 +642,7 @@ def is_server_present(server_name):
 			# return False
 	# return True
 	result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
+	logger.debug(f"openstack server show {server_name} returned: {result}")
 	return not "No Server found for" in result
 
 def clone_volume(job_id):
@@ -859,10 +861,16 @@ def convert_to_mzml(file):
 	# call the appropriate converter command based on the file extension
 	if file.endswith(".d"): 
 		logger.info(f"Converting Bruker data {os.path.basename(file)} to mzML")
-		subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file])
+		# subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file])
+		add_to_stdalt(job_id, f"Converting Bruker data {os.path.basename(file)} to mzML")
+		with open(get_log_file_path(job_id), "a") as log_file:
+			subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file], stdout = log_file, stderr = log_file, text = True)
 	elif file.endswith(".raw"): 
 		logger.info(f"Converting Thermo raw file {os.path.basename(file)} to mzML")
-		subprocess.run(["mono", config.get("converter.raw.to.mzml"), "-i", file, "-b", temp_output_file])
+		# subprocess.run(["mono", config.get("converter.raw.to.mzml"), "-i", file, "-b", temp_output_file])
+		add_to_stdalt(job_id, f"Converting Thermo raw file {os.path.basename(file)} to mzML")
+		with open(get_log_file_path(job_id), "a") as log_file:
+			subprocess.run(["mono", config.get("converter.raw.to.mzml"), "-i", file, "-b", temp_output_file], stdout = log_file, stderr = log_file, text = True)
 	else:
 		logger.error(f"Cannot convert file '{file}' to mzML, unknown extension")
 	# move the file to the final location
