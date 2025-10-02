@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
 # 
 # [a.burel@unistra.fr]

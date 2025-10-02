@@ -328,8 +328,21 @@ def start():
 	if not os.path.isdir(logs_dir): os.mkdir(logs_dir)
 	log_format = "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s"
 	log_date = "%Y/%m/%d %H:%M:%S"
-	if IS_DEBUG: logging.basicConfig(level = logging.DEBUG, format = log_format, datefmt = log_date)
+	if IS_DEBUG: 
+		# logging.basicConfig(level = logging.DEBUG, format = log_format, datefmt = log_date)
+		formatter = logging.Formatter(fmt = log_format, datefmt = log_date)
+		# Create a file handler (no rotation)
+		file_handler = logging.FileHandler(f"{logs_dir}/cumulus_debug.log")
+		file_handler.setLevel(logging.DEBUG)
+		file_handler.setFormatter(formatter)
+		# Create a console handler
+		console_handler = logging.StreamHandler()
+		console_handler.setLevel(logging.DEBUG)
+		console_handler.setFormatter(formatter)
+		# Set up basicConfig with dummy handler (this avoids it being locked)
+		logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, console_handler])
 	else:
+		# write logs to a file in the log directory, handle rotation in order to keep the old log files
 		logging.basicConfig(
 			handlers = [RotatingFileHandler(filename = f"{logs_dir}/cumulus.log", maxBytes = 10000000, backupCount = 10)],
 			level = logging.INFO,
