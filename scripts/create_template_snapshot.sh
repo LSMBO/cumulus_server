@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright or © or Copr. Alexandre BUREL for LSMBO / IPHC UMR7178 / CNRS (2024)
 # 
 # [a.burel@unistra.fr]
@@ -36,26 +38,26 @@
 # Once the template server is ready, this script will create a new snapshot of it, that can be used to create temporary servers for the next jobs.
 # The previous snapshot will be kept, the new one will be used by default. Any other snapshot will be deleted.
 
-#!/bin/bash
+# make sure to have the openstack client in the path
+# user shouyd adjust the path, or comment the line
+PATH=/usr/local/openstack_client/.venv/bin:$PATH
 
-VOLUME="cumulus-template-volume"
-SNAPSHOT_NAME="cumulus-template-snapshot"
+# names of the elements to search for
+VOLUME="template_image"
+SNAPSHOT_NAME="template-snapshot"
 
-# create a new snapshot with a temporary name
-# use --force because the volume cannot be detached from the server (it's the boot volume)
-openstack volume snapshot create --volume "$VOLUME" --force "$SNAPSHOT_NAME-new"
-
-# delete the previous snapshot if it exists
+# delete the previous snapshot already if it already exists
 if openstack volume snapshot show "$SNAPSHOT_NAME-previous" >/dev/null 2>&1; then
-    openstack volume snapshot delete "$SNAPSHOT_NAME-previous"
+	openstack volume snapshot delete "$SNAPSHOT_NAME-previous"
 fi
 
-# rename the current snapshot to previous if it exists
+# rename the current snapshot if it already exists
 if openstack volume snapshot show "$SNAPSHOT_NAME" >/dev/null 2>&1; then
     openstack volume snapshot set --name "$SNAPSHOT_NAME-previous" "$SNAPSHOT_NAME"
 fi
 
-# rename the new snapshot to the current name
-openstack volume snapshot set --name "$SNAPSHOT_NAME" "$SNAPSHOT_NAME-new"
+# create the snapshot
+# use --force because the volume cannot be detached from the server (it's the boot volume)
+openstack volume snapshot create --volume "$VOLUME" --force "$SNAPSHOT_NAME"
 
 echo "New snapshot $SNAPSHOT_NAME created successfully."
