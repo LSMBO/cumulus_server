@@ -272,7 +272,6 @@ def clean():
 	This function performs the following maintenance tasks in an infinite loop, running once every 24 hours after an initial 60-second delay:
 	- Archives and deletes job folders for jobs that have ended and are older than the configured maximum age.
 	- Deletes job directories that are not linked to any existing job ("zombie" job folders).
-	- Deletes log files that are not associated with any job.
 	- Deletes shared files that are old and unused.
 
 	All deletions and archival actions are logged with warnings.
@@ -294,11 +293,6 @@ def clean():
 		for job_dir in utils.get_zombie_jobs():
 			logger.warning(f"Job folder {job_dir} is not linked to any real job and will be deleted")
 			utils.delete_folder(job_dir)
-		# # delete log files that are not linked to any job
-		# zombie_log_files = utils.get_zombie_log_files()
-		# if len(zombie_log_files) > 0: logger.warning(f"{len(zombie_log_files)} log files are not linked to any real job and will be deleted")
-		# for log_file in zombie_log_files:
-		# 	os.remove(log_file)
 		# list the shared files that are old and not used
 		for file in utils.get_unused_shared_files_older_than(max_age_in_seconds):
 			utils.delete_raw_file(file)
@@ -330,8 +324,8 @@ def convert_raw_to_mzml():
 		files_to_convert = apps.get_files(job_dir, app_name, settings, False, True)
 		# get the first file that needs to be converted, and is not being converted yet
 		for file in files_to_convert:
-			mzml_file = apps.get_mzml_file_path(file)
-			temp_file = f"{config.TEMP_DIR}/{os.path.basename(mzml_file)}"
+			mzml_file = utils.get_mzml_file_path(file)
+			temp_file = utils.get_mzml_file_path(file, True)
 			# if there is one, and it does not exist yet, and is not being converted yet, we will convert it
 			if not os.path.exists(mzml_file) and not os.path.exists(temp_file):
 				utils.convert_to_mzml(file)
