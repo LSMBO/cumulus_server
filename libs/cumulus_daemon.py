@@ -169,7 +169,7 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 	# get the host that was generated
 	host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
 	# abort if the host could not be created
-	if host is not None or host.error is None:
+	if host is not None and host.error is None:
 		# create the script to run the job
 		cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
 		utils.write_file(cmd_file, content)
