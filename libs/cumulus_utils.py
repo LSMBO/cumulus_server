@@ -443,6 +443,8 @@ def add_to_log(job_id, prefix, text, add_timestamp = False):
 		# write the new line
 		f.write(new_line.encode('utf-8'))
 		f.write(b'\n')
+	# also log as debug
+	logger.debug(new_line)
 
 def add_to_stdout(job_id, text):
 	add_to_log(job_id, "STDOUT", text)
@@ -624,7 +626,8 @@ def wait_for_volume(volume_name):
 		time.sleep(2) # wait for 2 seconds, it should be enough
 		# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
 		# if result.stdout.decode('utf-8').find('available') != -1: is_available = True
-		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], stdout = subprocess.PIPE, stderr = subprocess.PIPE, text=True)
+		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True)
+		logger.debug(f"wait_for_volume({volume_name}) returned: {result}")
 		is_available = (json.loads(result.stdout).get("available") is not None)
 
 def get_volume_id(volume_name):
@@ -706,6 +709,7 @@ def clone_volume(job_id):
 		# add_to_stdalt(job_id, "The volume has been successfully created")
 	# # return the volume id and name
 	# return volume_id, volume_name
+	logger.debug(f"Clone volume for job {job_id}")
 	volume_name = f"volume_job_{job_id}"
 	volume_id = get_volume_id(volume_name)
 	if volume_id is None:
@@ -722,6 +726,7 @@ def clone_volume(job_id):
 		# reuse the volume
 		logger.warn(f"Volume {volume_name} already exists, reusing it")
 	# return the volume id and name
+	logger.debug(f"Cloned volume with name {volume_name} and ID {volume_id}")
 	return volume_id, volume_name
 
 def ssh_keyscan(ip_address):
@@ -780,6 +785,7 @@ def create_virtual_machine(job_id, flavor, volume_id):
 	# # return the worker name and ip address
 	# return worker_name, ip_address
 	
+	logger.debug(f"Create worker for job {job_id}")
 	worker_name = f"worker_job_{job_id}"
 	ip_address = get_server_ip_address(worker_name)
 	if ip_address is None:
@@ -796,6 +802,7 @@ def create_virtual_machine(job_id, flavor, volume_id):
 	# wait for the server to be accessible via ssh
 	wait_for_server_ssh_access(job_id, ip_address)
 	# return the worker name and ip address
+	logger.debug(f"Worker has been created with name {worker_name} and IP {ip_address}")
 	return worker_name, ip_address
 
 def write_host_file(job_dir, worker_name, ip_address, cpu, ram, volume_name, error):
