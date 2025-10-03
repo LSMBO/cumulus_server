@@ -633,7 +633,8 @@ def is_volume_present(volume_name):
 	# return True
 	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
 	logger.debug(f"openstack volume show {volume_name} returned: {result}")
-	return result.find('No volume with a name or ID') == -1
+	# return result.find('No volume with a name or ID') == -1
+	return not "No volume found for" in result
 
 def is_server_present(server_name):
 	# result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stderr=subprocess.PIPE, text=True)
@@ -854,7 +855,7 @@ def get_mzml_file_path(file_path, use_temp_dir = False):
 	# return the new file path
 	return mzml_file_path
 
-def convert_to_mzml(file):
+def convert_to_mzml(job_id, file):
 	# prepare the output and temp file names
 	temp_output_file = get_mzml_file_path(file, True)
 	final_output_file = get_mzml_file_path(file, False)

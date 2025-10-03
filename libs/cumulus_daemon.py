@@ -328,7 +328,7 @@ def convert_raw_to_mzml():
 			temp_file = utils.get_mzml_file_path(file, True)
 			# if there is one, and it does not exist yet, and is not being converted yet, we will convert it
 			if not os.path.exists(mzml_file) and not os.path.exists(temp_file):
-				utils.convert_to_mzml(file)
+				utils.convert_to_mzml(job_id, file)
 	# reset the flag to indicate that the conversion is not running anymore
 	MZML_CONVERSION_RUNNING = False
 	
