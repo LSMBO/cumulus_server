@@ -174,7 +174,8 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 		cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
 		utils.write_file(cmd_file, content)
 		# wait until all the files are there (mzML conversion may still be running at this point)
-		while not apps.are_all_files_transfered(job_dir, app_name, settings):
+		# FIXME a job was started while the last file was still being converted
+		while not apps.are_all_files_transfered(job_dir, app_name, settings, True):
 			# wait 10 seconds
 			time.sleep(10)
 		# start the remote script to run the job
