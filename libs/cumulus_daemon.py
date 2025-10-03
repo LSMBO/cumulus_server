@@ -105,7 +105,6 @@ def check_running_jobs():
 	This function relies on external modules for database access, process checking, and application-specific job status evaluation.
 	"""
 	for job_id in db.get_jobs_per_status("PREPARING"):
-		logger.info(f"Resume job {job_id}")
 		# if the host could not be created, the job has failed
 		job_dir = db.get_job_dir(job_id)
 		# if the host is not yet created, do nothing and wait for the next check
@@ -229,7 +228,7 @@ def restart_paused_jobs():
 	# The PAUSED status should only exist between a shutdown and a restart
 	for job_id in db.get_jobs_per_status("PAUSED"):
 		# restarting this job immediately
-		logger.info(f"Restarting job {job_id}")
+		logger.info(f"Resume job {job_id}")
 		db.set_status(job_id, "PREPARING")
 		# in this case, we consider that everything is already prepared
 		job_dir = db.get_job_dir(job_id)
@@ -330,6 +329,8 @@ def convert_raw_to_mzml():
 			# if there is one, and it does not exist yet, and is not being converted yet, we will convert it
 			if not os.path.exists(mzml_file) and not os.path.exists(temp_file):
 				utils.convert_to_mzml(job_id, file)
+		# update the symbolic links in the input folder
+		apps.link_shared_files(job_dir, app_name, settings)
 	# reset the flag to indicate that the conversion is not running anymore
 	MZML_CONVERSION_RUNNING = False
 	
