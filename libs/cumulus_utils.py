@@ -132,7 +132,7 @@ def get_host(job_id):
 	return get_host_from_file(job_dir + "/" + config.HOST_FILE)
 
 def get_local_hostname():
-	return subprocess.run(['hostname'], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
+	return subprocess.run(['hostname'], stdout = subprocess.PIPE).stdout.decode('utf-8').strip()
 
 def remote_script(host, script_with_args):
 	"""
@@ -621,71 +621,119 @@ def wait_for_volume(volume_name):
 	# wait for the volume to become available
 	is_available = False
 	while not is_available:
-		time.sleep(1) # wait for 1 second, it should be enough
-		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
-		if result.stdout.decode('utf-8').find('available') != -1: is_available = True
+		time.sleep(2) # wait for 2 seconds, it should be enough
+		# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
+		# if result.stdout.decode('utf-8').find('available') != -1: is_available = True
+		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], stdout = subprocess.PIPE, stderr = subprocess.PIPE, text=True)
+		is_available = (json.loads(result.stdout).get("available") is not None)
 
-def is_volume_present(volume_name):
-	# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
-	# for line in result.stdout.decode('utf-8').splitlines():
-		# if "No volume with a name or ID" in line:
-			# return False
-	# return True
-	result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
-	logger.debug(f"openstack volume show {volume_name} returned: {result}")
-	# return result.find('No volume with a name or ID') == -1
-	return "No volume found for" in result
+def get_volume_id(volume_name):
+	try:
+		# call openstack
+		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text=True)
+		# parse the results
+		volume_info = json.loads(result.stdout)
+		# return the id
+		return volume_info.get("id")
+	except subprocess.CalledProcessError as e:
+		# if the command fails (usually because the volume does not exist)
+		return None
 
-def is_server_present(server_name):
-	# result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stderr=subprocess.PIPE, text=True)
-	# for line in result.stdout.decode('utf-8').splitlines():
-		# if "No Server found for" in line:
-			# return False
-	# return True
-	result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
-	logger.debug(f"openstack server show {server_name} returned: {result}")
-	# return not "No Server found for" in result
-	return "No Server found for" in result
+# def is_volume_present(volume_name):
+	# # result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
+	# # for line in result.stdout.decode('utf-8').splitlines():
+		# # if "No volume with a name or ID" in line:
+			# # return False
+	# # return True
+	# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
+	# # logger.debug(f"openstack volume show {volume_name} returned: {result}")
+	# # return result.find('No volume with a name or ID') == -1
+	# return "No volume found for" in result
+
+# def is_server_present(server_name):
+	# # result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stderr=subprocess.PIPE, text=True)
+	# # for line in result.stdout.decode('utf-8').splitlines():
+		# # if "No Server found for" in line:
+			# # return False
+	# # return True
+	# result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
+	# logger.debug(f"openstack server show {server_name} returned: {result}")
+	# # return not "No Server found for" in result
+	# return "No Server found for" in result
+
+def get_server_ip_address(server_name):
+	try:
+		# call openstack
+		result = subprocess.run([config.OPENSTACK, "server", "show", server_name, "-f", "json"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text=True)
+		# parse the results and search for the first IP address
+		server_info = json.loads(result.stdout)
+		addresses = server_info.get("addresses")
+		if not isinstance(addresses, dict): return None
+		# Get the first network and its list of IPs
+		for network_ips in addresses.values():
+			if isinstance(network_ips, list) and network_ips: return network_ips[0]
+		# No IPs found in any network
+		return None
+	except subprocess.CalledProcessError as e:
+		# if the command fails (usually because the server does not exist)
+		return None
 
 def clone_volume(job_id):
-	volume_id = None
+	# volume_id = None
+	# volume_name = f"volume_job_{job_id}"
+	# # check that the volume does not already exist
+	# if is_volume_present(volume_name): 
+		# logger.warn(f"Volume {volume_name} already exists, reusing it")
+		# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
+		# for line in result.stdout.decode('utf-8').splitlines():
+			# if " id " in line:
+				# volume_id = line.split()[1]
+				# break
+	# else:
+		# add_to_stdalt(job_id, "Creating the volume for the virtual machine...")
+		# # result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name], stdout=subprocess.PIPE)
+		# for line in result.stdout.decode('utf-8').splitlines():
+			# if " id " in line:
+				# line = line.strip().replace('|', '').strip() # remove the pipes
+				# volume_id = line.split()[1]
+				# # return volume_id, volume_name
+				# break
+		# # check that the volume was created
+		# if not is_volume_present(volume_name): 
+			# return None, None
+		# # wait for the volume to become available
+		# wait_for_volume(volume_name)
+		# add_to_stdalt(job_id, "The volume has been successfully created")
+	# # return the volume id and name
+	# return volume_id, volume_name
 	volume_name = f"volume_job_{job_id}"
-	# check that the volume does not already exist
-	if is_volume_present(volume_name): 
-		logger.warn(f"Volume {volume_name} already exists, reusing it")
-		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
-		for line in result.stdout.decode('utf-8').splitlines():
-			if " id " in line:
-				volume_id = line.split()[1]
-				break
-	else:
+	volume_id = get_volume_id(volume_name)
+	if volume_id is None:
+		# create the volume
 		add_to_stdalt(job_id, "Creating the volume for the virtual machine...")
-		result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name], stdout=subprocess.PIPE)
-		for line in result.stdout.decode('utf-8').splitlines():
-			if " id " in line:
-				line = line.strip().replace('|', '').strip() # remove the pipes
-				volume_id = line.split()[1]
-				# return volume_id, volume_name
-				break
-		# check that the volume was created
-		if not is_volume_present(volume_name): 
+		result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name, "-f", "json"], stdout = subprocess.PIPE, text = True)
+		volume_id = json.loads(result.stdout).get("id")
+		if volume_id is None:
 			return None, None
 		# wait for the volume to become available
 		wait_for_volume(volume_name)
 		add_to_stdalt(job_id, "The volume has been successfully created")
+	else:
+		# reuse the volume
+		logger.warn(f"Volume {volume_name} already exists, reusing it")
 	# return the volume id and name
 	return volume_id, volume_name
 
 def ssh_keyscan(ip_address):
 	try:
-		result = subprocess.run(['ssh-keyscan', '-T', '5', ip_address], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+		result = subprocess.run(['ssh-keyscan', '-T', '5', ip_address], stdout = subprocess.PIPE, stderr = subprocess.DEVNULL, text=True)
 		return result.stdout.strip()
 	except Exception as e:
 		return None
 
 def wait_for_server_ssh_access(job_id, ip_address):
 	# remove the ip address beforehand
-	subprocess.run(['ssh-keygen', '-R', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+	subprocess.run(['ssh-keygen', '-R', ip_address], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL, check = True)
 	# wait for the server to return an answer
 	i = 0
 	while True:
@@ -706,27 +754,45 @@ def wait_for_server_ssh_access(job_id, ip_address):
 	add_to_stdalt(job_id, f"The virtual machine is available")
 
 def create_virtual_machine(job_id, flavor, volume_id):
+	# worker_name = f"worker_job_{job_id}"
+	# ip_address = None
+	# # check that the server does not already exist
+	# if is_server_present(worker_name): 
+		# logger.warn(f"Virtual machine {worker_name} already exists, reusing it")
+		# result = subprocess.run([config.OPENSTACK, "server", "show", worker_name], stdout=subprocess.PIPE)
+		# for line in result.stdout.decode('utf-8').splitlines():
+			# if "addresses" in line:
+				# ip_address = line.split()[3].split("=")[1]
+				# break
+	# else:
+		# add_to_stdalt(job_id, "Creating the virtual machine...")
+		# result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout=subprocess.PIPE)
+		# for line in result.stdout.decode('utf-8').splitlines():
+			# if " addresses " in line:
+				# line = line.strip().replace('|', '').strip() # remove the pipes
+				# ip_address = line.split()[1].split("=")[1]
+		# # check that the server was created
+		# if not is_server_present(worker_name): 
+			# return None, None
+		# add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
+	# # wait for the server to be accessible via ssh
+	# wait_for_server_ssh_access(job_id, ip_address)
+	# # return the worker name and ip address
+	# return worker_name, ip_address
+	
 	worker_name = f"worker_job_{job_id}"
-	ip_address = None
-	# check that the server does not already exist
-	if is_server_present(worker_name): 
-		logger.warn(f"Virtual machine {worker_name} already exists, reusing it")
-		result = subprocess.run([config.OPENSTACK, "server", "show", worker_name], stdout=subprocess.PIPE)
-		for line in result.stdout.decode('utf-8').splitlines():
-			if "addresses" in line:
-				ip_address = line.split()[3].split("=")[1]
-				break
-	else:
+	ip_address = get_server_ip_address(worker_name)
+	if ip_address is None:
+		# the worker does not exist yet
 		add_to_stdalt(job_id, "Creating the virtual machine...")
-		result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout=subprocess.PIPE)
-		for line in result.stdout.decode('utf-8').splitlines():
-			if " addresses " in line:
-				line = line.strip().replace('|', '').strip() # remove the pipes
-				ip_address = line.split()[1].split("=")[1]
-		# check that the server was created
-		if not is_server_present(worker_name): 
+		result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+		ip_address = get_server_ip_address(worker_name)
+		if ip_address is None: 
 			return None, None
 		add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
+	else:
+		# reuse the server
+		logger.warn(f"Virtual machine {worker_name} already exists, reusing it")
 	# wait for the server to be accessible via ssh
 	wait_for_server_ssh_access(job_id, ip_address)
 	# return the worker name and ip address
