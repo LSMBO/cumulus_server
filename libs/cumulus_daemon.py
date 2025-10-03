@@ -173,6 +173,10 @@ def start_job(job_id, job_dir, app_name, settings, flavor, job_details):
 		# create the script to run the job
 		cmd_file, content = apps.generate_script_content(job_id, job_dir, app_name, settings, host.cpu)
 		utils.write_file(cmd_file, content)
+		# wait until all the files are there (mzML conversion may still be running at this point)
+		while not apps.are_all_files_transfered(job_dir, app_name, settings):
+			# wait 10 seconds
+			time.sleep(10)
 		# start the remote script to run the job
 		utils.add_to_stdalt(job_id, f"Remotely execute the job {job_id} on the virtual machine")
 		# remote_cmd = f"{config.JOB_START_FILE} {job_id} '{job_dir}'"

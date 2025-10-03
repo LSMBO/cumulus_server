@@ -277,7 +277,7 @@ def get_files(job_dir, app_name, settings, consider_mzml_converted_files = False
 				elif child.tag == "filelist": files += get_filelist_content(job_dir, child, settings, consider_mzml_converted_files, only_files_to_convert_to_mzml)
 	return files
 
-def are_all_files_transfered(job_dir, app_name, settings):
+def are_all_files_transfered(job_dir, app_name, settings, consider_mzml_converted_files = False):
 	"""
 	Checks whether all expected files for a given job and application have been transferred.
 
@@ -295,7 +295,7 @@ def are_all_files_transfered(job_dir, app_name, settings):
 	if os.path.isfile(f"{job_dir}/{FINAL_FILE}") and app_name in APPS:
 		# search in the settings if the key exists, if so get the file or list of files
 		# for file in get_all_files_in_settings(job_dir, app_name, settings):
-		for file in get_files(job_dir, app_name, settings, True): # get files after mzML conversion
+		for file in get_files(job_dir, app_name, settings, consider_mzml_converted_files):
 			if not os.path.isfile(file) and not os.path.isdir(file):
 				logger.debug(f"Expected file '{file}' is missing")
 				return False
