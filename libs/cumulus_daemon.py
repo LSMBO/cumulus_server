@@ -105,11 +105,12 @@ def check_running_jobs():
 	This function relies on external modules for database access, process checking, and application-specific job status evaluation.
 	"""
 	for job_id in db.get_jobs_per_status("PREPARING"):
+		logger.info(f"Resume job {job_id}")
 		# if the host could not be created, the job has failed
 		job_dir = db.get_job_dir(job_id)
 		# if the host is not yet created, do nothing and wait for the next check
 		host_file = f"{job_dir}/{config.HOST_FILE}"
-		if not os.path.exists(host_file): continue
+		if not os.path.exists(host_file): continue # TODO what if the file was not yet created?
 		# get the host that was generated
 		host = utils.get_host_from_file(f"{job_dir}/{config.HOST_FILE}")
 		# abort if the host could not be created

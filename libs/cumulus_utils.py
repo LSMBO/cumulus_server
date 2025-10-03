@@ -627,8 +627,9 @@ def wait_for_volume(volume_name):
 		# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
 		# if result.stdout.decode('utf-8').find('available') != -1: is_available = True
 		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True)
-		logger.debug(f"wait_for_volume({volume_name}) returned: {result}")
-		is_available = (json.loads(result.stdout).get("available") is not None)
+		status = json.loads(result.stdout).get("status")
+		logger.debug(f"wait_for_volume({volume_name}) returned status: {status}")
+		is_available = status is not None and status == "available"
 
 def get_volume_id(volume_name):
 	try:
