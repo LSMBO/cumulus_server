@@ -43,6 +43,10 @@
 apt-get update
 sudo apt --yes install python3-venv nfs-kernel-server libgomp1 mono-complete chrony docker.io dotnet8
 
+# add user to the docker group (otherwise you need to call docker with sudo)
+# this will only be effective after user logs out and logs in again
+sudo usermod -aG docker ubuntu
+
 # install openstack
 sudo mkdir /usr/local/openstack_client
 sudo chown ubuntu:ubuntu /usr/local/openstack_client
