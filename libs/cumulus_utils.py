@@ -231,9 +231,6 @@ def create_job_directory(job_dir_name, form):
 	if not os.path.isfile(job_dir): os.mkdir(job_dir)
 	# add a .cumulus.settings file with basic information from the database, to make it easier to find proprer folder
 	write_file(job_dir + "/.cumulus.settings", json.dumps(form))
-	# # create a temp folder that the apps may use eventually
-	# temp_dir = f"{job_dir}/temp"
-	# if not os.path.isfile(temp_dir): os.mkdir(temp_dir)
 	# create an input folder that the apps may use eventually
 	input_dir = f"{job_dir}/input"
 	if not os.path.isfile(input_dir): os.mkdir(input_dir)
@@ -423,10 +420,6 @@ def add_to_log(job_id, prefix, text, add_timestamp = False):
 		prefix (str): The prefix to prepend to the log message (e.g., "STDERR").
 		text (str): The message to append to the stderr log.
 	"""
-	# merged_log_file = get_log_file_path(job_id)
-	# if os.path.isfile(merged_log_file):
-	# 	with open(merged_log_file, "a") as f:
-	# 		f.write(f"\n[{prefix}] {text}")
 	if add_timestamp:
 		# date must be like: 2025-09-18 08:57:45 UTC
 		dt = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " UTC"
@@ -624,8 +617,6 @@ def wait_for_volume(volume_name):
 	is_available = False
 	while not is_available:
 		time.sleep(2) # wait for 2 seconds, it should be enough
-		# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
-		# if result.stdout.decode('utf-8').find('available') != -1: is_available = True
 		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True)
 		status = json.loads(result.stdout).get("status")
 		logger.debug(f"wait_for_volume({volume_name}) returned status: {status}")
@@ -642,28 +633,6 @@ def get_volume_id(volume_name):
 	except subprocess.CalledProcessError as e:
 		# if the command fails (usually because the volume does not exist)
 		return None
-
-# def is_volume_present(volume_name):
-	# # result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
-	# # for line in result.stdout.decode('utf-8').splitlines():
-		# # if "No volume with a name or ID" in line:
-			# # return False
-	# # return True
-	# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
-	# # logger.debug(f"openstack volume show {volume_name} returned: {result}")
-	# # return result.find('No volume with a name or ID') == -1
-	# return "No volume found for" in result
-
-# def is_server_present(server_name):
-	# # result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stderr=subprocess.PIPE, text=True)
-	# # for line in result.stdout.decode('utf-8').splitlines():
-		# # if "No Server found for" in line:
-			# # return False
-	# # return True
-	# result = subprocess.run([config.OPENSTACK, "server", "show", server_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stderr
-	# logger.debug(f"openstack server show {server_name} returned: {result}")
-	# # return not "No Server found for" in result
-	# return "No Server found for" in result
 
 def get_server_ip_address(server_name):
 	try:
@@ -683,33 +652,6 @@ def get_server_ip_address(server_name):
 		return None
 
 def clone_volume(job_id):
-	# volume_id = None
-	# volume_name = f"volume_job_{job_id}"
-	# # check that the volume does not already exist
-	# if is_volume_present(volume_name): 
-		# logger.warn(f"Volume {volume_name} already exists, reusing it")
-		# result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name], stdout=subprocess.PIPE)
-		# for line in result.stdout.decode('utf-8').splitlines():
-			# if " id " in line:
-				# volume_id = line.split()[1]
-				# break
-	# else:
-		# add_to_stdalt(job_id, "Creating the volume for the virtual machine...")
-		# # result = subprocess.run([config.OPENSTACK, "volume", "create", "--snapshot", config.SNAPSHOT_NAME, "--size", config.VOLUME_SIZE_GB, "--bootable", volume_name], stdout=subprocess.PIPE)
-		# for line in result.stdout.decode('utf-8').splitlines():
-			# if " id " in line:
-				# line = line.strip().replace('|', '').strip() # remove the pipes
-				# volume_id = line.split()[1]
-				# # return volume_id, volume_name
-				# break
-		# # check that the volume was created
-		# if not is_volume_present(volume_name): 
-			# return None, None
-		# # wait for the volume to become available
-		# wait_for_volume(volume_name)
-		# add_to_stdalt(job_id, "The volume has been successfully created")
-	# # return the volume id and name
-	# return volume_id, volume_name
 	logger.debug(f"Clone volume for job {job_id}")
 	volume_name = f"volume_job_{job_id}"
 	volume_id = get_volume_id(volume_name)
@@ -760,32 +702,6 @@ def wait_for_server_ssh_access(job_id, ip_address):
 	add_to_stdalt(job_id, f"The virtual machine is available")
 
 def create_virtual_machine(job_id, flavor, volume_id):
-	# worker_name = f"worker_job_{job_id}"
-	# ip_address = None
-	# # check that the server does not already exist
-	# if is_server_present(worker_name): 
-		# logger.warn(f"Virtual machine {worker_name} already exists, reusing it")
-		# result = subprocess.run([config.OPENSTACK, "server", "show", worker_name], stdout=subprocess.PIPE)
-		# for line in result.stdout.decode('utf-8').splitlines():
-			# if "addresses" in line:
-				# ip_address = line.split()[3].split("=")[1]
-				# break
-	# else:
-		# add_to_stdalt(job_id, "Creating the virtual machine...")
-		# result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout=subprocess.PIPE)
-		# for line in result.stdout.decode('utf-8').splitlines():
-			# if " addresses " in line:
-				# line = line.strip().replace('|', '').strip() # remove the pipes
-				# ip_address = line.split()[1].split("=")[1]
-		# # check that the server was created
-		# if not is_server_present(worker_name): 
-			# return None, None
-		# add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
-	# # wait for the server to be accessible via ssh
-	# wait_for_server_ssh_access(job_id, ip_address)
-	# # return the worker name and ip address
-	# return worker_name, ip_address
-	
 	logger.debug(f"Create worker for job {job_id}")
 	worker_name = f"worker_job_{job_id}"
 	ip_address = get_server_ip_address(worker_name)
@@ -829,7 +745,6 @@ def create_worker(job_id, job_dir, flavor):
 		Host: The Host object representing the newly created worker VM.
 	"""
 	logger.info(f"Creating a virtual machine with flavor '{flavor}' for job {job_id}")
-	# job_dir = db.get_job_dir(job_id)
 	# clone the volume from the template
 	volume_id, volume_name = clone_volume(job_id)
 	# abord if the volume could not be created
@@ -854,29 +769,6 @@ def create_worker(job_id, job_dir, flavor):
 	# create a host object to represent this worker
 	logger.info(f"Worker VM '{worker_name}' has been created for job {job_id}")
 	write_host_file(job_dir, worker_name, ip_address, cpu, ram, volume_name, None)
-
-# def destroy_worker(job_id):
-	# """
-	# Destroys the worker VM associated with the given job ID.
-
-	# Args:
-		# job_id (int): The unique identifier of the job whose worker VM is to be destroyed.
-
-	# Returns:
-		# bool: True if the worker VM was successfully destroyed, False otherwise.
-	# """
-	# logger.info(f"Destroying the virtual machine for job {job_id}")
-	# host = get_host(job_id)
-	# if host is not None:
-		# # delete the VM
-		# subprocess.run([config.OPENSTACK, "server", "delete", "--wait", host.name])
-		# # delete the volume
-		# subprocess.run([config.OPENSTACK, "volume", "delete", host.volume])
-		# logger.info(f"Worker VM '{host.name}' has been destroyed for job {job_id}")
-		# return True
-	# else:
-		# logger.error(f"Cannot destroy the virtual machine for job {job_id}, host information not found")
-		# return False
 
 def destroy_worker(job_id):
 	"""
@@ -934,39 +826,35 @@ def convert_to_mzml(job_id, file):
 	# prepare the output and temp file names
 	temp_output_file = get_mzml_file_path(file, True)
 	final_output_file = get_mzml_file_path(file, False)
-	# call the appropriate converter command based on the file extension
+	# get the appropriate converter command based on the file extension
+	command = None
 	if file.endswith(".d"): 
 		logger.info(f"Converting Bruker data {os.path.basename(file)} to mzML")
 		# subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file])
 		add_to_stdalt(job_id, f"Converting Bruker data {os.path.basename(file)} to mzML")
-		with open(get_log_file_path(job_id), "a") as log_file:
-			subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file], stdout = log_file, stderr = log_file, text = True)
+		# with open(get_log_file_path(job_id), "a") as log_file:
+			# subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file], stdout = log_file, stderr = log_file, text = True)
+		converter = config.get("converter.d.to.mzml")
+		if converter.startswith("sudo "): command = [config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file]
+		else: command = ["sudo", config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file]
 	elif file.endswith(".raw"): 
 		logger.info(f"Converting Thermo raw file {os.path.basename(file)} to mzML")
 		# subprocess.run(["mono", config.get("converter.raw.to.mzml"), "-i", file, "-b", temp_output_file])
 		add_to_stdalt(job_id, f"Converting Thermo raw file {os.path.basename(file)} to mzML")
-		with open(get_log_file_path(job_id), "a") as log_file:
-			subprocess.run(["mono", config.get("converter.raw.to.mzml"), "-i", file, "-b", temp_output_file], stdout = log_file, stderr = log_file, text = True)
+		# with open(get_log_file_path(job_id), "a") as log_file:
+			# subprocess.run(["mono", converter, "-i", file, "-b", temp_output_file], stdout = log_file, stderr = log_file, text = True)
+		converter = config.get("converter.raw.to.mzml")
+		if converter.startswith("mono "): command = [converter, "-i", file, "-b", temp_output_file]
+		else: command = ["mono", converter, "-i", file, "-b", temp_output_file]
 	else:
 		logger.error(f"Cannot convert file '{file}' to mzML, unknown extension")
+		set_job_failed(job_id, f"Cannot convert file '{file}' to mzML, unknown extension")
+		return
+	# execute the command
+	with open(get_log_file_path(job_id), "a") as log_file:
+		subprocess.run(command, stdout = log_file, stderr = log_file, text = True)
 	# move the file to the final location
 	if os.path.isfile(temp_output_file): shutil.move(temp_output_file, final_output_file)
-
-# def get_job_usage(job_id):
-# 	"""
-# 	Searches for the file JOB_USAGE_FILE in the job directory and returns its content as a string.
-
-# 	Args:
-# 		job_id (int): The unique identifier of the job.
-
-# 	Returns:
-# 		str: The content of the file, or an empty string if the file does not exist.
-# 	"""
-# 	job_dir = db.get_job_dir(job_id)
-# 	job_usage_file = f"{job_dir}/{config.JOB_USAGE_FILE}"
-# 	if os.path.isfile(job_usage_file):
-# 		f = open(job_usage_file, "r")
-# 		content = f.read()
-# 		f.close()
-# 		return content
-# 	else: return ""
+	else:
+		# conversion has failed, the job should fail too as it will not be able to succeed
+		set_job_failed(job_id, f"File '{file}' could not be converted to mzML")
