@@ -35,6 +35,7 @@ import logging
 import os
 import paramiko
 import re
+import shlex
 import shutil
 import subprocess
 import time
@@ -822,6 +823,12 @@ def get_mzml_file_path(file_path, use_temp_dir = False):
 	# return the new file path
 	return mzml_file_path
 
+def get_command_as_array(command, input_file, output_file):
+	cmd = command
+	if "%input_file%" in cmd: cmd = command.replace("%input_file%", input_file)
+	if "%output_file%" in cmd: cmd = command.replace("%output_file%", output_file)
+	return shlex.split(cmd)
+
 def convert_to_mzml(job_id, file):
 	# prepare the output and temp file names
 	temp_output_file = get_mzml_file_path(file, True)
@@ -830,31 +837,25 @@ def convert_to_mzml(job_id, file):
 	command = None
 	if file.endswith(".d"): 
 		logger.info(f"Converting Bruker data {os.path.basename(file)} to mzML")
-		# subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file])
 		add_to_stdalt(job_id, f"Converting Bruker data {os.path.basename(file)} to mzML")
 		# with open(get_log_file_path(job_id), "a") as log_file:
 			# subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file], stdout = log_file, stderr = log_file, text = True)
 		converter = config.get("converter.d.to.mzml")
-		if converter.startswith("sudo "): command = [config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file]
-		else: command = ["sudo", config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file]
 	elif file.endswith(".raw"): 
 		logger.info(f"Converting Thermo raw file {os.path.basename(file)} to mzML")
-		# subprocess.run(["mono", config.get("converter.raw.to.mzml"), "-i", file, "-b", temp_output_file])
 		add_to_stdalt(job_id, f"Converting Thermo raw file {os.path.basename(file)} to mzML")
 		# with open(get_log_file_path(job_id), "a") as log_file:
 			# subprocess.run(["mono", converter, "-i", file, "-b", temp_output_file], stdout = log_file, stderr = log_file, text = True)
 		converter = config.get("converter.raw.to.mzml")
-		if converter.startswith("mono "): command = [converter, "-i", file, "-b", temp_output_file]
-		else: command = ["mono", converter, "-i", file, "-b", temp_output_file]
 	else:
 		logger.error(f"Cannot convert file '{file}' to mzML, unknown extension")
 		set_job_failed(job_id, f"Cannot convert file '{file}' to mzML, unknown extension")
 		return
-	# execute the command
+	# execute the command and write the output directly in the job log file
+	command = get_command_as_array(converter, file, temp_output_file)
 	with open(get_log_file_path(job_id), "a") as log_file:
 		subprocess.run(command, stdout = log_file, stderr = log_file, text = True)
 	# move the file to the final location
 	if os.path.isfile(temp_output_file): shutil.move(temp_output_file, final_output_file)
-	else:
-		# conversion has failed, the job should fail too as it will not be able to succeed
-		set_job_failed(job_id, f"File '{file}' could not be converted to mzML")
+	# if conversion has failed, the job should fail too
+	else: set_job_failed(job_id, f"File '{file}' could not be converted to mzML")
