@@ -823,10 +823,18 @@ def get_mzml_file_path(file_path, use_temp_dir = False):
 	# return the new file path
 	return mzml_file_path
 
+def get_uid_gid(directory):
+	stat_result = subprocess.run(["stat", "-c", "%u:%g", directory], capture_output = True, text = True, check = True)
+	return stat_result.stdout.strip()
+
+def uid_gid_replacer(match):
+    return get_uid_gid(match.group(1))
+
 def get_command_as_array(command, input_file, output_file):
 	cmd = command
 	if "%input_file%" in cmd: cmd = command.replace("%input_file%", input_file)
 	if "%output_file%" in cmd: cmd = command.replace("%output_file%", output_file)
+	if "%uid_gid:" in cmd: cmd = re.sub(r"%uid_gid:([^%]+)%", uid_gid_replacer, cmd)
 	return shlex.split(cmd)
 
 def convert_to_mzml(job_id, file):
