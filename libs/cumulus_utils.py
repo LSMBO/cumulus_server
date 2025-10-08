@@ -618,7 +618,7 @@ def wait_for_volume(volume_name):
 	is_available = False
 	while not is_available:
 		time.sleep(2) # wait for 2 seconds, it should be enough
-		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True)
+		result = subprocess.run([config.OPENSTACK, "volume", "show", volume_name, "-f", "json"], stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True)
 		status = json.loads(result.stdout).get("status")
 		logger.debug(f"wait_for_volume({volume_name}) returned status: {status}")
 		is_available = status is not None and status == "available"
@@ -675,14 +675,14 @@ def clone_volume(job_id):
 
 def ssh_keyscan(ip_address):
 	try:
-		result = subprocess.run(['ssh-keyscan', '-T', '5', ip_address], stdout = subprocess.PIPE, stderr = subprocess.DEVNULL, text=True)
+		result = subprocess.run(['ssh-keyscan', '-T', '5', ip_address], stdout = subprocess.PIPE, stderr = subprocess.DEVNULL, text = True)
 		return result.stdout.strip()
 	except Exception as e:
 		return None
 
 def wait_for_server_ssh_access(job_id, ip_address):
 	# remove the ip address beforehand
-	subprocess.run(['ssh-keygen', '-R', ip_address], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL, check = True)
+	subprocess.run(['ssh-keygen', '-R', ip_address], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 	# wait for the server to return an answer
 	i = 0
 	while True:
@@ -709,10 +709,13 @@ def create_virtual_machine(job_id, flavor, volume_id):
 	if ip_address is None:
 		# the worker does not exist yet
 		add_to_stdalt(job_id, "Creating the virtual machine...")
-		result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+		# result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+		result = subprocess.run([config.OPENSTACK, "server", "create", "--flavor", flavor, "--key-name", config.CERT_KEY_NAME, "--security-group", "default", "--network", config.CLOUD_NETWORK, "--wait", "--block-device", f"source_type=volume,uuid={volume_id},boot_index=0,destination_type=volume", worker_name], stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True)
 		ip_address = get_server_ip_address(worker_name)
-		if ip_address is None: 
-			return None, None
+		if ip_address is None:
+			# add_to_stdalt(job_id, f"Error while creating the virtual machine")
+			# if result.stderr != "": add_to_stdalt(job_id, f"Error was: {result.stderr}")
+			return worker_name, None, result.stdout, result.stderr
 		add_to_stdalt(job_id, f"The virtual machine for job '{job_id}' has been successfully created")
 	else:
 		# reuse the server
@@ -721,7 +724,7 @@ def create_virtual_machine(job_id, flavor, volume_id):
 	wait_for_server_ssh_access(job_id, ip_address)
 	# return the worker name and ip address
 	logger.debug(f"Worker has been created with name {worker_name} and IP {ip_address}")
-	return worker_name, ip_address
+	return worker_name, ip_address, result.stdout, result.stderr
 
 def write_host_file(job_dir, worker_name, ip_address, cpu, ram, volume_name, error):
 	if error is not None:
@@ -755,12 +758,14 @@ def create_worker(job_id, job_dir, flavor):
 		write_host_file(job_dir, None, None, None, None, None, "Cannot create the volume")
 		return
 	# create a worker VM based on this volume
-	worker_name, ip_address = create_virtual_machine(job_id, flavor, volume_id)
+	worker_name, ip_address, stdout, stderr = create_virtual_machine(job_id, flavor, volume_id)
 	# abord if the vm could not be created
-	if worker_name is None or ip_address is None:
-		logger.error(f"Cannot create the virtual machine for job {job_id}, aborting")
+	if ip_address is None:
+		logger.error(f"Cannot create the virtual machine for job {job_id}, aborting. Error was: {stderr}")
 		add_to_stdalt(job_id, f"Cannot create the virtual machine for job {job_id}, aborting")
 		write_host_file(job_dir, None, None, None, None, None, "Cannot create the virtual machine")
+		# delete the worker if it has been created but is not usable
+		subprocess.run([config.OPENSTACK, "server", "delete", worker_name])
 		# delete the volume
 		subprocess.run([config.OPENSTACK, "volume", "delete", volume_name])
 		return
@@ -824,7 +829,7 @@ def get_mzml_file_path(file_path, use_temp_dir = False):
 	return mzml_file_path
 
 def get_uid_gid(directory):
-	stat_result = subprocess.run(["stat", "-c", "%u:%g", directory], capture_output = True, text = True, check = True)
+	stat_result = subprocess.run(["stat", "-c", "%u:%g", directory], capture_output = True, text = True)
 	return stat_result.stdout.strip()
 
 def uid_gid_replacer(match):
