@@ -327,13 +327,14 @@ def convert_raw_to_mzml():
 		app_name = db.get_app_name(job_id)
 		settings = db.get_settings(job_id)
 		files_to_convert = apps.get_files(job_dir, app_name, settings, False, True)
-		# get the first file that needs to be converted, and is not being converted yet
+		# get the first file that needs to be converted
 		for file in files_to_convert:
 			mzml_file = utils.get_mzml_file_path(file)
 			temp_file = utils.get_mzml_file_path(file, True)
-			# if there is one, and it does not exist yet, and is not being converted yet, we will convert it
-			if not os.path.exists(mzml_file) and not os.path.exists(temp_file):
-				utils.convert_to_mzml(job_id, file)
+			# delete the temp file if it already exist (can happen if server was stopped while converting a file)
+			if os.path.exists(temp_file): os.remove(temp_file)
+			# convert the file if it has not been converted yet
+			if not os.path.exists(mzml_file): utils.convert_to_mzml(job_id, file)
 		# update the symbolic links in the input folder
 		apps.link_shared_files(job_dir, app_name, settings)
 	# reset the flag to indicate that the conversion is not running anymore
