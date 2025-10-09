@@ -133,7 +133,7 @@ def get_host(job_id):
 	return get_host_from_file(job_dir + "/" + config.HOST_FILE)
 
 def get_local_hostname():
-	return subprocess.run(['hostname'], stdout = subprocess.PIPE).stdout.decode('utf-8').strip()
+	return subprocess.run(['/usr/bin/hostname'], stdout = subprocess.PIPE).stdout.decode('utf-8').strip()
 
 def remote_script(host, script_with_args):
 	"""
@@ -675,14 +675,14 @@ def clone_volume(job_id):
 
 def ssh_keyscan(ip_address):
 	try:
-		result = subprocess.run(['ssh-keyscan', '-T', '5', ip_address], stdout = subprocess.PIPE, stderr = subprocess.DEVNULL, text = True)
+		result = subprocess.run(['/usr/bin/ssh-keyscan', '-T', '5', ip_address], stdout = subprocess.PIPE, stderr = subprocess.DEVNULL, text = True)
 		return result.stdout.strip()
 	except Exception as e:
 		return None
 
 def wait_for_server_ssh_access(job_id, ip_address):
 	# remove the ip address beforehand
-	subprocess.run(['ssh-keygen', '-R', ip_address], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+	subprocess.run(['/usr/bin/ssh-keygen', '-R', ip_address], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 	# wait for the server to return an answer
 	i = 0
 	while True:
@@ -829,7 +829,7 @@ def get_mzml_file_path(file_path, use_temp_dir = False):
 	return mzml_file_path
 
 def get_uid_gid(directory):
-	stat_result = subprocess.run(["stat", "-c", "%u:%g", directory], capture_output = True, text = True)
+	stat_result = subprocess.run(["/usr/bin/stat", "-c", "%u:%g", directory], capture_output = True, text = True)
 	return stat_result.stdout.strip()
 
 def uid_gid_replacer(match):
