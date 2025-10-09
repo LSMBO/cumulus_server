@@ -4,8 +4,8 @@ refresh.rate.in.seconds = 30
 data.max.age.in.days = 90
 
 # converters for different file formats
-converter.raw.to.mzml = mono /home/ubuntu/ThermoRawFileParser1.4.5/ThermoRawFileParser.exe -i "%input_file%" -b "%output_file%"
-converter.d.to.mzml = docker run -u "%uid_gid:/cumulus%" -v /cumulus:/cumulus mfreitas/tdf2mzml tdf2mzml.py -i "%input_file%" -o "%output_file%"
+converter.raw.to.mzml = /usr/bin/mono /home/ubuntu/ThermoRawFileParser1.4.5/ThermoRawFileParser.exe -i "%input_file%" -b "%output_file%"
+converter.d.to.mzml = /usr/bin/docker run -u "%uid_gid:/cumulus%" -v /cumulus:/cumulus mfreitas/tdf2mzml tdf2mzml.py -i "%input_file%" -o "%output_file%"
 
 # openstack config
 openstack.bin.path = /cumulus/openstack/bin/openstack
