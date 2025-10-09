@@ -116,3 +116,9 @@ sudo systemctl restart nfs-kernel-server
 # you will have to recreate the snapshot everytime you change something on the template (ie. add an app)
 
 # TODO configure cumulus.conf and flavors.conf
+
+# set and start the service
+sudo cp cumulus.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl start cumulus
+sudo systemctl enable cumulus
