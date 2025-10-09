@@ -1,0 +1,14 @@
+[Unit]
+Description=Cumulus service
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/cumulus/bin/cumulus_server
+Environment="PATH=/cumulus/bin/cumulus_server/.venv/bin"
+ExecStart=/cumulus/bin/cumulus_server/.venv/bin/python cumulus.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
