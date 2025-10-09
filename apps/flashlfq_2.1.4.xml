@@ -1,7 +1,7 @@
 <tool id="flashlfq_2.1.4" name="FlashLFQ" version="2.1.4" url="https://github.com/smith-chem-wisc/FlashLFQ" description="Ultra-fast label-free quantification algorithm for mass-spectrometry proteomics" end_tag="Finished writing output" command="dotnet ~/share/flashlfq/v2.1.4/CMD.dll --thr %nb_threads% --rea --out '.'" category="__work_in_progress__">
 
     <section name="main" title="Settings" expanded="true">
-        <filelist name="psm-file" label="Select PSM file" format="fasta" is_raw_input="false" multiple="false" is_folder="false" value="" command="--idt '%value%'" help="Add your identification file here. Accepted file formats are Morpheus .tsv, MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv." />
+        <filelist name="psm-file" label="Select PSM file" is_raw_input="false" multiple="false" is_folder="false" value="" command="--idt '%value%'" help="Add your identification file here. Accepted file formats are Morpheus .tsv, MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv." />
         <conditional name="spectra">
             <select name="raw-type" label="Select the type of your spectra file" help="All formats others than mzML will be converted to mzML before processing.">
                 <option value="mzml" selected="true">mzML files</option>
