@@ -867,8 +867,12 @@ def convert_to_mzml(job_id, file):
 	# execute the command and write the output directly in the job log file
 	command = get_command_as_array(converter, file, temp_output_file)
 	with open(get_log_file_path(job_id), "a") as log_file:
+		logger.debug(command)
 		subprocess.run(command, stdout = log_file, stderr = log_file, text = True)
 	# move the file to the final location
 	if os.path.isfile(temp_output_file): shutil.move(temp_output_file, final_output_file)
 	# if conversion has failed, the job should fail too
-	else: set_job_failed(job_id, f"File '{file}' could not be converted to mzML")
+	else: 
+		logger.error(f"mzML conversion for job {job_id} has failed; command was:")
+		logger.error(command)
+		set_job_failed(job_id, f"File '{file}' could not be converted to mzML")
