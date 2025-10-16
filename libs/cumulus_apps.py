@@ -173,6 +173,7 @@ def get_file_path(job_dir, file_path, is_raw_input):
 	
 	Notes:
 		Raw/Fasta tags will be replaced by Shared/Local in the future.
+		This function does not check if the file exists, it just returns the path the file should have.
 	"""
 	if is_raw_input == "true": return config.DATA_DIR + "/" + os.path.basename(file_path)
 	# else: return f"{job_dir}/{os.path.basename(file_path)}"
