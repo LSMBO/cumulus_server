@@ -320,8 +320,8 @@ def convert_raw_to_mzml():
 	MZML_CONVERSION_RUNNING = True
 	# wait a little before starting the conversion
 	time.sleep(10)
-	# list all the pending jobs, oldest ones first
-	for job_id in db.get_jobs_per_status("PENDING"):
+	# list all the pending and preparing jobs, oldest ones first
+	for job_id in db.get_jobs_per_status("PENDING") + db.get_jobs_per_status("PREPARING"):
 		# get the list of raw files that need to be converted to mzML
 		job_dir = db.get_job_dir(job_id)
 		app_name = db.get_app_name(job_id)
@@ -334,6 +334,7 @@ def convert_raw_to_mzml():
 			# delete the temp file if it already exist (can happen if server was stopped while converting a file)
 			if os.path.exists(temp_file): os.remove(temp_file)
 			# convert the file if it has not been converted yet
+			# if not os.path.exists(mzml_file): utils.convert_to_mzml(job_id, file)
 			if os.path.exists(file) and not os.path.exists(mzml_file): utils.convert_to_mzml(job_id, file)
 		# update the symbolic links in the input folder
 		apps.link_shared_files(job_dir, app_name, settings)
