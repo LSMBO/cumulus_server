@@ -345,7 +345,8 @@ def start():
 		# write logs to a file in the log directory, handle rotation in order to keep the old log files
 		logging.basicConfig(
 			handlers = [RotatingFileHandler(filename = f"{logs_dir}/cumulus.log", maxBytes = 10000000, backupCount = 10)],
-			level = logging.INFO,
+			# level = logging.INFO,
+			level = logging.DEBUG,
 			format = log_format,
 			datefmt = log_date
 		)
