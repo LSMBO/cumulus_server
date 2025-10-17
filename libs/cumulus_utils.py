@@ -851,14 +851,10 @@ def convert_to_mzml(job_id, file):
 	if file.endswith(".d"): 
 		logger.info(f"Converting Bruker data {os.path.basename(file)} to mzML")
 		add_to_stdalt(job_id, f"Converting Bruker data {os.path.basename(file)} to mzML")
-		# with open(get_log_file_path(job_id), "a") as log_file:
-			# subprocess.run([config.get("converter.d.to.mzml"), "-i", file, "-o", temp_output_file], stdout = log_file, stderr = log_file, text = True)
 		converter = config.get("converter.d.to.mzml")
 	elif file.endswith(".raw"): 
 		logger.info(f"Converting Thermo raw file {os.path.basename(file)} to mzML")
 		add_to_stdalt(job_id, f"Converting Thermo raw file {os.path.basename(file)} to mzML")
-		# with open(get_log_file_path(job_id), "a") as log_file:
-			# subprocess.run(["mono", converter, "-i", file, "-b", temp_output_file], stdout = log_file, stderr = log_file, text = True)
 		converter = config.get("converter.raw.to.mzml")
 	else:
 		logger.error(f"Cannot convert file '{file}' to mzML, unknown extension")

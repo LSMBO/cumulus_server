@@ -74,8 +74,6 @@ def start():
 	# create a pending job, it will be started when the files are all available, return the job id
 	job_id, job_dir = db.create_job(request.form)
 	utils.create_job_directory(job_dir, request.form)
-	# call the function to convert raw files to mzML, if needed
-	# threading.Thread(target=daemon.convert_raw_to_mzml, args=()).start()
 	# return the job id and the job directory
 	logger.info(f"Create job {job_id}")
 	return jsonify(job_id, job_dir)
@@ -346,8 +344,8 @@ def start():
 		# write logs to a file in the log directory, handle rotation in order to keep the old log files
 		logging.basicConfig(
 			handlers = [RotatingFileHandler(filename = f"{logs_dir}/cumulus.log", maxBytes = 10000000, backupCount = 10)],
-			# level = logging.INFO,
-			level = logging.DEBUG,
+			level = logging.INFO,
+			# level = logging.DEBUG,
 			format = log_format,
 			datefmt = log_date
 		)
