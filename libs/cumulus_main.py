@@ -74,7 +74,7 @@ def start():
 	job_id, job_dir = db.create_job(request.form)
 	utils.create_job_directory(job_dir, request.form)
 	# call the function to convert raw files to mzML, if needed
-	threading.Thread(target=daemon.convert_raw_to_mzml, args=()).start()
+	# threading.Thread(target=daemon.convert_raw_to_mzml, args=()).start()
 	# return the job id and the job directory
 	logger.info(f"Create job {job_id}")
 	return jsonify(job_id, job_dir)
@@ -355,6 +355,7 @@ def start():
 	db.initialize_database()
 	# start the daemons once all functions are defined
 	threading.Thread(target=daemon.run, args=(), daemon=True).start()
+	threading.Thread(target=daemon.convert_raw_to_mzml, args=(), daemon=True).start()
 	if not IS_DEBUG: threading.Thread(target=daemon.clean, args=(), daemon=True).start()
 	# immediately restart the paused jobs, if any
 	daemon.restart_paused_jobs()

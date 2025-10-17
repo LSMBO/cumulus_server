@@ -43,8 +43,7 @@ import libs.cumulus_apps as apps
 logger = logging.getLogger(__name__)
 
 REFRESH_RATE = int(config.get("refresh.rate.in.seconds"))
-# MAX_AGE = int(config.get("data.max.age.in.days"))
-MZML_CONVERSION_RUNNING = False
+# MZML_CONVERSION_RUNNING = False
 
 def is_process_running(job_id):
 	"""
@@ -306,42 +305,70 @@ def clean():
 		time.sleep(86400)
 
 def convert_raw_to_mzml():
-	"""
-	Converts raw data files to mzML format for pending jobs.
-	This function checks for pending jobs and converts their associated raw data files to mzML format if they haven't been converted yet.
-	It ensures that only one conversion process runs at a time using a global flag.
-	This function is not exactly a daemon, as it is intended to be called periodically from the main daemon loop.
-	But is has to be called in a separate thread to avoid blocking the main daemon loop.
-	"""
-	global MZML_CONVERSION_RUNNING
-	# if a conversion is already running, do nothing
-	if MZML_CONVERSION_RUNNING: return
-	# get the list of jobs that need mzML conversion
-	jobs = db.get_jobs_per_status("PENDING") + db.get_jobs_per_status("PREPARING")
-	if len(jobs) == 0: return
-	# set a flag to indicate that the conversion is running
-	MZML_CONVERSION_RUNNING = True
-	logger.debug("Started mzML files convertion")
-	# wait a little before starting the conversion
-	time.sleep(10)
-	# list all the pending and preparing jobs, oldest ones first
-	for job_id in jobs:
-		# get the list of raw files that need to be converted to mzML
-		job_dir = db.get_job_dir(job_id)
-		app_name = db.get_app_name(job_id)
-		settings = db.get_settings(job_id)
-		files_to_convert = apps.get_files(job_dir, app_name, settings, False, True)
-		# get the first file that needs to be converted
-		for file in files_to_convert:
-			mzml_file = utils.get_mzml_file_path(file)
-			temp_file = utils.get_mzml_file_path(file, True)
-			# delete the temp file if it already exist (can happen if server was stopped while converting a file)
-			if os.path.exists(temp_file): os.remove(temp_file)
-			# convert the file if it has not been converted yet
-			if os.path.exists(file) and not os.path.exists(mzml_file): utils.convert_to_mzml(job_id, file)
-		# update the symbolic links in the input folder
-		apps.link_shared_files(job_dir, app_name, settings)
-	# reset the flag to indicate that the conversion is not running anymore
-	logger.debug("Stopped mzML files convertion")
-	MZML_CONVERSION_RUNNING = False
+	# we want to convert all the raw files from this job to mzml
+	# but only if they have to be converted
+	# and only if they are not already converted
+	# we do not want to convert more than one file at a time
+	while True:
+		# get the list of jobs that may need mzML conversion
+		for job_id in db.get_jobs_per_status("PENDING") + db.get_jobs_per_status("PREPARING"):
+			# get job information
+			job_dir = db.get_job_dir(job_id)
+			app_name = db.get_app_name(job_id)
+			settings = db.get_settings(job_id)
+			# get the list of raw files that need to be converted to mzML
+			for file in apps.get_files(job_dir, app_name, settings, False, True):
+				# define output file and temp file
+				mzml_file = utils.get_mzml_file_path(file)
+				temp_file = utils.get_mzml_file_path(file, True)
+				# delete the temp file if it already exist (can happen if server was stopped while converting a file)
+				if os.path.exists(temp_file): os.remove(temp_file)
+				# convert the file if it has been transferred, but not yet been converted
+				if os.path.exists(file) and not os.path.exists(mzml_file): utils.convert_to_mzml(job_id, file)
+			# update the symbolic links in the input folder of this job
+			apps.link_shared_files(job_dir, app_name, settings)
+		# sleep a little but not too much
+		time.sleep(10)
+
+# def convert_raw_to_mzml():
+	# """
+	# Converts raw data files to mzML format for pending jobs.
+	# This function checks for pending jobs and converts their associated raw data files to mzML format if they haven't been converted yet.
+	# It ensures that only one conversion process runs at a time using a global flag.
+	# This function is not exactly a daemon, as it is intended to be called periodically from the main daemon loop.
+	# But is has to be called in a separate thread to avoid blocking the main daemon loop.
+	# """
+	# # TODO add a "while True:"
+	
+	# global MZML_CONVERSION_RUNNING
+	# # if a conversion is already running, do nothing
+	# if MZML_CONVERSION_RUNNING: return
+	# # get the list of jobs that need mzML conversion
+	# jobs = db.get_jobs_per_status("PENDING") + db.get_jobs_per_status("PREPARING")
+	# if len(jobs) == 0: return
+	# # set a flag to indicate that the conversion is running
+	# MZML_CONVERSION_RUNNING = True
+	# logger.debug("Started mzML files convertion")
+	# # wait a little before starting the conversion
+	# time.sleep(10)
+	# # list all the pending and preparing jobs, oldest ones first
+	# for job_id in jobs:
+		# # get the list of raw files that need to be converted to mzML
+		# job_dir = db.get_job_dir(job_id)
+		# app_name = db.get_app_name(job_id)
+		# settings = db.get_settings(job_id)
+		# files_to_convert = apps.get_files(job_dir, app_name, settings, False, True)
+		# # get the first file that needs to be converted
+		# for file in files_to_convert:
+			# mzml_file = utils.get_mzml_file_path(file)
+			# temp_file = utils.get_mzml_file_path(file, True)
+			# # delete the temp file if it already exist (can happen if server was stopped while converting a file)
+			# if os.path.exists(temp_file): os.remove(temp_file)
+			# # convert the file if it has not been converted yet
+			# if os.path.exists(file) and not os.path.exists(mzml_file): utils.convert_to_mzml(job_id, file)
+		# # update the symbolic links in the input folder
+		# apps.link_shared_files(job_dir, app_name, settings)
+	# # reset the flag to indicate that the conversion is not running anymore
+	# logger.debug("Stopped mzML files convertion")
+	# MZML_CONVERSION_RUNNING = False
 	
