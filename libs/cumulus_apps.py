@@ -307,13 +307,20 @@ def are_all_files_transfered(job_dir, app_name, settings, consider_mzml_converte
 		logger.debug(f"{job_dir}/{FINAL_FILE} is not there yet")
 		return False
 
+def link_shared_file(job_dir, file):
+	dest_path = Path(f"{job_dir}/{INPUT_DIR}").resolve()
+	file_path = Path(file).resolve()
+	link_name = dest_path / file_path.name
+	if not link_name.exists(): link_name.symlink_to(file_path)
+
 def link_shared_files(job_dir, app_name, settings):
 	logger.info("Linking data to the job directory")
-	dest_path = Path(f"{job_dir}/{INPUT_DIR}").resolve()
+	# dest_path = Path(f"{job_dir}/{INPUT_DIR}").resolve()
 	for file in get_files(job_dir, app_name, settings, True): # get files after mzML conversion
-		file_path = Path(file).resolve()
-		link_name = dest_path / file_path.name
-		if not link_name.exists(): link_name.symlink_to(file_path)
+		# file_path = Path(file).resolve()
+		# link_name = dest_path / file_path.name
+		# if not link_name.exists(): link_name.symlink_to(file_path)
+		link_shared_file(job_dir, file)
 
 def replace_in_command(command, tag, value):
 	"""
