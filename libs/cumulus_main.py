@@ -56,10 +56,6 @@ if os.getenv("CUMULUS_DEBUG"): IS_DEBUG = True
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
 
-# register the signal handler
-signal.signal(signal.SIGINT, handle_shutdown) # Ctrl+C
-signal.signal(signal.SIGTERM, handle_shutdown) # systemctl stop
-
 # this has to be a POST message
 @app.route("/start", methods=["POST"])
 def start():
@@ -374,3 +370,7 @@ def handle_shutdown(signum, frame):
 	db.pause_preparing_jobs()
 	# exit the program
 	sys.exit(0)
+
+# register the signal handler
+signal.signal(signal.SIGINT, handle_shutdown) # Ctrl+C
+signal.signal(signal.SIGTERM, handle_shutdown) # systemctl stop
