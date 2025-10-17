@@ -324,9 +324,11 @@ def convert_raw_to_mzml():
 				# delete the temp file if it already exist (can happen if server was stopped while converting a file)
 				if os.path.exists(temp_file): os.remove(temp_file)
 				# convert the file if it has been transferred, but not yet been converted
-				if os.path.exists(file) and not os.path.exists(mzml_file): utils.convert_to_mzml(job_id, file)
-			# update the symbolic links in the input folder of this job
-			apps.link_shared_files(job_dir, app_name, settings)
+				if os.path.exists(file) and not os.path.exists(mzml_file): 
+					utils.convert_to_mzml(job_id, file)
+					apps.link_shared_file(job_dir, mzml_file)
+			# # update the symbolic links in the input folder of this job
+			# apps.link_shared_files(job_dir, app_name, settings)
 		# sleep a little but not too much
 		time.sleep(10)
 
