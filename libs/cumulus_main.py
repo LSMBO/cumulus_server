@@ -234,7 +234,7 @@ def get_results(owner, job_id, file_name):
 	# in every other case, return an empty string
 	return ""
 
-@app.route("/getfile/<string:owner>/<path:file_path>")
+@app.route("/getfile/<string:owner>/<path:file_name>")
 def get_file(owner, file_name):
 	"""
 	Retrieve and send a shared file.
@@ -255,7 +255,7 @@ def get_file(owner, file_name):
 		Logs errors to stderr using utils.add_to_stderr if file sending fails.
 	"""
 	# append the data directory
-	file_path = config.DATA_DIR + "/" + file_name
+	file_path = config.DATA_DIR + "/" + unquote(file_name)
 	# check that the file exists and it is actually a file
 	if os.path.isfile(file_path):
 		# return the file
@@ -268,8 +268,10 @@ def get_file(owner, file_name):
 	# in every other case, return an empty string
 	return ""
 
-@app.route("/getfilecontent/<string:owner>/<path:file_name>")
-def get_file_content(owner, file_name):
+# @app.route("/getfilecontent/<string:owner>/<path:file_name>")
+# def get_file_content(owner, file_name):
+@app.route("/getfilecontent", methods=["POST"])
+def get_file_content():
 	"""
 	When a user wants to download a shared file, this route has to be called first to retrieve 
 	the entire content of the file (as it may be a folder)
@@ -284,10 +286,19 @@ def get_file_content(owner, file_name):
 		If the given file name corresponds to a file, only one path will be in the array
 		If the given file name corresponds to a folder, the array will contain every file inside this folder
 	"""
-	# complete the path for the file
-	file = f"{config.DATA_DIR}/{unquote(file_name)}"
-	# get the corresponding list of files as an array
-	files = apps.get_shared_file_content(file)
+	# get the list of file names
+	if "names" not in request.form: return jsonify({"error": 'Missing "names" in form data'}), 400
+	try:
+		names = json.loads(request.form['names'])
+	except Exception as e:
+		return jsonify({'error': 'Invalid JSON in "names" field', 'details': str(e)}), 400
+	if not isinstance(names, list): return jsonify({"error": '"names" should be a list'}), 400
+	files = []
+	for file_name in names:
+		# complete the path for the file
+		file = f"{config.DATA_DIR}/{unquote(file_name)}"
+		# get the corresponding list of files as an array
+		files.extend(apps.get_shared_file_content(file))
 	# return the array
 	return jsonify(files)
 
