@@ -234,7 +234,7 @@ def get_results(owner, job_id, file_name):
 	# in every other case, return an empty string
 	return ""
 
-@app.route("/getfile/<string:owner>/<path:file_name>")
+@app.route("/getfile/<string:owner>/<path:file_path>")
 def get_file(owner, file_name):
 	"""
 	Retrieve and send a shared file.
@@ -254,19 +254,44 @@ def get_file(owner, file_name):
 	Side Effects:
 		Logs errors to stderr using utils.add_to_stderr if file sending fails.
 	"""
-	file = f"{config.DATA_DIR}/{unquote(file_name)}"
-	# check that the file exists
-	if os.path.isfile(file):
+	# check that the file exists and it is actually a file
+	if os.path.isfile(file_path):
 		# return the file
 		try:
-			logger.info(f"Shared file '{file_name}' is being downloaded by '{owner}'")
-			# return send_file(file)
-			return transfer_file(file_name, file)
+			logger.debug(f"Shared file '{file_name}' is being downloaded by '{owner}'")
+			return transfer_file(os.path.basename(file_path), file_path)
 		except Exception as e:
 			logger.error(f"Error on [get_file], {e.strerror}: {file}")
 			return str(e)
 	# in every other case, return an empty string
 	return ""
+
+@app.route("/getfilecontent/<string:owner>/<path:file_name>")
+def get_file_content(owner, file_name):
+	"""
+	When a user wants to download a shared file, this route has to be called first to retrieve 
+	the entire content of the file (as it may be a folder)
+	The use will then have to call get_file for each file
+
+	Args:
+		owner (str): The username or identifier of the user requesting the file.
+		file_name (str): The name of the file to retrieve.
+
+	Returns:
+		flask.Response: A Flask response object corresponding to an array of file paths
+		If the given file name corresponds to a file, only one path will be in the array
+		If the given file name corresponds to a folder, the array will contain every file inside this folder
+	"""
+	# complete the path for the file
+	file = f"{config.DATA_DIR}/{unquote(file_name)}"
+	# prepare the array
+	files = []
+	# if the path corresponds to a file, just add it
+	if os.path.isfile(file): files.append(file)
+	# if it's a folder, add the list of files inside the folder to the array
+	elif os.path.isdir(file): files = app.get_output_file_list(file_name)
+	# return the array
+	return jsonify(files)
 
 @app.route("/info")
 def info():
