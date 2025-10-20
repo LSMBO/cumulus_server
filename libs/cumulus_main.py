@@ -188,6 +188,15 @@ def delete(owner, job_id):
 		else: return f"You cannot delete a running job"
 	else: return f"You cannot delete this job"
 
+def transfer_file(file_name, file_path):
+	return send_file(
+		file_path,
+		as_attachment = True,
+		download_name = file_name, # original file name
+		mimetype = 'application/octet-stream', # always send as binary
+		conditional = False # disabled range requests and possible compression handling
+	)
+
 @app.route("/getresults/<string:owner>/<int:job_id>/<path:file_name>")
 def get_results(owner, job_id, file_name):
 	"""
@@ -217,7 +226,8 @@ def get_results(owner, job_id, file_name):
 			# return the file
 			try:
 				logger.debug(f"User '{owner}' is downloading file '{file}' from job {job_id}")
-				return send_file(file)
+				# return send_file(file)
+				return transfer_file(file_name, file)
 			except Exception as e:
 				utils.add_to_stderr(job_id, f"Error on [get_results], {e.strerror}: {file}")
 				return str(e)
@@ -250,7 +260,8 @@ def get_file(owner, file_name):
 		# return the file
 		try:
 			logger.info(f"Shared file '{file_name}' is being downloaded by '{owner}'")
-			return send_file(file)
+			# return send_file(file)
+			return transfer_file(file_name, file)
 		except Exception as e:
 			logger.error(f"Error on [get_file], {e.strerror}: {file}")
 			return str(e)
