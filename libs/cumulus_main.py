@@ -254,11 +254,13 @@ def get_file(owner, file_name):
 	Side Effects:
 		Logs errors to stderr using utils.add_to_stderr if file sending fails.
 	"""
+	# append the data directory
+	file_path = config.DATA_DIR + "/" + file_name
 	# check that the file exists and it is actually a file
 	if os.path.isfile(file_path):
 		# return the file
 		try:
-			logger.debug(f"Shared file '{file_name}' is being downloaded by '{owner}'")
+			logger.debug(f"Shared file '{os.path.basename(file_path)}' is being downloaded by '{owner}'")
 			return transfer_file(os.path.basename(file_path), file_path)
 		except Exception as e:
 			logger.error(f"Error on [get_file], {e.strerror}: {file}")
@@ -284,12 +286,8 @@ def get_file_content(owner, file_name):
 	"""
 	# complete the path for the file
 	file = f"{config.DATA_DIR}/{unquote(file_name)}"
-	# prepare the array
-	files = []
-	# if the path corresponds to a file, just add it
-	if os.path.isfile(file): files.append(file)
-	# if it's a folder, add the list of files inside the folder to the array
-	elif os.path.isdir(file): files = app.get_output_file_list(file_name)
+	# get the corresponding list of files as an array
+	files = apps.get_shared_file_content(file)
 	# return the array
 	return jsonify(files)
 

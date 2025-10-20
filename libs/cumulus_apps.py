@@ -894,21 +894,20 @@ def get_file_list(job_dir):
 	# the user will select the files they want to retrieve
 	return filelist
 
-def get_output_file_list(root_dir, append_output_directory = True):
+def get_output_file_list(job_dir):
 	"""
 	Recursively retrieves a list of files from the output folder of the specified job directory.
 	Folders are not returned, they will be retrieved from the files pathes that are returned.
 
 	Args:
-		root_dir (str): The path to the root directory.
+		job_dir (str): The path to the root directory.
 
 	Returns:
 		list of tuple: A list of tuples, each containing the relative file path (str) and its size (int, in bytes).
 	"""
 	# this function will only return files, empty folders will be disregarded
 	filelist = []
-	# root_path = job_dir + "/" + OUTPUT_DIR + "/"
-	root_path = root_dir + "/" + OUTPUT_DIR + "/" if append_output_directory else root_dir + "/"
+	root_path = job_dir + "/" + OUTPUT_DIR + "/"
 	if os.path.isdir(root_path):
 		# list all files including sub-directories
 		for root, _, files in os.walk(root_path):
@@ -919,5 +918,32 @@ def get_output_file_list(root_dir, append_output_directory = True):
 				file = f if rel_path == "" else rel_path + "/" + f
 				# logger.debug(f"get_output_file_list->add({file})")
 				filelist.append((file, utils.get_size(root_path + "/" + file)))
+	# the user will select the files they want to retrieve
+	return filelist
+
+def get_shared_file_content(file_name):
+	"""
+	Recursively retrieves the list of files from the specified shared file name.
+	Folders are not returned, they will be retrieved from the files pathes that are returned.
+
+	Args:
+		file_name (str): The base name of the shared file.
+
+	Returns:
+		list of string: A list file path (str).
+	"""
+	# this function will only return files, empty folders will be disregarded
+	filelist = []
+	root_path = config.DATA_DIR + "/" + os.path.basename(file_name)
+	# return the file directly if it's a file
+	if os.path.isfile(root_path): filelist.append(root_path)
+	# if it's a folder, parse its content and add each file
+	elif os.path.isdir(root_path):
+		# list all files including sub-directories
+		for root, _, files in os.walk(root_path):
+			# do not return the absolute path but just the relative path
+			relative_root = root.replace(config.DATA_DIR + "/", "")
+			for f in files:
+				filelist.append(relative_root + "/" + f)
 	# the user will select the files they want to retrieve
 	return filelist
