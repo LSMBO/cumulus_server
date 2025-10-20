@@ -216,6 +216,7 @@ def get_results(owner, job_id, file_name):
 		if os.path.isfile(file):
 			# return the file
 			try:
+				logger.debug(f"User '{owner}' is downloading file '{file}' from job {job_id}")
 				return send_file(file)
 			except Exception as e:
 				utils.add_to_stderr(job_id, f"Error on [get_results], {e.strerror}: {file}")
@@ -223,12 +224,13 @@ def get_results(owner, job_id, file_name):
 	# in every other case, return an empty string
 	return ""
 
-@app.route("/getfile/<path:file_name>")
-def get_file(file_name):
+@app.route("/getfile/<string:owner>/<path:file_name>")
+def get_file(owner, file_name):
 	"""
 	Retrieve and send a shared file.
 
 	Args:
+		owner (str): The username or identifier of the user requesting the file.
 		file_name (str): The name of the file to retrieve.
 
 	Returns:
@@ -237,6 +239,7 @@ def get_file(file_name):
 
 	Notes:
 		- Everybody can download the shared files.
+		- The owner is just requested to log who is making the request
 
 	Side Effects:
 		Logs errors to stderr using utils.add_to_stderr if file sending fails.
@@ -246,6 +249,7 @@ def get_file(file_name):
 	if os.path.isfile(file):
 		# return the file
 		try:
+			logger.info(f"Shared file '{file_name}' is being downloaded by '{owner}'")
 			return send_file(file)
 		except Exception as e:
 			logger.error(f"Error on [get_file], {e.strerror}: {file}")
@@ -374,8 +378,8 @@ def start():
 		# write logs to a file in the log directory, handle rotation in order to keep the old log files
 		logging.basicConfig(
 			handlers = [RotatingFileHandler(filename = f"{logs_dir}/cumulus.log", maxBytes = 10000000, backupCount = 10)],
-			level = logging.INFO,
-			# level = logging.DEBUG,
+			# level = logging.INFO,
+			level = logging.DEBUG,
 			format = log_format,
 			datefmt = log_date
 		)
