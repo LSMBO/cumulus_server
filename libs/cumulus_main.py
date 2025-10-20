@@ -223,6 +223,36 @@ def get_results(owner, job_id, file_name):
 	# in every other case, return an empty string
 	return ""
 
+@app.route("/getfile/<path:file_name>")
+def get_file(file_name):
+	"""
+	Retrieve and send a shared file.
+
+	Args:
+		file_name (str): The name of the file to retrieve.
+
+	Returns:
+		Response: The file as a Flask response object if the user is authorized and the file exists.
+		str: An error message if an exception occurs during file sending.
+
+	Notes:
+		- Everybody can download the shared files.
+
+	Side Effects:
+		Logs errors to stderr using utils.add_to_stderr if file sending fails.
+	"""
+	file = f"{config.DATA_DIR}/{unquote(file_name)}"
+	# check that the file exists
+	if os.path.isfile(file):
+		# return the file
+		try:
+			return send_file(file)
+		except Exception as e:
+			logger.error(f"Error on [get_file], {e.strerror}: {file}")
+			return str(e)
+	# in every other case, return an empty string
+	return ""
+
 @app.route("/info")
 def info():
 	"""
