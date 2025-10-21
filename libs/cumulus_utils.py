@@ -833,7 +833,10 @@ def get_uid_gid(directory):
 	return stat_result.stdout.strip()
 
 def uid_gid_replacer(match):
-    return get_uid_gid(match.group(1))
+	# return get_uid_gid(match.group(1))
+	directory = match.group(1)
+	uid_gid = get_uid_gid(directory)
+	return f"{uid_gid}:{directory}"
 
 def get_command_as_array(command, input_file, output_file):
 	cmd = command
