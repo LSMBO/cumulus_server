@@ -25,7 +25,7 @@
             <option value="tsv">TSV</option>
             <option value="sage">Sage</option>
         </select>
-        <filelist name="spectrum_files" label="Select Identification files" exclude_from_config="true" is_raw_input="true" multiple="true" is_folder="false" convert_to_mzml="false" value="" help="Select the MGF, mzML, or Bruker raw file(s) containing the spectra. The file names should not contain spaces." />
+        <filelist name="spectrum_files" label="Select Spectrum files" exclude_from_config="true" is_raw_input="true" multiple="true" is_folder="false" convert_to_mzml="false" value="" help="Select the MGF, mzML, or Bruker raw file(s) containing the spectra. The file names should not contain spaces." />
         <string name="ms2rescore.spectrum_path" label="" visibility="hidden" value="../%input_dir%" help="" />
         <keyvalues name="ms2rescore.modification_mapping" is_list="false" type_of="string" label="Modification mapping" label_key="Search engine label" label_value="ProForma label" placeholder_key="ox" placeholder_value="U:Oxidation" help="Map search engine modification labels to ProForma labels (PSI-formula, or mass shift). This is required for correct modification parsing. If this field is left empty, the search engine labels will be used as is, which may lead to incorrect feature generation for modified peptides. Check out the user guide for more information.">
         </keyvalues>
@@ -59,7 +59,7 @@
 						</when>
 				</conditional>
         <conditional name="ms2pip">
-            <checkbox name="enable_ms2pip" label="Enable MS²PIP (spectrum intensity predication)" value="true" exclude_from_config="true" help="" />
+            <checkbox name="enable_ms2pip" label="Enable MS²PIP (spectrum intensity prediction)" value="true" exclude_from_config="true" help="" />
             <when value="true">
                 <select name="ms2rescore.feature_generators.ms2pip.model" label="MS²PIP model" help="">
                     <option value="CID">CID</option>
@@ -82,7 +82,7 @@
             </when>
         </conditional>
         <conditional name="deeplc">
-            <checkbox name="enable_deeplc" label="Enable DeepLC (retention time predication)" value="true" exclude_from_config="true" help="" />
+            <checkbox name="enable_deeplc" label="Enable DeepLC (retention time prediction)" value="true" exclude_from_config="true" help="" />
             <when value="true">
                 <checkbox name="ms2rescore.feature_generators.deeplc.deeplc_retrain" label="Use transfer learning" value="false" help="" />
                 <number name="ms2rescore.feature_generators.deeplc.n_epochs" label="Number of transfer learning epochs" value="20" step="5" min="1" help="" />
@@ -97,7 +97,7 @@
 						</when>
 				</conditional>
         <conditional name="ionmob">
-            <checkbox name="enable_ionmob" label="Enable Ionmob (ion mobility predication)" value="false" exclude_from_config="true" help="" />
+            <checkbox name="enable_ionmob" label="Enable Ionmob (ion mobility prediction)" value="false" exclude_from_config="true" help="" />
             <when value="true">
                 <string name="ms2rescore.feature_generators.ionmob_model" label="Name of built-in model or path to custom model" value="GRUPredictor" placeholder="GRUPredictor" help="" />
             </when>
