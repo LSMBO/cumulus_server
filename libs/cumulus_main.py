@@ -218,7 +218,9 @@ def get_results(owner, job_id, file_name):
 	Side Effects:
 		Logs errors to stderr using utils.add_to_stderr if file sending fails.
 	"""
-	file = f"{db.get_job_dir(job_id)}/{unquote(file_name)}"
+	# reconstruct file path, including output folder
+	# file = f"{db.get_job_dir(job_id)}/{unquote(file_name)}"
+	file = f"{db.get_job_dir(job_id)}/{config.get("output.folder")}/{unquote(file_name)}"
 	# check that the user can download the results
 	if db.is_owner(job_id, owner):
 		# check that the file exists
