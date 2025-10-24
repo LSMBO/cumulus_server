@@ -81,7 +81,7 @@ def start():
 @app.route("/joblist/<int:job_id>/<int:number>/")
 def job_list(job_id, number):
 	"""
-	Retrieve a list of the most recent jobs for a given job ID.
+	Retrieves a list of the most recent jobs for a given job ID.
 
 	Args:
 		job_id (int): The identifier of the job to retrieve.
@@ -200,7 +200,7 @@ def transfer_file(file_name, file_path):
 @app.route("/getresults/<string:owner>/<int:job_id>/<path:file_name>")
 def get_results(owner, job_id, file_name):
 	"""
-	Retrieve and send a result file for a given job if the requesting user is the owner.
+	Retrieves and sends a result file for a given job if the requesting user is the owner.
 
 	Args:
 		owner (str): The username or identifier of the user requesting the file.
@@ -239,7 +239,7 @@ def get_results(owner, job_id, file_name):
 @app.route("/getfile/<string:owner>/<path:file_name>")
 def get_file(owner, file_name):
 	"""
-	Retrieve and send a shared file.
+	Retrieves and sends a shared file.
 
 	Args:
 		owner (str): The username or identifier of the user requesting the file.
@@ -277,7 +277,7 @@ def get_file_content():
 	"""
 	When a user wants to download a shared file, this route has to be called first to retrieve 
 	the entire content of the file (as it may be a folder)
-	The use will then have to call get_file for each file
+	The user will then have to call get_file for each file
 
 	Args:
 		owner (str): The username or identifier of the user requesting the file.
@@ -338,7 +338,7 @@ def listapps():
 @app.route("/storage")
 def storage():
 	"""
-	Returns a JSON response containing the list of file names and their sizes in the /cumulus/data directory.
+	Returns a JSON response containing the list of file names and their sizes in the shared data folder.
 
 	Returns:
 		flask.Response: A JSON response with the raw file list as provided by utils.get_raw_file_list().
