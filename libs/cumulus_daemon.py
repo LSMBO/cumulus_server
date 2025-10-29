@@ -73,11 +73,11 @@ def is_process_running(job_id):
 		# if os.path.exists(alive_file): is_alive = time.time() - os.path.getmtime(alive_file) < 180
 		if os.path.exists(alive_file): 
 			# is_alive = time.time() - os.path.getmtime(alive_file) < 180
-			previous_time = db.get_last_modified(id)
-			current_time = os.path.getmtime(alive_file)
+			previous_time = int(db.get_last_modified(id))
+			current_time = int(os.path.getmtime(alive_file))
 			logger.debug(f"Alive file {alive_file} was last modified at {previous_time}, current modification time is {current_time}")
 			is_alive = current_time > previous_time
-			if is_alive: db.set_last_modified(id, int(current_time))
+			if is_alive: db.set_last_modified(id, current_time)
 		# if the alive file does not exist, check if the stop file exists, in this case, the job has stopped
 		elif os.path.exists(stop_file): is_alive = False
 		# there should always be an alive file or a stop file, but if none of them exist, we consider that the job is not running
