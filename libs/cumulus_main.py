@@ -39,6 +39,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 import signal
+import sys
 import threading
 from urllib.parse import unquote
 from waitress import serve
