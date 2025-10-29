@@ -635,7 +635,7 @@ def pause_preparing_jobs():
 	"""
 	# connect to the database
 	cnx, cursor = connect()
-	logger.debug(f"UPDATE jobs SET {field} = {value} WHERE id = {job_id}")
+	logger.debug(f"UPDATE jobs SET status = 'PAUSED' WHERE status = 'PREPARING'")
 	cursor.execute(f"UPDATE jobs SET status = 'PAUSED' WHERE status = 'PREPARING'")
 	cnx.commit()
 	# disconnect
